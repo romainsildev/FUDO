@@ -30,12 +30,13 @@ struct PlaceholderScaffold<Extra: View>: View {
     }
 }
 
-/// Sub-screen pushed by the tab placeholders to prove the pill hides on push.
+/// Sub-screen pushed by the tab placeholders to prove the tab bar hides on push.
 struct PushDemoScreen: View {
     let title: String
     var body: some View {
-        PlaceholderScaffold(title: title, subtitle: "Pushed — pill hidden, native back restores it.")
+        PlaceholderScaffold(title: title, subtitle: "Pushed — tab bar hidden, native back restores it.")
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
+            .fudoHidesTabBar()
     }
 }

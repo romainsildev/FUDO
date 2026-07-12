@@ -1,22 +1,10 @@
 import SwiftUI
-import Observation
 
-/// Shared override so a screen can force-hide the floating pill regardless of
-/// nav-path depth (belt-and-suspenders; primary hide is path-driven in MainTabView).
-@Observable final class TabBarVisibility {
-    var isHidden = false
-}
-
-private struct HidesTabBarModifier: ViewModifier {
-    @Environment(TabBarVisibility.self) private var visibility
-    func body(content: Content) -> some View {
-        content
-            .onAppear { visibility.isHidden = true }
-            .onDisappear { visibility.isHidden = false }
-    }
-}
-
+/// Hides the NATIVE tab bar while this view is on screen — apply to pushed
+/// screens (habit detail, Settings subscreens) per nav conventions (prd/12 §1).
+/// On iOS 26 the system animates the Liquid Glass bar away natively.
 extension View {
-    /// Force-hide the floating pill while this view is on screen.
-    func fudoHidesTabBar() -> some View { modifier(HidesTabBarModifier()) }
+    func fudoHidesTabBar() -> some View {
+        toolbar(.hidden, for: .tabBar)
+    }
 }

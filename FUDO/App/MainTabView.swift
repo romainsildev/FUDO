@@ -1,44 +1,32 @@
 import SwiftUI
 
-/// 4-tab shell. Per-tab NavigationPath preserves state per tab. The floating pill is an
-/// overlay above the stock (hidden) tab bar; it hides whenever the selected tab has pushed.
+/// 4-tab shell on the NATIVE TabView (Romain, 2026-07-12 — RiteOff pattern).
+/// On iOS 26 devices the system renders the floating Liquid Glass bar for
+/// free; earlier iOS gets the standard bottom bar. Per-tab NavigationPath
+/// preserves state per tab. Bar selection tint stays neutral (textPrimary,
+/// RiteOff pattern); tab CONTENT re-tints to vermillon so CTAs keep the accent.
 struct MainTabView: View {
     @Environment(AppState.self) private var appState
-    @State private var visibility = TabBarVisibility()
     @State private var paths: [AppTab: NavigationPath] = Dictionary(
         uniqueKeysWithValues: AppTab.allCases.map { ($0, NavigationPath()) }
     )
 
-    private var pillHidden: Bool {
-        let pushed = !(paths[appState.selectedTab]?.isEmpty ?? true)
-        return pushed || visibility.isHidden
-    }
-
     var body: some View {
         @Bindable var appState = appState
-        ZStack(alignment: .bottom) {
-            TabView(selection: $appState.selectedTab) {
-                tab(.today) { HomePlaceholderView() }
-                tab(.progress) { ProgressionPlaceholderView() }
-                tab(.stats) { StatsPlaceholderView() }
-                tab(.settings) { SettingsPlaceholderView() }
-            }
-
-            if !pillHidden {
-                FudoTabBar(selected: $appState.selectedTab)
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 8)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
+        TabView(selection: $appState.selectedTab) {
+            tab(.today) { HomePlaceholderView() }
+            tab(.progress) { ProgressionPlaceholderView() }
+            tab(.stats) { StatsPlaceholderView() }
+            tab(.settings) { SettingsPlaceholderView() }
         }
-        .environment(visibility)
-        .animation(AppAnimation.standard, value: pillHidden)
+        .tint(FudoColor.textPrimary)
+        .onChange(of: appState.selectedTab) { _, _ in Haptics.light() }
     }
 
     @ViewBuilder
     private func tab<Root: View>(_ tab: AppTab, @ViewBuilder root: @escaping () -> Root) -> some View {
-        FudoNavigationStack(path: pathBinding(tab)) { root() }
-            .toolbar(.hidden, for: .tabBar)
+        FudoNavigationStack(path: pathBinding(tab)) { root().tint(FudoColor.accent) }
+            .tabItem { Label(tab.title, systemImage: tab.icon) }
             .tag(tab)
     }
 

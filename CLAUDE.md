@@ -83,7 +83,8 @@ Hors scope (ne jamais coder, même si "facile") : communauté/leaderboard, heatm
 
 - **Source de vérité des assets = CE repo (git).** `~/Downloads` = zone de transit, jamais une source. Ne JAMAIS supprimer/écraser un asset sans avoir vérifié qu'une copie est committée (`git log --follow <fichier>`).
 - `Assets.xcassets` : JAMAIS d'image posée en vrac dedans — uniquement des `.imageset`/`.appiconset` avec leur `Contents.json`.
-- Tout asset bundlé (image, font, vidéo) vit sous `FUDO/` (dossier synchronisé Xcode) — `FUDO/Resources/Welcome/`, `FUDO/Resources/Fonts/`, `FUDO/Assets.xcassets/`. Rien d'autre à la racine du repo que : `CLAUDE.md`, `.gitignore`, `docs/`, `FUDO/`, `FUDO.xcodeproj/`, `FUDOTests/`, `FUDOUITests/`.
+- Tout asset bundlé (image, font, vidéo) vit sous `FUDO/` (dossier synchronisé Xcode) — `FUDO/Resources/Welcome/`, `FUDO/Resources/Fonts/`, `FUDO/Assets.xcassets/`. Rien d'autre à la racine du repo que : `CLAUDE.md`, `.gitignore`, `docs/`, `DesignReference/`, `FUDO/`, `FUDO.xcodeproj/`, `FUDOTests/`, `FUDOUITests/`.
+- `DesignReference/` = screenshots des frames Figma (fournis par le chef d'orchestre session par session, sous-dossiers `app/`, `onboarding/`). HORS build (jamais dans un target) — à CONSULTER pour toute tâche visuelle : c'est la maquette de référence, pas une inspiration.
 - Pas de fichier temporaire/brouillon dans le repo ; pas de doublons (`Foo 2.swift`) — si Xcode en génère un, le signaler et le résoudre immédiatement.
 - `xcuserdata/`, `.DS_Store`, `*.xcuserstate` = ignorés via `.gitignore` — ne jamais les committer.
 - Toute suppression de fichier = commande servie à Romain, jamais exécutée en autonomie.

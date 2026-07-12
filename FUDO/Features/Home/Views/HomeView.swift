@@ -5,9 +5,11 @@ import SwiftUI
 /// so the collapse tracks the finger at 60 fps and reverses for free.
 private enum HomeHeroMetrics {
     /// Scroll distance over which the hero fully condenses into the strip.
-    static let collapseDistance: CGFloat = 240
+    /// Must stay well under the available scroll range (~150-250 pt with 5 cards
+    /// on a tall iPhone) or the collapse never completes — device bug 2026-07-12.
+    static let collapseDistance: CGFloat = 150
     /// Fraction of the collapse at which the compact strip starts fading in.
-    static let stripAppearStart: CGFloat = 0.55
+    static let stripAppearStart: CGFloat = 0.45
     static let stripHeight: CGFloat = 44
     static let heroMinScale: CGFloat = 0.86
     static let miniRingSize: CGFloat = 22
@@ -104,7 +106,7 @@ struct HomeView: View {
                 }
             }
             .coordinateSpace(name: "homeScroll")
-            .onPreferenceChange(HomeScrollOffsetKey.self) { scrollOffset = $0 }
+            .modifier(HomeScrollOffsetReader { scrollOffset = $0 })
 
             compactStrip
                 .opacity(stripT)
@@ -382,5 +384,25 @@ private struct HomeScrollOffsetKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = nextValue()
+    }
+}
+
+/// Offset reading, two paths: iOS 18+ uses the native `onScrollGeometryChange`
+/// (reliable during live scroll on iOS 26 — the PreferenceKey pattern proved
+/// flaky there, device bug 2026-07-12); iOS 17 falls back to the GeometryReader
+/// preference emitted by the scroll content.
+private struct HomeScrollOffsetReader: ViewModifier {
+    let onChange: (CGFloat) -> Void
+
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, *) {
+            content.onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentOffset.y + geometry.contentInsets.top
+            } action: { _, offset in
+                onChange(offset)
+            }
+        } else {
+            content.onPreferenceChange(HomeScrollOffsetKey.self) { onChange($0) }
+        }
     }
 }

@@ -5,16 +5,12 @@ import SwiftUI
 /// so the collapse tracks the finger at 60 fps and reverses for free.
 private enum HomeHeroMetrics {
     /// Scroll distance over which the hero fully condenses into the strip.
-    /// The scroll content reserves at least this much extra range (minHeight
-    /// below), so the collapse ALWAYS completes regardless of card count.
-    static let collapseDistance: CGFloat = 200
+    /// Must stay well under the available scroll range (~150-250 pt with 5 cards
+    /// on a tall iPhone) or the collapse never completes — device bug 2026-07-12.
+    static let collapseDistance: CGFloat = 150
     /// Fraction of the collapse at which the compact strip starts fading in.
-    static let stripAppearStart: CGFloat = 0.7
+    static let stripAppearStart: CGFloat = 0.45
     static let stripHeight: CGFloat = 44
-    /// Layout height the hero consumes when fully expanded. Its frame shrinks
-    /// to ZERO with scroll — the checklist rises into the freed space, no dead
-    /// zone under the strip (device bug 2026-07-12: fade-only left a giant void).
-    static let heroNaturalHeight: CGFloat = 480
     static let heroMinScale: CGFloat = 0.86
     static let miniRingSize: CGFloat = 22
     static let miniRingWidth: CGFloat = 3
@@ -76,69 +72,46 @@ struct HomeView: View {
     // MARK: - Active challenge (frames 01 / 01c) — collapsing hero
 
     private var activeContent: some View {
-        VStack(spacing: 0) {
-            collapsingHero
-            checklistArea
-        }
-    }
-
-    /// The hero's LAYOUT height shrinks with scroll (bottom-anchored, top clipped
-    /// under the header) — the checklist genuinely gains the freed space. Scale
-    /// and fade ride the same interpolation; everything is a direct function of
-    /// the offset, so it reverses for free.
-    private var collapsingHero: some View {
-        senseiAndOVRBlock
-            .padding(.horizontal, FudoSpacing.screenMargin)
-            .scaleEffect(1 - (1 - HomeHeroMetrics.heroMinScale) * heroT, anchor: .bottom)
-            .opacity(1 - heroT)
-            .frame(height: HomeHeroMetrics.heroNaturalHeight * (1 - heroT), alignment: .bottom)
-            .clipped()
-    }
-
-    private var checklistArea: some View {
-        GeometryReader { viewport in
-            ZStack(alignment: .top) {
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        if viewModel.showsIncompleteBanner, let summary = viewModel.incompleteRollover {
-                            incompleteBanner(summary)
-                                .padding(.top, 10)
-                                .transition(.move(edge: .top).combined(with: .opacity))
-                        }
-
-                        if viewModel.screenState == .dayComplete {
-                            completionBlock
-                                .padding(.top, 14)
-                                .transition(.opacity.combined(with: .move(edge: .top)))
-                        }
-
-                        protocolSection
-                            .padding(.top, 24)
+        ZStack(alignment: .top) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    if viewModel.showsIncompleteBanner, let summary = viewModel.incompleteRollover {
+                        incompleteBanner(summary)
+                            .padding(.top, 6)
+                            .transition(.move(edge: .top).combined(with: .opacity))
                     }
-                    .padding(.horizontal, FudoSpacing.screenMargin)
-                    .padding(.bottom, 100)   // clear of the floating tab pill
-                    // Guarantees enough scroll range for a FULL collapse even with
-                    // few cards — the surplus is invisible dark space at the bottom.
-                    .frame(minHeight: viewport.size.height + HomeHeroMetrics.collapseDistance,
-                           alignment: .top)
-                    .animation(AppAnimation.standard, value: viewModel.screenState)
-                    .animation(AppAnimation.standard, value: viewModel.showsIncompleteBanner)
-                    .background {
-                        GeometryReader { geo in
-                            Color.clear.preference(key: HomeScrollOffsetKey.self,
-                                                   value: -geo.frame(in: .named("homeScroll")).minY)
-                        }
+
+                    senseiAndOVRBlock
+                        .scaleEffect(1 - (1 - HomeHeroMetrics.heroMinScale) * heroT, anchor: .top)
+                        .opacity(1 - heroT)
+
+                    if viewModel.screenState == .dayComplete {
+                        completionBlock
+                            .padding(.top, 14)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
+
+                    protocolSection
+                        .padding(.top, FudoSpacing.sectionGap)
+                }
+                .padding(.horizontal, FudoSpacing.screenMargin)
+                .padding(.bottom, 100)   // clear of the floating tab pill
+                .animation(AppAnimation.standard, value: viewModel.screenState)
+                .animation(AppAnimation.standard, value: viewModel.showsIncompleteBanner)
+                .background {
+                    GeometryReader { geo in
+                        Color.clear.preference(key: HomeScrollOffsetKey.self,
+                                               value: -geo.frame(in: .named("homeScroll")).minY)
                     }
                 }
-                .coordinateSpace(name: "homeScroll")
-                .modifier(HomeScrollOffsetReader { scrollOffset = $0 })
-
-                compactStrip
-                    .padding(.top, 4)
-                    .opacity(stripT)
-                    .offset(y: (1 - stripT) * -8)
-                    .allowsHitTesting(stripT > 0.6)
             }
+            .coordinateSpace(name: "homeScroll")
+            .modifier(HomeScrollOffsetReader { scrollOffset = $0 })
+
+            compactStrip
+                .opacity(stripT)
+                .offset(y: (1 - stripT) * -8)
+                .allowsHitTesting(stripT > 0.6)
         }
     }
 

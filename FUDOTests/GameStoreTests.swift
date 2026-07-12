@@ -14,9 +14,7 @@ struct GameStoreTests {
 
     private func makeStore(startingAt now: Date) throws -> (GameStore, Clock) {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try ModelContainer(
-            for: Challenge.self, TaskRule.self, DayLog.self, PlayerState.self,
-            configurations: config)
+        let container = try ModelContainer(for: FudoSchema.schema, configurations: config)
         let clock = Clock(now)
         let store = GameStore(modelContext: container.mainContext,
                               calendar: .current, nowProvider: { clock.now })

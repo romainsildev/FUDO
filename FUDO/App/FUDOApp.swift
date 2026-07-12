@@ -15,8 +15,7 @@ struct FUDOApp: App {
         )
         #endif
         do {
-            container = try ModelContainer(
-                for: Challenge.self, TaskRule.self, DayLog.self, PlayerState.self)
+            container = try ModelContainer(for: FudoSchema.schema)
         } catch {
             // 100 % local app, no fallback store: a boot-time container failure is unrecoverable.
             fatalError("ModelContainer creation failed: \(error)")

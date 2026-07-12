@@ -7,9 +7,7 @@ import Testing
 struct DebugSeedTests {
     @Test func seedProducesTheCanonicalDataset() throws {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try ModelContainer(
-            for: Challenge.self, TaskRule.self, DayLog.self, PlayerState.self,
-            configurations: config)
+        let container = try ModelContainer(for: FudoSchema.schema, configurations: config)
         let context = container.mainContext
 
         DebugSeed.seed(context: context, now: .now)

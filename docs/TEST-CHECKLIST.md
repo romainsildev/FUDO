@@ -46,23 +46,23 @@
 
 - [✅] 📱 Presser-tenir une carte non cochée ~1,0 s : ring vermillon se dessine autour de la carte + haptique progressive (léger → moyen → fort) + carte légèrement enfoncée.
 - [✅] 📱 À 1,0 s : haptique success + burst vermillon au niveau du cercle + "+X.X OVR" flotte et s'efface + la carte passe cochée (barrée) et GLISSE en bas de liste.
-- [ ] 🖥️ Le sensei fait sa micro-réaction (respiration + halo) à CHAQUE check.
-- [ ] 🖥️ Le ring du jour passe à 4/5, le compteur aussi, le badge "▲ today" augmente.
-- [ ] 📱 Relâcher AVANT 1 s : ring rembobine en douceur (~0,3 s), RIEN validé, AUCUNE haptique supplémentaire.
-- [ ] 📱 Re-presser pendant le rembobinage : le ring repart proprement de zéro (pas de complétion anticipée).
-- [ ] 📱 Commencer un hold puis SCROLLER verticalement : le hold s'annule immédiatement, le scroll gagne, ring rembobine.
-- [ ] 🖥️ Spam tap rapide sur une carte : rien ne se valide (le tap seul ne coche plus).
+- [✅] 🖥️ Le sensei fait sa micro-réaction (respiration + halo) à CHAQUE check.
+- [✅] 🖥️ Le ring du jour passe à 4/5, le compteur aussi, le badge "▲ today" augmente.
+- [✅] 📱 Relâcher AVANT 1 s : ring rembobine en douceur (~0,3 s), RIEN validé, AUCUNE haptique supplémentaire.
+- [✅] 📱 Re-presser pendant le rembobinage : le ring repart proprement de zéro (pas de complétion anticipée).
+- [✅] 📱 Commencer un hold puis SCROLLER verticalement : le hold s'annule immédiatement, le scroll gagne, ring rembobine.
+- [✅] 🖥️ Spam tap rapide sur une carte : rien ne se valide (le tap seul ne coche plus).
 
 ## 6. Uncheck (reprise exacte des points)
 
-- [ ] 🖥️ Noter l'OVR/badge → long-press ~0,35 s sur une carte COCHÉE → dialog "Uncheck this task? / Points will be taken back."
-- [ ] 🖥️ "Uncheck" → carte redevient non cochée, remonte dans la liste, ring/compteur redescendent, badge diminue du delta EXACT (aucun burst, aucune célébration).
-- [ ] 🖥️ "Keep it" → strictement rien ne change.
-- [ ] 🖥️ Anti-farming : check → uncheck → re-check la même carte = même delta qu'au premier check (comparer le "+X.X OVR" flottant les 2 fois).
+- [✅] 🖥️ Noter l'OVR/badge → long-press ~0,35 s sur une carte COCHÉE → dialog "Uncheck this task? / Points will be taken back."
+- [✅] 🖥️ "Uncheck" → carte redevient non cochée, remonte dans la liste, ring/compteur redescendent, badge diminue du delta EXACT (aucun burst, aucune célébration).
+- [✅] 🖥️ "Keep it" → strictement rien ne change.
+- [✅] 🖥️ Anti-farming : check → uncheck → re-check la même carte = même delta qu'au premier check (comparer le "+X.X OVR" flottant les 2 fois).
 
 ## 7. Day complete — célébration (item 7 du polish)
 
-- [ ] 📱 Cocher les 2 dernières cartes. Au DERNIER check, séquence ~1,8 s : flash du ring qui se scelle → burst or+vermillon émis DEPUIS le ring (pas du centre) + grande respiration du sensei + aura dorée → retombée douce. Haptiques : medium au seal, success au burst.
+- [✅] 📱 Cocher les 2 dernières cartes. Au DERNIER check, séquence ~1,8 s : flash du ring qui se scelle → burst or+vermillon émis DEPUIS le ring (pas du centre) + grande respiration du sensei + aura dorée → retombée douce. Haptiques : medium au seal, success au burst.
 - [ ] 🖥️ État final (frame 01c) : ring plein scellé avec glow, "▲ +X.X today", "Day 12: complete. Return tomorrow.", lien "Share my day ›" (stub, ne fait rien — normal), 5/5, toutes les cartes barrées.
 - [ ] 🖥️ KILL l'app (swipe app switcher) → relancer : état day-complete intact mais la célébration ne se REJOUE PAS (piège connu).
 - [ ] 🖥️ Long-press uncheck sur une carte → l'état day-complete se défait proprement (message disparaît, ring rouvre à 4/5) ; re-check → la célébration se rejoue (action live légitime).

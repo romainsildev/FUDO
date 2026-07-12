@@ -1,0 +1,39 @@
+{
+  "configurations" : [
+    {
+      "id" : "C8AC3B5B-1642-4051-8CE4-BBBE5BE01169",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "performanceAntipatternCheckerEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:FUDO.xcodeproj",
+      "identifier" : "B55F68603002C6C8003FC32B",
+      "name" : "FUDO"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:FUDO.xcodeproj",
+        "identifier" : "B55F686D3002C6C9003FC32B",
+        "name" : "FUDOTests"
+      }
+    },
+    {
+      "enabled" : false,
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:FUDO.xcodeproj",
+        "identifier" : "B55F68773002C6C9003FC32B",
+        "name" : "FUDOUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

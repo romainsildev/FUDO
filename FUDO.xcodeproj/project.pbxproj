@@ -27,6 +27,7 @@
 		B55F68613002C6C8003FC32B /* FUDO.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FUDO.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B55F686E3002C6C9003FC32B /* FUDOTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FUDOTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B55F68783002C6C9003FC32B /* FUDOUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FUDOUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B57B4B533003E88200BB187C /* FUDO.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = file; path = FUDO.xctestplan; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -88,6 +89,7 @@
 		B55F68583002C6C8003FC32B = {
 			isa = PBXGroup;
 			children = (
+				B57B4B533003E88200BB187C /* FUDO.xctestplan */,
 				B55F68633002C6C8003FC32B /* FUDO */,
 				B55F68713002C6C9003FC32B /* FUDOTests */,
 				B55F687B3002C6C9003FC32B /* FUDOUITests */,

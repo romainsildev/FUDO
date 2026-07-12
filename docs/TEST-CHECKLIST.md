@@ -10,33 +10,33 @@
 
 ## 1. Lancement & shell (session 0)
 
-- [ ] 🖥️ Install fraîche (reset seed ci-dessus) → l'app s'ouvre direct sur Today, AUCUN écran vide, aucun crash.
-- [ ] 🖥️ L'app est 100 % dark, même si le device est en mode clair (réglages iOS → apparence claire → l'app reste sombre).
-- [ ] 🖥️ 4 onglets visibles : Today · Progress · Stats · Settings ; Progress/Stats/Settings = placeholders (normal à ce stade).
-- [ ] 📱 Changer d'onglet → haptique légère à chaque switch.
-- [ ] 🖥️ Dans Stats ou Settings : "Push demo →" → l'écran pushé MASQUE la tab bar ; back natif la restaure.
+- ✅   🖥️ Install fraîche (reset seed ci-dessus) → l'app s'ouvre direct sur Today, AUCUN écran vide, aucun crash.
+- ✅ 🖥️ L'app est 100 % dark, même si le device est en mode clair (réglages iOS → apparence claire → l'app reste sombre).
+- ✅ 🖥️ 4 onglets visibles : Today · Progress · Stats · Settings ; Progress/Stats/Settings = placeholders (normal à ce stade).
+- [✅] 📱 Changer d'onglet → haptique légère à chaque switch.
+- [✅] 🖥️ Dans Stats ou Settings : "Push demo →" → l'écran pushé MASQUE la tab bar ; back natif la restaure.
 
 ## 2. Home — header épinglé & pills (items 3/5 du polish)
 
-- [ ] 🖥️ Header = avatar rond + pill "DAY 12 / 30" + pill flamme 🔥 4 — les trois alignés, rien d'autre.
-- [ ] 🖥️ AVATAR : le visage du sensei REMPLIT le cercle 34 pt (plus de cercle à moitié vide, pas de bord noir).
-- [ ] 📱 Pills en vrai Liquid Glass sur iOS 26 (reflets natifs) ; sur simulateur/OS antérieur → recette material (vérifier les 2 chemins si possible).
-- [ ] 🖥️ Pill flamme : flamme en dégradé vermillon→or (pointe or), compte "4" blanc cassé, fond verre.
-- [ ] 🖥️ Tap avatar → bascule sur l'onglet Progress (pas de push).
-- [ ] 🖥️ Pendant N'IMPORTE quel scroll de la checklist : le header ne bouge JAMAIS.
+- [✅] 🖥️ Header = avatar rond + pill "DAY 12 / 30" + pill flamme 🔥 4 — les trois alignés, rien d'autre.
+- [✅] 🖥️ AVATAR : le visage du sensei REMPLIT le cercle 34 pt (plus de cercle à moitié vide, pas de bord noir).
+- [peut pas verifier mais ca a l'air oui ] 📱 Pills en vrai Liquid Glass sur iOS 26 (reflets natifs) ; sur simulateur/OS antérieur → recette material (vérifier les 2 chemins si possible).
+- [✅] 🖥️ Pill flamme : flamme en dégradé vermillon→or (pointe or), compte "4" blanc cassé, fond verre.
+- [✅] 🖥️ Tap avatar → bascule sur l'onglet Progress (pas de push).
+- [✅] 🖥️ Pendant N'IMPORTE quel scroll de la checklist : le header ne bouge JAMAIS.
 
 ## 3. Home — bloc hero (sensei + OVR)
 
-- [ ] 🖥️ Sensei ASCETIC dans le ring, arc vermillon ≈ 3/5, halo chaud derrière lui.
-- [ ] 🖥️ "61" géant sous le sensei + "ASCETIC" vermillon en majuscules espacées.
-- [ ] 🖥️ Badge "▲ +X.X today" VERT à droite du rang (3 checks du seed → ~+0.7).
-- [ ] 🖥️ Tap sur le bloc sensei/OVR → bascule sur Progress (même affordance que l'avatar).
-- [ ] 🖥️ Section "TODAY'S PROTOCOL" + compteur "3 / 5" vermillon à droite ; 2 cartes non cochées EN HAUT, 3 cochées barrées en bas, légèrement estompées.
-- [ ] 🖥️ La dernière carte reste atteignable AU-DESSUS de la tab bar flottante (pas cachée dessous).
+- [✅] 🖥️ Sensei ASCETIC dans le ring, arc vermillon ≈ 3/5, halo chaud derrière lui.
+- [✅] 🖥️ "61" géant sous le sensei + "ASCETIC" vermillon en majuscules espacées.
+- [✅] 🖥️ Badge "▲ +X.X today" VERT à droite du rang (3 checks du seed → ~+0.7).
+- [✅] 🖥️ Tap sur le bloc sensei/OVR → bascule sur Progress (même affordance que l'avatar).
+- [✅] 🖥️ Section "TODAY'S PROTOCOL" + compteur "3 / 5" vermillon à droite ; 2 cartes non cochées EN HAUT, 3 cochées barrées en bas, légèrement estompées.
+- [✅] 🖥️ La dernière carte reste atteignable AU-DESSUS de la tab bar flottante (pas cachée dessous).
 
 ## 4. Hero collapsant (item 2 du polish)
 
-- [ ] 📱 Scroll down LENT : le hero rétrécit + s'estompe en continu, AUCUN saut ; le strip compact 44 pt apparaît sous le header (tête sensei + "61 · ASCETIC" + "3/5" + mini ring).
+- [non] 📱 Scroll down LENT : le hero rétrécit + s'estompe en continu, AUCUN saut ; le strip compact 44 pt apparaît sous le header (tête sensei + "61 · ASCETIC" + "3/5" + mini ring).
 - [ ] 📱 Scroll up : tout s'inverse, continu, 60 fps (aucun frame drop perceptible).
 - [ ] 🖥️ Strip visible → tap dessus → Progress.
 - [ ] 🖥️ Hero déployé (haut de scroll) → le strip est invisible ET ne vole aucun tap.

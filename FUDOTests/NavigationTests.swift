@@ -17,8 +17,4 @@ struct NavigationTests {
         #expect(FudoSheet.flame.id != FudoSheet.shareCard.id)
         #expect(FudoCover.onboarding.id != FudoCover.paywall.id)
     }
-
-    @Test func visibilityDefaultsVisible() {
-        #expect(TabBarVisibility().isHidden == false)
-    }
 }

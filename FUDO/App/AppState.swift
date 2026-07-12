@@ -9,6 +9,6 @@ import Observation
 @Observable final class AppState {
     var hasCompletedOnboarding = true   // SEAM (onboarding): default true until onboarding ships
     var entitlementActive = true        // SEAM (Session 6 EntitlementStore)
-    var hasActiveChallenge = false      // SEAM (Session 1 GameStore)
+    var hasActiveChallenge = false      // fed by GameStore via RootView.refresh() (Session 1)
     var selectedTab: AppTab = .today
 }

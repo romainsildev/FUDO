@@ -19,18 +19,11 @@ struct FudoGlassCapsule: View {
     var shadow: Bool = true
 
     var body: some View {
-        glass
-            .shadow(
-                color: shadow ? .black.opacity(0.40) : .clear,
-                radius: shadow ? 12 : 0,
-                x: 0,
-                y: shadow ? 4 : 0
-            )
-    }
-
-    @ViewBuilder
-    private var glass: some View {
         if #available(iOS 26.0, *) {
+            // Native Liquid Glass carries its own depth. NEVER add the legacy drop
+            // shadow here: on iOS 26 a `.shadow` on a glassEffect layer rasterizes
+            // it with expanded bounds — a huge translucent rounded rect behind the
+            // capsule (device bug, 2026-07-12). `shadow` only affects the legacy path.
             Color.clear
                 .glassEffect(
                     .regular.tint(strong ? FudoColor.surfaceGlassStrong : FudoColor.surfaceGlass),
@@ -38,6 +31,12 @@ struct FudoGlassCapsule: View {
                 )
         } else {
             legacyGlass
+                .shadow(
+                    color: shadow ? .black.opacity(0.40) : .clear,
+                    radius: shadow ? 12 : 0,
+                    x: 0,
+                    y: shadow ? 4 : 0
+                )
         }
     }
 

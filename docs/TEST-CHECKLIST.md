@@ -44,8 +44,8 @@
 
 ## 5. Hold-to-check (LE geste — item 1 du polish)
 
-- [ ] 📱 Presser-tenir une carte non cochée ~1,0 s : ring vermillon se dessine autour de la carte + haptique progressive (léger → moyen → fort) + carte légèrement enfoncée.
-- [ ] 📱 À 1,0 s : haptique success + burst vermillon au niveau du cercle + "+X.X OVR" flotte et s'efface + la carte passe cochée (barrée) et GLISSE en bas de liste.
+- [✅] 📱 Presser-tenir une carte non cochée ~1,0 s : ring vermillon se dessine autour de la carte + haptique progressive (léger → moyen → fort) + carte légèrement enfoncée.
+- [✅] 📱 À 1,0 s : haptique success + burst vermillon au niveau du cercle + "+X.X OVR" flotte et s'efface + la carte passe cochée (barrée) et GLISSE en bas de liste.
 - [ ] 🖥️ Le sensei fait sa micro-réaction (respiration + halo) à CHAQUE check.
 - [ ] 🖥️ Le ring du jour passe à 4/5, le compteur aussi, le badge "▲ today" augmente.
 - [ ] 📱 Relâcher AVANT 1 s : ring rembobine en douceur (~0,3 s), RIEN validé, AUCUNE haptique supplémentaire.

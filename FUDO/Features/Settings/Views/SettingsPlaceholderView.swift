@@ -8,6 +8,10 @@ struct SettingsPlaceholderView: View {
                     .font(FudoFont.body())
                     .foregroundStyle(FudoColor.accent)
             }
+            #if DEBUG
+            DebugMenuSection()
+                .padding(.top, FudoSpacing.sectionGap)
+            #endif
         }
         .navigationDestination(for: PushDemoDestination.self) { PushDemoScreen(title: $0.title) }
     }

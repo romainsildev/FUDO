@@ -39,7 +39,17 @@ struct ChallengeSetupViewModelTests {
         let (vm, _) = try makeViewModel()
         vm.addRule(title: "Custom rule", iconName: "flame.fill")
         vm.select(.monk60)
-        #expect(vm.rules == PresetCatalog.definition(for: .monk60).defaultRules)
+        // Compare business fields, never ids: defaultRules mints fresh UUIDs
+        // on every call, so full EditableRule equality can never hold.
+        let expected = PresetCatalog.definition(for: .monk60).defaultRules
+        #expect(vm.rules.count == expected.count)
+        for (rule, template) in zip(vm.rules, expected) {
+            #expect(rule.title == template.title)
+            #expect(rule.iconName == template.iconName)
+            #expect(rule.isEnabled == template.isEnabled)
+            #expect(rule.valueKind == template.valueKind)
+            #expect(rule.timeMinutes == template.timeMinutes)
+        }
     }
 
     @Test func classic75ProgressPhotoShipsDisabled() throws {

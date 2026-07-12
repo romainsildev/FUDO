@@ -318,3 +318,46 @@ final class GameStore {
         }
     }
 }
+
+#if DEBUG
+// Debug-menu hooks (Settings §DEBUG). Same file on purpose: they reach the
+// private modelContext, boot fetches and completeChallenge. Never in Release.
+extension GameStore {
+
+    /// Empties the whole store, then optionally replays DebugSeed (day 12).
+    /// Blank wipe arms `DebugSeed.seedDisabledKey` so the launch auto-seed
+    /// doesn't resurrect the data; reseeding disarms it.
+    func debugWipe(reseed: Bool) {
+        wipeAll(DayLog.self)
+        wipeAll(TaskRule.self)
+        wipeAll(Challenge.self)
+        wipeAll(PlayerState.self)
+        save()
+        UserDefaults.standard.set(!reseed, forKey: DebugSeed.seedDisabledKey)
+        if reseed {
+            DebugSeed.seed(context: modelContext)
+        }
+        // The seed replays through its OWN GameStore instance — re-run the boot
+        // fetches so THIS store (the one the UI observes) sees the new world.
+        player = Self.fetchPlayer(in: modelContext)
+        activeChallenge = Self.fetchActiveChallenge(in: modelContext)
+        pendingRankUp = nil
+    }
+
+    /// Ends the active challenge as `.completed` right now (no day-log closure —
+    /// pure shortcut to reach the challenge-complete state on device).
+    func debugCompleteActiveChallenge() {
+        guard let player, let challenge = activeChallenge else { return }
+        completeChallenge(challenge, player: player)
+        player.lastDayClosedAt = now   // idle clock for decay starts now
+        save()
+    }
+
+    private func wipeAll<T: PersistentModel>(_ type: T.Type) {
+        // fetch+delete — ModelContext.delete(model:) batch is unreliable on iOS 17.
+        for model in (try? modelContext.fetch(FetchDescriptor<T>())) ?? [] {
+            modelContext.delete(model)
+        }
+    }
+}
+#endif

@@ -23,8 +23,13 @@ enum DebugSeed {
         RuleDraft(title: "Wake up before 7:00", iconName: "sunrise.fill"),
     ]
 
+    /// "Wipe vierge" (debug menu) sets this so the auto-seed never returns after
+    /// an intentional blank wipe; "Wipe & reseed" clears it.
+    static let seedDisabledKey = "debug.seedDisabled"
+
     @MainActor
     static func seedIfNeeded(context: ModelContext, now: Date = .now) {
+        guard !UserDefaults.standard.bool(forKey: seedDisabledKey) else { return }
         let count = (try? context.fetchCount(FetchDescriptor<PlayerState>())) ?? 0
         guard count == 0 else { return }
         seed(context: context, now: now)

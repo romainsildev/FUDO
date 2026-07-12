@@ -104,4 +104,6 @@ Hors scope (ne jamais coder, même si "facile") : communauté/leaderboard, heatm
 
 | Date | Note (convention découverte, piège rencontré, décision de build) |
 |---|---|
-| _(vide — première entrée au premier build)_ | |
+| 2026-07-12 | Session 1 (data layer) : 4 @Model + OVREngine + GameStore + DebugSeed + câblage livrés. Décisions actées : 1 pénalité PAR jour manqué (DayLogs synthétiques au rollover, en ordre) · `OnboardingAnswers` typée (barème dans les enums) · seed = replay moteur base 49 → OVR 61 / streak 4 / J12 · `lastDayClosedAt` = lendemain du jour clos (horloge idle du decay). |
+| 2026-07-12 | PIÈGE SwiftData : plusieurs `ModelContainer` créés via la variadique `ModelContainer(for: Type.self, …)` dans un même process (host app + tests unitaires in-memory) → crash SIGTRAP interne SwiftData à l'insert (métadonnées `.unique` dupliquées, iOS 17). Fix : UNE instance `Schema` partagée (`FudoSchema.schema`), tout container se construit dessus. **Fix NON VÉRIFIÉ** (run de tests stoppé par Romain, machine saturée) — à vérifier Cmd+U. OVREngineTests : 100 % verts au run initial. |
+| 2026-07-12 | RÈGLE DURCIE : 1 seul `xcodebuild test` par session, MÊME pour debugger un échec — analyse statique (crash logs `~/Library/Logs/DiagnosticReports`) + fix committé non vérifié + vérif par Romain dans Xcode. Fin de session : `pkill -f xcodebuild` + `xcrun simctl shutdown all`. |

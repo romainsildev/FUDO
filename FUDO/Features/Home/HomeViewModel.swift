@@ -19,6 +19,15 @@ struct HomeChecklistItem: Identifiable, Equatable {
     }
 }
 
+/// What the rollover just took — feeds the factual banner ("Yesterday: incomplete.
+/// OVR -4."). `dayCount` > 1 when the app stayed closed across several missed days.
+struct IncompleteRolloverSummary: Equatable {
+    let dayCount: Int
+    /// Summed penalties of the trailing incomplete days (what the OVR lost at
+    /// closure — live gains of those days were already on screen when earned).
+    let ovrDrop: Double
+}
+
 /// One pastille of the flame-sheet week (Monday-first, per frame 09 — EN-only app,
 /// fixed order regardless of locale).
 struct FlameWeekDay: Identifiable {
@@ -53,8 +62,63 @@ final class HomeViewModel {
     /// Increments only when the day flips to 100 % LIVE under the user's finger.
     private(set) var celebrationTrigger = 0
 
+    /// Effective day whose incomplete banner was dismissed — persisted so a
+    /// killed-then-relaunched app never re-shows a banner the user already closed
+    /// (known-pitfalls list). A new rollover day is a new banner.
+    private var dismissedBannerDay: Date?
+    private static let dismissedBannerDayKey = "home.incompleteBanner.dismissedDay"
+    /// Fire just past the 2 AM boundary, never on it.
+    private static let rolloverTimerSlack: TimeInterval = 1
+
     init(store: GameStore) {
         self.store = store
+        self.dismissedBannerDay = UserDefaults.standard
+            .object(forKey: Self.dismissedBannerDayKey) as? Date
+    }
+
+    // MARK: - Rollover (UI side — the engine owns the rules)
+
+    /// Foreground clock: sleeps to the next grace boundary (2 AM) and rolls the day
+    /// over LIVE while the app stays on screen. RootView's scene-active refresh
+    /// covers every backgrounded crossing; `processRolloverIfNeeded` is idempotent,
+    /// so the two paths double-firing is harmless. Attach via `.task` — cancellation
+    /// follows the view's lifetime.
+    func watchRolloverWhileForeground() async {
+        while !Task.isCancelled {
+            let seconds = store.timeUntilNextRollover + Self.rolloverTimerSlack
+            try? await Task.sleep(for: .seconds(seconds))
+            guard !Task.isCancelled else { return }
+            store.processRolloverIfNeeded()
+        }
+    }
+
+    /// Trailing run of closed-incomplete days ending yesterday, with the summed
+    /// penalties the closures took. Nil when yesterday was complete (or no data).
+    var incompleteRollover: IncompleteRolloverSummary? {
+        guard store.activeChallenge != nil else { return nil }
+        let calendar = store.displayCalendar
+        var day = calendar.date(byAdding: .day, value: -1, to: store.effectiveToday)
+        var count = 0
+        var drop = 0.0
+        while let current = day, let log = store.dayLog(on: current),
+              log.isClosed, !log.isComplete {
+            count += 1
+            drop += max(0, log.checksTotal - log.ovrDelta)   // ovrDelta = checks − penalty
+            day = calendar.date(byAdding: .day, value: -1, to: current)
+        }
+        guard count > 0 else { return nil }
+        return IncompleteRolloverSummary(dayCount: count, ovrDrop: drop)
+    }
+
+    var showsIncompleteBanner: Bool {
+        guard incompleteRollover != nil else { return false }
+        guard let dismissed = dismissedBannerDay else { return true }
+        return !store.displayCalendar.isDate(dismissed, inSameDayAs: store.effectiveToday)
+    }
+
+    func dismissIncompleteBanner() {
+        dismissedBannerDay = store.effectiveToday
+        UserDefaults.standard.set(store.effectiveToday, forKey: Self.dismissedBannerDayKey)
     }
 
     // MARK: - Screen state
@@ -87,13 +151,14 @@ final class HomeViewModel {
 
     /// Micro-badge next to the OVR. Priority: today's live gains; failing that, the
     /// penalty the morning rollover just applied for an incomplete yesterday — the
-    /// factual sting ("Yesterday: incomplete. OVR -4.") without a word of copy.
+    /// SAME metric the banner shows (yesterday's live gains were on screen when
+    /// earned, so the morning drop is the penalty alone, not the day's net).
     var ovrDeltaToday: Double? {
         if let log = store.currentLog(), log.checksTotal > 0 { return log.checksTotal }
         if store.activeChallenge != nil,
-           let yesterday = yesterdayLog, yesterday.isClosed, !yesterday.isComplete,
-           yesterday.ovrDelta < 0 {
-            return yesterday.ovrDelta
+           let yesterday = yesterdayLog, yesterday.isClosed, !yesterday.isComplete {
+            let penalty = max(0, yesterday.checksTotal - yesterday.ovrDelta)
+            return penalty > 0 ? -penalty : nil
         }
         return nil
     }

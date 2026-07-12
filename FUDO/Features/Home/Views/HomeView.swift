@@ -31,6 +31,7 @@ struct HomeView: View {
                 challengeSetupStub
             }
         }
+        .task { await viewModel.watchRolloverWhileForeground() }
     }
 
     // MARK: - Active challenge (frames 01 / 01c)
@@ -40,6 +41,12 @@ struct HomeView: View {
             VStack(spacing: 0) {
                 header
                     .padding(.top, 8)
+
+                if viewModel.showsIncompleteBanner, let summary = viewModel.incompleteRollover {
+                    incompleteBanner(summary)
+                        .padding(.top, 14)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
 
                 senseiAndOVRBlock
 
@@ -55,6 +62,45 @@ struct HomeView: View {
             .padding(.horizontal, FudoSpacing.screenMargin)
             .padding(.bottom, 100)   // clear of the floating tab pill
             .animation(AppAnimation.standard, value: viewModel.screenState)
+            .animation(AppAnimation.standard, value: viewModel.showsIncompleteBanner)
+        }
+    }
+
+    /// Factual, one line, dismissible (D — rollover session). The number is the
+    /// penalty the closure took; the negative color rides the number only.
+    private func incompleteBanner(_ summary: IncompleteRolloverSummary) -> some View {
+        HStack(spacing: 12) {
+            (
+                Text(summary.dayCount == 1
+                     ? "Yesterday: incomplete. "
+                     : "\(summary.dayCount) days incomplete. ")
+                    .foregroundStyle(FudoColor.textPrimary)
+                + Text(String(format: "OVR -%.1f.", summary.ovrDrop))
+                    .foregroundStyle(FudoColor.negative)
+            )
+            .font(.system(size: 15, weight: .medium))
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+
+            Spacer(minLength: 8)
+
+            Button {
+                withAnimation(AppAnimation.standard) { viewModel.dismissIncompleteBanner() }
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(FudoColor.textSecondary)
+                    .padding(4)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Dismiss")
+        }
+        .padding(.horizontal, FudoSpacing.cardPadding)
+        .padding(.vertical, 13)
+        .background {
+            RoundedRectangle(cornerRadius: FudoSpacing.radiusCard, style: .continuous)
+                .fill(FudoColor.bgCard)
+                .strokeBorder(FudoColor.border, lineWidth: 1)
         }
     }
 

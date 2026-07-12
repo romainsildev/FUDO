@@ -291,6 +291,16 @@ final class GameStore {
         return ((try? modelContext.fetch(descriptor)) ?? []).reduce(0) { $0 + $1.checks.count }
     }
 
+    /// Seconds until the current effective day ends — the next grace-period boundary
+    /// (2 AM wall clock). Target for the foreground rollover timer; the scene-active
+    /// path (RootView.refresh) covers every backgrounded crossing.
+    var timeUntilNextRollover: TimeInterval {
+        guard let nextDay = calendar.date(byAdding: .day, value: 1, to: effectiveToday),
+              let boundary = calendar.date(byAdding: .hour, value: GameConfig.graceHours, to: nextDay)
+        else { return 3600 }   // calendar math failed — retry hourly, rollover is idempotent
+        return max(1, boundary.timeIntervalSince(now))
+    }
+
     // MARK: - Plumbing
 
     private func applyOVRChange(_ delta: Double, to player: PlayerState) {

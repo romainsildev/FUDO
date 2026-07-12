@@ -79,6 +79,16 @@ Hors scope (ne jamais coder, même si "facile") : communauté/leaderboard, heatm
 - SwiftData : vérifier que Claude n'a pas créé des doublons de fichiers modèles ; pas de `try!` silencieux.
 - Médias qui débordent : contraindre via `GeometryReader` + `frame`, pas des paddings au hasard.
 
+## Hygiène du repo (obligatoire — leçon du 2026-07-12 : 4 ensō perdus par manipulation d'assets hors process)
+
+- **Source de vérité des assets = CE repo (git).** `~/Downloads` = zone de transit, jamais une source. Ne JAMAIS supprimer/écraser un asset sans avoir vérifié qu'une copie est committée (`git log --follow <fichier>`).
+- `Assets.xcassets` : JAMAIS d'image posée en vrac dedans — uniquement des `.imageset`/`.appiconset` avec leur `Contents.json`.
+- Tout asset bundlé (image, font, vidéo) vit sous `FUDO/` (dossier synchronisé Xcode) — `FUDO/Resources/Welcome/`, `FUDO/Resources/Fonts/`, `FUDO/Assets.xcassets/`. Rien d'autre à la racine du repo que : `CLAUDE.md`, `.gitignore`, `docs/`, `FUDO/`, `FUDO.xcodeproj/`, `FUDOTests/`, `FUDOUITests/`.
+- Pas de fichier temporaire/brouillon dans le repo ; pas de doublons (`Foo 2.swift`) — si Xcode en génère un, le signaler et le résoudre immédiatement.
+- `xcuserdata/`, `.DS_Store`, `*.xcuserstate` = ignorés via `.gitignore` — ne jamais les committer.
+- Toute suppression de fichier = commande servie à Romain, jamais exécutée en autonomie.
+- Fin de session : après le commit de checkpoint, `git status` doit être vide (zéro orphelin non tracké).
+
 ## Principes pour Claude
 
 - Plan mode avant tout build multi-écrans ; **ultrathink pour les tâches visuelles/UI**.

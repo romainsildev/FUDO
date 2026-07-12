@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "sensei-1-novice.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

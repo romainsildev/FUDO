@@ -132,20 +132,27 @@ final class HomeViewModel {
     var totalCount: Int { items.count }
     var dayProgress: Double { totalCount > 0 ? Double(checkedCount) / Double(totalCount) : 0 }
 
-    func toggle(_ item: HomeChecklistItem) {
-        if item.isChecked {
-            store.uncheckTask(item.rule)   // exact refund — no haptic, unchecking is not a validation
-            return
-        }
+    /// Called by the row when the hold-to-check completes (HoldToConfirm guarantees
+    /// exactly one call and already fired the success haptic). Returns the exact OVR
+    /// delta the engine granted — the row floats it as "+X OVR" — or nil if the
+    /// store refused the check (closed day…).
+    func confirmCheck(_ item: HomeChecklistItem) -> Double? {
+        guard !item.isChecked else { return nil }
         let wasComplete = isDayComplete
         store.checkTask(item.rule)
-        guard store.currentLog()?.isChecked(item.rule) == true else { return }   // store refused (closed day…)
-        Haptics.medium()
+        guard let granted = store.currentLog()?.checks
+            .first(where: { $0.ruleID == item.rule.id })?.ovrDelta else { return nil }
         checkPulseTrigger += 1
         if !wasComplete && isDayComplete {
             celebrationTrigger += 1
-            Haptics.success()
         }
+        return granted
+    }
+
+    /// Confirmed through the row's dialog — exact refund, no burst, no celebration.
+    func uncheck(_ item: HomeChecklistItem) {
+        guard item.isChecked else { return }
+        store.uncheckTask(item.rule)
     }
 
     // MARK: - Flame sheet (aggregated from DayLog — no new data)

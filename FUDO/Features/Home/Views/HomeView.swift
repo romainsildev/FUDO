@@ -146,9 +146,9 @@ struct HomeView: View {
                 ForEach(viewModel.items) { item in
                     ChecklistRowView(title: item.rule.title,
                                      iconName: item.rule.iconName,
-                                     isChecked: item.isChecked) {
-                        viewModel.toggle(item)
-                    }
+                                     isChecked: item.isChecked,
+                                     onHoldConfirmed: { viewModel.confirmCheck(item) },
+                                     onUncheckConfirmed: { viewModel.uncheck(item) })
                 }
             }
             .animation(AppAnimation.standard, value: viewModel.items)

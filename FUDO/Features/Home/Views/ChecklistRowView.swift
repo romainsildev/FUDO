@@ -1,36 +1,138 @@
 import SwiftUI
 
-/// One non-negotiable card. THIS session: simple tap toggles through GameStore
-/// (the 1.5 s hold-to-check gesture replaces the tap in the next step — only the
-/// gesture wiring changes, the card stays).
+/// One non-negotiable card. Unchecked: the signature 1.5 s hold-to-check
+/// (HoldToConfirm — ring around the card, progressive haptics; on seal: burst +
+/// floating "+X OVR"). Checked: long-press asks before unchecking — exact refund,
+/// no burst, no celebration (anti-farming stays in GameStore).
 struct ChecklistRowView: View {
     let title: String
     let iconName: String
     let isChecked: Bool
-    let onTap: () -> Void
+    /// Fired once when the hold completes. Returns the OVR delta actually granted
+    /// (nil if the store refused the check) — shown as the floating label.
+    let onHoldConfirmed: () -> Double?
+    let onUncheckConfirmed: () -> Void
+
+    @State private var showsUncheckDialog = false
+    @State private var burstToken = 0
+    @State private var sealOpacity: Double = 0
+    @State private var floatingDelta: Double?
+    @State private var floatOffset: CGFloat = 0
+    @State private var floatOpacity: Double = 0
+
+    private var cardShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: FudoSpacing.radiusCard, style: .continuous)
+    }
+
+    /// Trailing distance to the check-circle center (circle is 26 pt wide).
+    private var checkCircleCenterInset: CGFloat { FudoSpacing.cardPadding + 13 }
 
     var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 12) {
-                iconTile
-                Text(title)
-                    .font(FudoFont.body())
-                    .strikethrough(isChecked, color: FudoColor.textSecondary)
-                    .foregroundStyle(isChecked ? FudoColor.textSecondary : FudoColor.textPrimary)
-                    .lineLimit(1)
-                Spacer(minLength: 8)
-                checkCircle
+        interactiveCard
+            .overlay { sealEcho }
+            .overlay(alignment: .trailing) { burst }
+            .overlay(alignment: .trailing) { floatingLabel }
+            .confirmationDialog("Uncheck this task?", isPresented: $showsUncheckDialog,
+                                titleVisibility: .visible) {
+                Button("Uncheck", role: .destructive) { onUncheckConfirmed() }
+                Button("Keep it", role: .cancel) {}
+            } message: {
+                Text("Points will be taken back.")
             }
-            .padding(FudoSpacing.cardPadding)
-            .background {
-                RoundedRectangle(cornerRadius: FudoSpacing.radiusCard, style: .continuous)
-                    .fill(FudoColor.bgCard)
-                    .strokeBorder(FudoColor.border, lineWidth: 1)
-            }
-            .opacity(isChecked ? 0.65 : 1)
-            .contentShape(RoundedRectangle(cornerRadius: FudoSpacing.radiusCard, style: .continuous))
+    }
+
+    // MARK: - Interaction split (per state)
+
+    @ViewBuilder
+    private var interactiveCard: some View {
+        if isChecked {
+            card
+                .onLongPressGesture(minimumDuration: 0.5) { showsUncheckDialog = true }
+                .accessibilityAction(named: "Uncheck") { showsUncheckDialog = true }
+        } else {
+            card
+                .holdToConfirm(in: cardShape) { handleHoldConfirmed() }
+                .accessibilityAction(named: "Check") { handleHoldConfirmed() }
         }
-        .buttonStyle(.plain)
+    }
+
+    /// The hold clock completed — the component already fired the success haptic
+    /// and guarantees a single call. Store refusal (nil delta) shows nothing.
+    private func handleHoldConfirmed() {
+        guard let delta = onHoldConfirmed() else { return }
+        burstToken += 1
+        sealOpacity = 1
+        withAnimation(AppAnimation.standard) { sealOpacity = 0 }
+        floatingDelta = delta
+        floatOffset = 0
+        floatOpacity = 1
+        withAnimation(AppAnimation.slow) {
+            floatOffset = -36
+            floatOpacity = 0
+        }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1))
+            floatingDelta = nil
+        }
+    }
+
+    // MARK: - Check effects (row-level so they survive the checked-state flip)
+
+    /// Brief full ring the instant the hold seals — the card restyles to checked
+    /// underneath it, so the moment reads as "sealed", not "swapped".
+    private var sealEcho: some View {
+        cardShape
+            .inset(by: HoldToConfirmMetrics.ringWidth / 2)
+            .stroke(FudoColor.accent,
+                    style: StrokeStyle(lineWidth: HoldToConfirmMetrics.ringWidth, lineCap: .round))
+            .opacity(sealOpacity)
+            .allowsHitTesting(false)
+    }
+
+    @ViewBuilder
+    private var burst: some View {
+        if burstToken > 0 {
+            ParticleBurstView(color: FudoColor.accent)
+                .id(burstToken)
+                .offset(x: -checkCircleCenterInset)
+        }
+    }
+
+    @ViewBuilder
+    private var floatingLabel: some View {
+        if let delta = floatingDelta {
+            Text(String(format: "+%.1f OVR", delta))
+                .font(.system(size: 13, weight: .bold).monospacedDigit())
+                .foregroundStyle(FudoColor.positive)
+                .padding(.trailing, FudoSpacing.cardPadding)
+                .offset(y: floatOffset)
+                .opacity(floatOpacity)
+                .allowsHitTesting(false)
+        }
+    }
+
+    // MARK: - Card
+
+    private var card: some View {
+        HStack(spacing: 12) {
+            iconTile
+            Text(title)
+                .font(FudoFont.body())
+                .strikethrough(isChecked, color: FudoColor.textSecondary)
+                .foregroundStyle(isChecked ? FudoColor.textSecondary : FudoColor.textPrimary)
+                .lineLimit(1)
+            Spacer(minLength: 8)
+            checkCircle
+        }
+        .padding(FudoSpacing.cardPadding)
+        .background {
+            cardShape
+                .fill(FudoColor.bgCard)
+                .strokeBorder(FudoColor.border, lineWidth: 1)
+        }
+        .opacity(isChecked ? 0.65 : 1)
+        .contentShape(cardShape)
+        .accessibilityElement(children: .combine)
         .accessibilityLabel(title)
         .accessibilityValue(isChecked ? "Checked" : "Not checked")
     }

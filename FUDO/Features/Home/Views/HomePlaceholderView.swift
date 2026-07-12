@@ -1,14 +1,12 @@
 import SwiftUI
 
+/// Session-2 shim: MainTabView (out of this session's write scope) still instantiates
+/// `HomePlaceholderView`. The real screen is `HomeView`; the next shell touch renames
+/// the call site and deletes this file.
 struct HomePlaceholderView: View {
+    @Environment(GameStore.self) private var gameStore
+
     var body: some View {
-        PlaceholderScaffold(title: "Today", subtitle: "Home — daily checklist lives here.") {
-            NavigationLink(value: PushDemoDestination(title: "Today detail")) {
-                Text("Push demo →")
-                    .font(FudoFont.body())
-                    .foregroundStyle(FudoColor.accent)
-            }
-        }
-        .navigationDestination(for: PushDemoDestination.self) { PushDemoScreen(title: $0.title) }
+        HomeView(store: gameStore)
     }
 }

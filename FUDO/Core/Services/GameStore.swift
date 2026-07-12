@@ -262,6 +262,35 @@ final class GameStore {
         return pendingRankUp
     }
 
+    // MARK: - Read-only aggregates (Home + flame sheet — DATA-MODEL §Agrégations, no new data)
+
+    /// The effective gameplay day on the store's injected clock — views must use THIS,
+    /// never `Date.now`, so grace-period behavior and tests stay coherent.
+    var effectiveToday: Date { OVREngine.effectiveDay(now: now, calendar: calendar) }
+
+    /// The store's calendar, exposed so views derive week layouts on the same clock.
+    var displayCalendar: Calendar { calendar }
+
+    /// Day number "X" of "day X / Y" for the active challenge, on the store's clock.
+    var todayNumber: Int? {
+        activeChallenge?.currentDayNumber(now: now, calendar: calendar)
+    }
+
+    /// DayLog for a given day across ALL challenges — the flame-sheet week can span
+    /// a finished challenge. Fetch-all + in-memory match (same iOS 17 #Predicate
+    /// limitation as fetchActiveChallenge; dataset stays tiny).
+    func dayLog(on day: Date) -> DayLog? {
+        let descriptor = FetchDescriptor<DayLog>(sortBy: [SortDescriptor(\.date)])
+        return (try? modelContext.fetch(descriptor))?
+            .first { calendar.isDate($0.date, inSameDayAs: day) }
+    }
+
+    /// Σ checks.count over every DayLog of every challenge (flame sheet "total checks").
+    var totalChecksAllTime: Int {
+        let descriptor = FetchDescriptor<DayLog>()
+        return ((try? modelContext.fetch(descriptor)) ?? []).reduce(0) { $0 + $1.checks.count }
+    }
+
     // MARK: - Plumbing
 
     private func applyOVRChange(_ delta: Double, to player: PlayerState) {

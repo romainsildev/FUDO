@@ -24,8 +24,10 @@ struct HomeView: View {
     @Environment(AppState.self) private var appState
     @State private var viewModel: HomeViewModel
     @State private var scrollOffset: CGFloat = 0
+    private let store: GameStore
 
     init(store: GameStore) {
+        self.store = store
         _viewModel = State(initialValue: HomeViewModel(store: store))
     }
 
@@ -63,7 +65,9 @@ struct HomeView: View {
         }
         .fudoCover(item: $viewModel.presentedCover) { cover in
             if cover == .challengeSetup {
-                challengeSetupStub
+                ChallengeSetupStandaloneView(store: store) {
+                    viewModel.presentedCover = nil
+                }
             }
         }
         .task { await viewModel.watchRolloverWhileForeground() }
@@ -353,25 +357,6 @@ struct HomeView: View {
                        streakIsAlive: viewModel.streakIsAlive,
                        onAvatarTap: goToProgress,
                        onFlameTap: { viewModel.presentedSheet = .flame })
-    }
-
-    /// Cover stub until the real ChallengeSetup flow ships — the temporary close
-    /// button is the only exit (real flow owns its own exits, covers never swipe).
-    private var challengeSetupStub: some View {
-        ZStack(alignment: .topTrailing) {
-            ChallengeSetupPlaceholderView()
-            Button {
-                viewModel.presentedCover = nil
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(FudoColor.textSecondary)
-                    .padding(12)
-            }
-            .buttonStyle(.plain)
-            .padding(.top, 8)
-            .padding(.trailing, 12)
-        }
     }
 
     private func goToProgress() {

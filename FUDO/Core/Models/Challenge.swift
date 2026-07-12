@@ -60,6 +60,12 @@ extension Challenge {
         currentDayNumber(now: now, calendar: calendar) > rulesLockedAfterDay
     }
 
+    /// Rules stay editable until day `rulesLockedAfterDay` inclusive (day 3),
+    /// locked after. Settings consumes this to show the lock message.
+    func canEditRules(now: Date, calendar: Calendar = .current) -> Bool {
+        !isRuleEditingLocked(now: now, calendar: calendar)
+    }
+
     /// Active rules in checklist order — the set a day must fully check to be complete.
     var activeRules: [TaskRule] {
         rules.filter(\.isActive).sorted { $0.sortOrder < $1.sortOrder }

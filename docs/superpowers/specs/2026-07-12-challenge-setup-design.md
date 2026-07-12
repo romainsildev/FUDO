@@ -88,6 +88,8 @@ No paywall logic. Abandon lives in Settings only. No recurrence, no domain UI.
 
 ## Tests
 
-`ChallengeSetupViewModelTests` — pure logic, no SwiftData container: preset load, chip
-mapping, 8-cap, warning at 7, enabled-only commit mapping, end-date math. Run = Romain
-(Cmd+U). Session verification = compile-only build.
+`ChallengeSetupViewModelTests` — the VM is store-injected (all three skins hold a
+GameStore), so the suite goes through `SwiftDataTestSupport` + `@Suite(.serialized)`
+like GameStoreTests: preset load, chip mapping, 8-cap, warning at 7, enabled-only
+commit mapping, end-date math, canEditRules lock at day 4. Run = Romain (Cmd+U).
+Session verification = compile-only build (app + build-for-testing, no sim booted).

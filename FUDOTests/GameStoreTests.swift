@@ -3,6 +3,7 @@ import SwiftData
 import Testing
 @testable import FUDO
 
+@Suite(.serialized)
 @MainActor
 struct GameStoreTests {
 
@@ -13,8 +14,7 @@ struct GameStoreTests {
     }
 
     private func makeStore(startingAt now: Date) throws -> (GameStore, Clock) {
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try ModelContainer(for: FudoSchema.schema, configurations: config)
+        let container = try SwiftDataTestSupport.freshContainer()
         let clock = Clock(now)
         let store = GameStore(modelContext: container.mainContext,
                               calendar: .current, nowProvider: { clock.now })

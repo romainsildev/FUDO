@@ -3,11 +3,11 @@ import SwiftData
 import Testing
 @testable import FUDO
 
+@Suite(.serialized)
 @MainActor
 struct DebugSeedTests {
     @Test func seedProducesTheCanonicalDataset() throws {
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try ModelContainer(for: FudoSchema.schema, configurations: config)
+        let container = try SwiftDataTestSupport.freshContainer()
         let context = container.mainContext
 
         DebugSeed.seed(context: context, now: .now)

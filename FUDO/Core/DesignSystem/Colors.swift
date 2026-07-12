@@ -19,4 +19,13 @@ enum FudoColor {
     static let negative = Color(hex: "FF453A")     // OVR delta ▼ only
 
     static let celebrationGold = Color(hex: "E8B44A") // celebration bursts only
+
+    // Glass (RiteOff recipe) — translucent white overlays for `.ultraThinMaterial`
+    // capsules/cards. Dark-only, app UI only (never mirrored to the widget's Asset
+    // Catalog — the widget renders a flat snapshot, no glass). Not "pure white text":
+    // these are frosted-glass tints, applied via opacity, never as a foreground color.
+    static let surfaceGlass = Color.white.opacity(0.06)       // default glass tint
+    static let surfaceGlassStrong = Color.white.opacity(0.10) // active / raised glass
+    static let borderGlass = Color.white.opacity(0.22)        // 0.5px glass hairline
+    static let specularHighlight = Color.white.opacity(0.18)  // top-edge light catch
 }

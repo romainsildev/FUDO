@@ -1,48 +1,49 @@
 import SwiftUI
 
-/// Custom dark floating pill. Matches DesignReference/app 01/02/05/07:
-/// every tab shows icon + label; active = vermillon icon+label inside a filled
-/// highlight; inactive = grey (textSecondary), no fill. Pill = dark capsule + 1px border.
+/// Floating glass pill tab bar — RiteOff recipe, FUDO colors. Content-hugging
+/// tabs: every tab shows icon + label; active = vermillon icon+label over a
+/// `surfaceGlassStrong` capsule; inactive = grey (textSecondary), no fill.
+/// Pill = frosted glass (``FudoGlassCapsule``) so it reads over both flat ink
+/// and the warm-gradient screens.
 struct FudoTabBar: View {
     @Binding var selected: AppTab
 
     var body: some View {
-        HStack(spacing: 2) {
+        HStack(spacing: 6) {
             ForEach(AppTab.allCases, id: \.self) { tabButton($0) }
         }
-        .padding(6)
-        .background(
-            Capsule()
-                .fill(FudoColor.bgCard)
-                .overlay(Capsule().stroke(FudoColor.border, lineWidth: 1))
-        )
+        .padding(.horizontal, 8)
+        .padding(.vertical, 8)
+        .fudoGlassCapsule()
         .animation(AppAnimation.standard, value: selected)
     }
 
     private func tabButton(_ tab: AppTab) -> some View {
-        let isActive = selected == tab
+        let active = (selected == tab)
         return Button {
+            guard selected != tab else { return }
             Haptics.light()
             selected = tab
         } label: {
-            VStack(spacing: 4) {
+            VStack(spacing: 2) {
                 Image(systemName: tab.icon)
                     .font(.system(size: 18, weight: .semibold))
                 Text(tab.title)
                     .font(.system(size: 11, weight: .medium))
             }
-            .foregroundStyle(isActive ? FudoColor.accent : FudoColor.textSecondary)
-            .frame(maxWidth: .infinity)
+            .foregroundStyle(active ? FudoColor.accent : FudoColor.textSecondary)
+            .padding(.horizontal, 22)
             .padding(.vertical, 8)
+            .frame(minWidth: 84)
             .background {
-                if isActive {
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .fill(FudoColor.accent.opacity(0.15))
+                if active {
+                    Capsule().fill(FudoColor.surfaceGlassStrong)
                 }
             }
+            .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(tab.title)
-        .accessibilityAddTraits(isActive ? [.isSelected] : [])
+        .accessibilityAddTraits(active ? .isSelected : [])
     }
 }

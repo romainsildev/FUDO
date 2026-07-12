@@ -92,6 +92,7 @@ Hors scope (ne jamais coder, même si "facile") : communauté/leaderboard, heatm
 
 ## Principes pour Claude
 
+- **Machine 16 GB (M5 base) — la charge vient des BUILDS, pas des subagents.** Subagents OK pour écrire du code/des fichiers. INTERDIT : deux `xcodebuild` en même temps, quelle que soit la source. Vérif par étape = compile-only SANS booter de simulateur (`xcodebuild build -destination 'generic/platform=iOS Simulator'`). Suite de tests complète (qui boote un sim) : UNE fois par session, jamais par étape, jamais en parallèle d'autre chose. Zéro sim booté en tâche de fond. La vérif visuelle/device = Romain, dans Xcode, sur son iPhone (Cmd+R) — jamais la session.
 - Plan mode avant tout build multi-écrans ; **ultrathink pour les tâches visuelles/UI**.
 - Si tu modifies une feature, vérifier que les autres marchent encore (surtout OVREngine ↔ Home ↔ widget).
 - Ne JAMAIS modifier la formule OVR ou les constantes de `GameConfig` sans accord explicite de Romain.

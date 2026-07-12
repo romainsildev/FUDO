@@ -31,21 +31,17 @@ struct HomeHeaderView: View {
             Button(action: onFlameTap) {
                 HStack(spacing: 5) {
                     Image(systemName: "flame.fill")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(streakIsAlive ? FudoColor.accent : FudoColor.textSecondary)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(streakIsAlive
+                                         ? AnyShapeStyle(FudoGradient.flame)
+                                         : AnyShapeStyle(FudoColor.textSecondary))
                     Text("\(streak)")
                         .font(.system(size: 14, weight: .bold).monospacedDigit())
-                        .foregroundStyle(streakIsAlive ? FudoColor.accent : FudoColor.textSecondary)
+                        .foregroundStyle(streakIsAlive ? FudoColor.textPrimary : FudoColor.textSecondary)
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 9)
-                .background {
-                    if streakIsAlive {
-                        Capsule().fill(FudoColor.accentDeep.opacity(0.45))
-                    } else {
-                        FudoGlassCapsule(shadow: false)
-                    }
-                }
+                .fudoGlassCapsule(strong: streakIsAlive, shadow: false)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("\(streak) day streak — open details")

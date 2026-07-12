@@ -14,6 +14,16 @@ enum SenseiMood: Equatable {
 /// art the reactions are scale/aura pulses on the still image — when animated art
 /// lands, swap the implementation of `react()`/`celebrate()` and the mood modifier;
 /// every call site stays untouched.
+/// Choreography of the 100 % day moment — one of the few allowed celebrations.
+/// Total ≈ 1.8 s: seal beat → ring burst + reaction → settle. Premium, no confetti rain.
+private enum CelebrationMetrics {
+    static let sealBeat: TimeInterval = 0.45
+    static let burstBeat: TimeInterval = 0.45
+    static let settleBeat: TimeInterval = 0.9
+    static let ringFlashScale: CGFloat = 1.02
+    static let senseiPeakScale: CGFloat = 1.06
+}
+
 struct SenseiStageView: View {
     let rank: Rank
     let mood: SenseiMood
@@ -27,6 +37,8 @@ struct SenseiStageView: View {
     @State private var senseiScale: CGFloat = 1
     @State private var auraBoost: Double = 0
     @State private var goldFlash: Double = 0
+    @State private var ringFlash: Double = 0
+    @State private var ringScale: CGFloat = 1
     @State private var showsBurst = false
 
     private let stageHeight: CGFloat = 340
@@ -39,7 +51,15 @@ struct SenseiStageView: View {
             ring
             sensei
             if showsBurst {
-                GoldBurstView().id(celebrationTrigger)
+                // Gold + vermillon, emitted FROM the ring — not a center pop.
+                ParticleBurstView(colors: [FudoColor.celebrationGold, FudoColor.accent],
+                                  particleCount: ParticleBurstMetrics.dayCompleteCount,
+                                  distance: 34...72,
+                                  particleSize: 3...6,
+                                  startDistance: 2,
+                                  originRadius: ringDiameter / 2,
+                                  animation: AppAnimation.slow)
+                    .id(celebrationTrigger)
             }
         }
         .frame(height: stageHeight)
@@ -81,6 +101,11 @@ struct SenseiStageView: View {
                         .stroke(FudoColor.accent.opacity(0.45), lineWidth: FudoSpacing.ringWidth + 4)
                         .blur(radius: 6)
                 }
+                // Celebration seal flash — brighter, wider, gone after the sequence.
+                Circle()
+                    .stroke(FudoColor.accentPressed.opacity(ringFlash),
+                            lineWidth: FudoSpacing.ringWidth + 3)
+                    .blur(radius: 3)
                 Circle()
                     .trim(from: 0, to: progress)
                     .stroke(FudoColor.accent,
@@ -89,6 +114,7 @@ struct SenseiStageView: View {
             }
         }
         .frame(width: ringDiameter, height: ringDiameter)
+        .scaleEffect(ringScale)
         .animation(AppAnimation.standard, value: progress)
     }
 
@@ -141,20 +167,32 @@ struct SenseiStageView: View {
         }
     }
 
-    /// 100 % day, live only: bigger breath, brief gold aura, one burst.
+    /// 100 % day, live only (CelebrationMetrics choreography):
+    /// 1. the ring seals — flash + micro scale pulse, medium haptic;
+    /// 2. gold+vermillon burst FROM the ring, sensei's big breath, gold aura, success haptic;
+    /// 3. everything settles into the steady sealed state (frame 01c).
     private func celebrate() {
-        showsBurst = true
-        withAnimation(AppAnimation.standard, completionCriteria: .logicallyComplete) {
-            senseiScale = 1.06
-            goldFlash = 0.30
-        } completion: {
+        Task { @MainActor in
+            withAnimation(AppAnimation.standard) {
+                ringFlash = 0.8
+                ringScale = CelebrationMetrics.ringFlashScale
+            }
+            try? await Task.sleep(for: .seconds(CelebrationMetrics.sealBeat))
+            Haptics.medium()
+            showsBurst = true
+            withAnimation(AppAnimation.standard) {
+                senseiScale = CelebrationMetrics.senseiPeakScale
+                goldFlash = 0.30
+                ringScale = 1
+            }
+            try? await Task.sleep(for: .seconds(CelebrationMetrics.burstBeat))
+            Haptics.success()
             withAnimation(AppAnimation.slow) {
                 senseiScale = 1
                 goldFlash = 0
+                ringFlash = 0
             }
-        }
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(1.4))
+            try? await Task.sleep(for: .seconds(CelebrationMetrics.settleBeat))
             showsBurst = false
         }
     }

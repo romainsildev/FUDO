@@ -43,4 +43,34 @@ enum SenseiAssetProvider {
             ? Image(imageName(for: rank))
             : Image(systemName: fallbackSymbol(for: rank))
     }
+
+    // MARK: - Head crop (header avatar, compact strip)
+
+    /// Top-weighted square crop framing the face, done in PIXEL space so a
+    /// `scaledToFill + Circle` mask fills the avatar edge to edge. Fractions
+    /// calibrated on the 1024×1536 renders (face center ≈ x 0.5, y 0.19).
+    private static let headCropWidthFraction: CGFloat = 0.38  // square side, × art width
+    private static let headCropTopFraction: CGFloat = 0.07    // crop top, × art height
+
+    @MainActor private static var headCache: [Rank: Image] = [:]
+
+    /// Face crop for the given rank — nil when the art is missing (call sites
+    /// draw the SF Symbol fallback themselves at symbol-appropriate size).
+    @MainActor
+    static func headImage(for rank: Rank) -> Image? {
+        if let cached = headCache[rank] { return cached }
+        guard let art = UIImage(named: imageName(for: rank)),
+              let cgImage = art.cgImage else { return nil }
+        let width = CGFloat(cgImage.width)
+        let height = CGFloat(cgImage.height)
+        let side = width * headCropWidthFraction
+        let cropRect = CGRect(x: (width - side) / 2,
+                              y: height * headCropTopFraction,
+                              width: side,
+                              height: side)
+        guard let cropped = cgImage.cropping(to: cropRect) else { return nil }
+        let head = Image(uiImage: UIImage(cgImage: cropped, scale: art.scale, orientation: .up))
+        headCache[rank] = head
+        return head
+    }
 }

@@ -47,7 +47,9 @@ struct ChecklistRowView: View {
     private var interactiveCard: some View {
         if isChecked {
             card
-                .onLongPressGesture(minimumDuration: 0.5) { showsUncheckDialog = true }
+                .onLongPressGesture(minimumDuration: HoldToConfirmMetrics.quickLongPress) {
+                    showsUncheckDialog = true
+                }
                 .accessibilityAction(named: "Uncheck") { showsUncheckDialog = true }
         } else {
             card

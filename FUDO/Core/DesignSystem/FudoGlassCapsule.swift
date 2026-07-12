@@ -1,6 +1,8 @@
 import SwiftUI
 
-/// Reusable frosted-glass capsule (RiteOff recipe), iOS 17 `.ultraThinMaterial`.
+/// Reusable glass capsule — ONE component, TWO rendering paths:
+/// on iOS 26+ the native Liquid Glass (`glassEffect`), earlier the RiteOff
+/// `.ultraThinMaterial` recipe. Every capsule call site upgrades for free.
 /// Dark-only. Reads over both flat ink (`bgPrimary`) and the warm-gradient screens.
 ///
 /// The Figma mockups use glass capsules app-wide — the floating tab bar, Home
@@ -8,9 +10,8 @@ import SwiftUI
 ///   `content.padding(…).fudoGlassCapsule()`            // sugar (below)
 ///   `.background { FudoGlassCapsule() }`                // or drop the shape directly
 ///
-/// Recipe: Capsule ZStack [`.ultraThinMaterial` + tint] · 0.5px `borderGlass`
+/// Legacy recipe: Capsule ZStack [`.ultraThinMaterial` + tint] · 0.5px `borderGlass`
 /// stroke · top specular highlight (masked, non-interactive) · soft drop shadow.
-/// iOS 17 APIs only — no iOS 26 `glassEffect`.
 struct FudoGlassCapsule: View {
     /// `true` = `surfaceGlassStrong` tint (raised/active). Default = `surfaceGlass`.
     var strong: Bool = false
@@ -18,6 +19,29 @@ struct FudoGlassCapsule: View {
     var shadow: Bool = true
 
     var body: some View {
+        glass
+            .shadow(
+                color: shadow ? .black.opacity(0.40) : .clear,
+                radius: shadow ? 12 : 0,
+                x: 0,
+                y: shadow ? 4 : 0
+            )
+    }
+
+    @ViewBuilder
+    private var glass: some View {
+        if #available(iOS 26.0, *) {
+            Color.clear
+                .glassEffect(
+                    .regular.tint(strong ? FudoColor.surfaceGlassStrong : FudoColor.surfaceGlass),
+                    in: Capsule()
+                )
+        } else {
+            legacyGlass
+        }
+    }
+
+    private var legacyGlass: some View {
         ZStack {
             Capsule().fill(.ultraThinMaterial)
             Capsule().fill(strong ? FudoColor.surfaceGlassStrong : FudoColor.surfaceGlass)
@@ -36,12 +60,6 @@ struct FudoGlassCapsule: View {
             .allowsHitTesting(false)
         }
         .clipShape(Capsule())
-        .shadow(
-            color: shadow ? .black.opacity(0.40) : .clear,
-            radius: shadow ? 12 : 0,
-            x: 0,
-            y: shadow ? 4 : 0
-        )
     }
 }
 

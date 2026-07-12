@@ -29,3 +29,15 @@ enum FudoColor {
     static let borderGlass = Color.white.opacity(0.22)        // 0.5px glass hairline
     static let specularHighlight = Color.white.opacity(0.18)  // top-edge light catch
 }
+
+/// Shared gradients built from the tokens above — never hand-mix hexes in views.
+enum FudoGradient {
+    /// Flame: vermillon base rising into a gold tip (Romain, 2026-07-12 polish pass).
+    /// Used by the streak pill and the flame-sheet hero. NOT a celebration use of
+    /// gold — this is the flame's identity color.
+    static let flame = LinearGradient(
+        colors: [FudoColor.celebrationGold, FudoColor.accent],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+}

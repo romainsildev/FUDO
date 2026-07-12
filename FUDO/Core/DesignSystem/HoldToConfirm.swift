@@ -2,18 +2,21 @@ import SwiftUI
 
 /// Metrics of the signature hold-to-confirm gesture — single source, no magic
 /// numbers in views (CLAUDE.md). The challenge confirmation screen reuses these
-/// verbatim (same 1.5 s, `.heavy` completion).
+/// verbatim (same duration, `.heavy` completion).
 enum HoldToConfirmMetrics {
-    static let duration: TimeInterval = 1.5
+    /// 1.0 s — tuned down from 1.5 s after device runs (2026-07-12 polish pass).
+    static let duration: TimeInterval = 1.0
     /// Early release → the ring rewinds smoothly in this time.
     static let rewindDuration: TimeInterval = 0.3
     static let ringWidth: CGFloat = 3
     /// Progressive haptic build during the hold (light → medium → heavy),
-    /// evenly spaced before the completion haptic.
+    /// evenly spaced before the completion haptic — compresses with `duration`.
     static let hapticStepCount = 3
     static let pressedScale: CGFloat = 0.985
     /// How long the sealed ring lingers before the component resets itself.
     static let sealResetDelay: TimeInterval = 0.6
+    /// Short recognition for secondary long-press actions (uncheck → dialog).
+    static let quickLongPress: TimeInterval = 0.35
 }
 
 /// Haptic fired the instant the hold completes.

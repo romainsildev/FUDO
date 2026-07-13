@@ -298,54 +298,64 @@ struct HomeView: View {
 
     // MARK: - No active challenge (frame 01b — never an empty screen)
 
+    /// Fixed-height blocks (340pt stage + giant OVR + copy + CTA) can exceed the
+    /// space under the pinned header on smaller screens: a plain VStack then
+    /// overflows BOTH ends and shoves the header into the status bar (device bug
+    /// 2026-07-13). ScrollView + minHeight keeps the layout identical when it
+    /// fits (spacers distribute) and scrolls instead of overflowing when not.
     private var noChallengeContent: some View {
-        VStack(spacing: 0) {
-            Spacer(minLength: 12)
+        GeometryReader { geo in
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    Spacer(minLength: 12)
 
-            VStack(spacing: 0) {
-                SenseiStageView(rank: viewModel.rank,
-                                mood: .resting,
-                                progress: 0,
-                                showsRingProgress: false,
-                                pulseTrigger: 0,
-                                celebrationTrigger: 0)
-                Text("\(viewModel.displayedOVR)")
-                    .font(FudoFont.ovr(84))
-                    .foregroundStyle(FudoColor.textPrimary)
-                rankLine
+                    VStack(spacing: 0) {
+                        SenseiStageView(rank: viewModel.rank,
+                                        mood: .resting,
+                                        progress: 0,
+                                        showsRingProgress: false,
+                                        pulseTrigger: 0,
+                                        celebrationTrigger: 0)
+                        Text("\(viewModel.displayedOVR)")
+                            .font(FudoFont.ovr(84))
+                            .foregroundStyle(FudoColor.textPrimary)
+                        rankLine
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture { goToProgress() }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityAddTraits(.isButton)
+
+                    VStack(spacing: 8) {
+                        Text("Your rank awaits.")
+                            .font(FudoFont.title())
+                            .foregroundStyle(FudoColor.textPrimary)
+                        Text("The dojo doesn't close. Start again.")
+                            .font(FudoFont.body())
+                            .foregroundStyle(FudoColor.textSecondary)
+                    }
+                    .padding(.top, 28)
+
+                    Spacer(minLength: 20)
+
+                    Button {
+                        Haptics.medium()
+                        viewModel.presentedCover = .challengeSetup
+                    } label: {
+                        Text("Start a new challenge")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(FudoColor.textPrimary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: FudoSpacing.ctaHeight)
+                            .background { Capsule().fill(FudoColor.accent) }
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.bottom, 90)   // clear of the floating tab pill
+                }
+                .padding(.horizontal, FudoSpacing.screenMargin)
+                .frame(minHeight: geo.size.height)
             }
-            .contentShape(Rectangle())
-            .onTapGesture { goToProgress() }
-            .accessibilityElement(children: .combine)
-            .accessibilityAddTraits(.isButton)
-
-            VStack(spacing: 8) {
-                Text("Your rank awaits.")
-                    .font(FudoFont.title())
-                    .foregroundStyle(FudoColor.textPrimary)
-                Text("The dojo doesn't close. Start again.")
-                    .font(FudoFont.body())
-                    .foregroundStyle(FudoColor.textSecondary)
-            }
-            .padding(.top, 28)
-
-            Spacer(minLength: 20)
-
-            Button {
-                Haptics.medium()
-                viewModel.presentedCover = .challengeSetup
-            } label: {
-                Text("Start a new challenge")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(FudoColor.textPrimary)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: FudoSpacing.ctaHeight)
-                    .background { Capsule().fill(FudoColor.accent) }
-            }
-            .buttonStyle(.plain)
-            .padding(.bottom, 90)   // clear of the floating tab pill
         }
-        .padding(.horizontal, FudoSpacing.screenMargin)
     }
 
     // MARK: - Shared pieces

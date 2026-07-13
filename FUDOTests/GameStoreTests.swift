@@ -231,4 +231,24 @@ struct GameStoreTests {
         #expect(store.pendingRankUp == nil)
         #expect(player.highestRankReached == Rank.disciple.rawValue)
     }
+
+    /// Lock-in for the Progression rank path: the high-water mark rises the moment the OVR
+    /// enters a new rank (live check), and NEVER drops when the OVR falls back below it.
+    @Test func highestRankIsHighWaterAndSurvivesADrop() throws {
+        let (store, _) = try makeStore(startingAt: try date(day: 1))
+        store.ensurePlayer(startingOVR: 49.9)                       // one check below Disciple
+        let challenge = try #require(store.startChallenge(preset: .monk30, durationDays: 30,
+                                                          rules: fiveRules, reminderMinutes: 420))
+        let player = try #require(store.player)
+        #expect(player.highestRankReached == Rank.novice.rawValue)
+
+        let rule = try #require(challenge.activeRules.first)
+        store.checkTask(rule)                                       // cross up into Disciple
+        #expect(player.rank == .disciple)
+        #expect(player.highestRankReached == Rank.disciple.rawValue)
+
+        store.uncheckTask(rule)                                     // OVR falls back under 50
+        #expect(player.rank == .novice)
+        #expect(player.highestRankReached == Rank.disciple.rawValue)   // high-water never drops
+    }
 }

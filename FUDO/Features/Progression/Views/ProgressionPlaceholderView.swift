@@ -1,14 +1,12 @@
 import SwiftUI
 
+/// Session-4 shim: MainTabView (out of this session's write scope) still instantiates
+/// `ProgressionPlaceholderView`. The real screen is `ProgressionView`; the next shell touch
+/// renames the call site and deletes this file. Mirrors `HomePlaceholderView`.
 struct ProgressionPlaceholderView: View {
+    @Environment(GameStore.self) private var gameStore
+
     var body: some View {
-        PlaceholderScaffold(title: "Progress", subtitle: "The challenge and the rank.") {
-            NavigationLink(value: PushDemoDestination(title: "Progress detail")) {
-                Text("Push demo →")
-                    .font(FudoFont.body())
-                    .foregroundStyle(FudoColor.accent)
-            }
-        }
-        .navigationDestination(for: PushDemoDestination.self) { PushDemoScreen(title: $0.title) }
+        ProgressionView(store: gameStore)
     }
 }

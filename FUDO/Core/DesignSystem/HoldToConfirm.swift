@@ -45,6 +45,9 @@ struct HoldToConfirm<Ring: InsettableShape>: ViewModifier {
     let shape: Ring
     let duration: TimeInterval
     let completionHaptic: HoldCompletionHaptic
+    /// Ring stroke color — default vermillon (dark cards); the vermillon CTAs
+    /// pass a cream ring so it isn't invisible on their own accent fill.
+    var ringColor: Color = FudoColor.accent
     let onConfirm: () -> Void
 
     @State private var progress: CGFloat = 0
@@ -62,7 +65,7 @@ struct HoldToConfirm<Ring: InsettableShape>: ViewModifier {
         shape
             .inset(by: HoldToConfirmMetrics.ringWidth / 2)
             .trim(from: 0, to: progress)
-            .stroke(FudoColor.accent,
+            .stroke(ringColor,
                     style: StrokeStyle(lineWidth: HoldToConfirmMetrics.ringWidth, lineCap: .round))
             .opacity(ringOpacity)
             .allowsHitTesting(false)
@@ -151,9 +154,11 @@ extension View {
                                                           style: .continuous),
         duration: TimeInterval = HoldToConfirmMetrics.duration,
         completionHaptic: HoldCompletionHaptic = .success,
+        ringColor: Color = FudoColor.accent,
         onConfirm: @escaping () -> Void
     ) -> some View {
         modifier(HoldToConfirm(shape: shape, duration: duration,
-                               completionHaptic: completionHaptic, onConfirm: onConfirm))
+                               completionHaptic: completionHaptic, ringColor: ringColor,
+                               onConfirm: onConfirm))
     }
 }

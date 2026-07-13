@@ -142,7 +142,8 @@ struct LaunchConfirmScreen: View {
                 Capsule().strokeBorder(viewModel.canCommit ? Color.clear : FudoColor.border,
                                        lineWidth: 1)
             }
-            .holdToConfirm(in: Capsule(), completionHaptic: .heavy) { commit() }
+            .holdToConfirm(in: Capsule(), completionHaptic: .heavy,
+                           ringColor: FudoColor.textPrimary) { commit() }
             .disabled(!viewModel.canCommit)
             .padding(.horizontal, FudoSpacing.screenMargin)
             .padding(.bottom, 12)

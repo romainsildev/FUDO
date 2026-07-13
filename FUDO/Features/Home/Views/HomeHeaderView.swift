@@ -10,10 +10,14 @@ struct HomeHeaderView: View {
     let onAvatarTap: () -> Void
     let onFlameTap: () -> Void
 
+    /// Every header element shares this height so avatar and both pills line up
+    /// on one row — no more staggered tops (device feedback 2026-07-13).
+    private static let elementHeight: CGFloat = 34
+
     var body: some View {
         HStack(spacing: 12) {
             Button(action: onAvatarTap) {
-                SenseiAvatarView(rank: rank)
+                SenseiAvatarView(rank: rank, diameter: Self.elementHeight)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Your sensei — open Progress")
@@ -23,7 +27,7 @@ struct HomeHeaderView: View {
                 .kerning(1.5)
                 .foregroundStyle(FudoColor.textPrimary)
                 .padding(.horizontal, 16)
-                .padding(.vertical, 10)
+                .frame(height: Self.elementHeight)
                 .fudoGlassCapsule(shadow: false)
 
             Spacer()
@@ -40,7 +44,7 @@ struct HomeHeaderView: View {
                         .foregroundStyle(streakIsAlive ? FudoColor.textPrimary : FudoColor.textSecondary)
                 }
                 .padding(.horizontal, 14)
-                .padding(.vertical, 9)
+                .frame(height: Self.elementHeight)
                 .fudoGlassCapsule(strong: streakIsAlive, shadow: false)
             }
             .buttonStyle(.plain)

@@ -324,24 +324,31 @@ final class GameStore {
 // private modelContext, boot fetches and completeChallenge. Never in Release.
 extension GameStore {
 
-    /// Empties the whole store, then optionally replays DebugSeed (day 12).
-    /// Blank wipe arms `DebugSeed.seedDisabledKey` so the launch auto-seed
-    /// doesn't resurrect the data; reseeding disarms it.
+    /// Empties the whole store, then either replays DebugSeed (day 12) or leaves
+    /// the realistic blank state: an ONBOARDED player with a baseline OVR and NO
+    /// challenge (frame 01b). The blank branch MUST create that player — the
+    /// challenge-setup flow's `startChallenge` needs one, and the no-challenge
+    /// Home never mints it. Blank wipe also arms `DebugSeed.seedDisabledKey` so
+    /// the launch auto-seed doesn't resurrect the data; reseeding disarms it.
     func debugWipe(reseed: Bool) {
         wipeAll(DayLog.self)
         wipeAll(TaskRule.self)
         wipeAll(Challenge.self)
         wipeAll(PlayerState.self)
+        player = nil
+        activeChallenge = nil
+        pendingRankUp = nil
         save()
         UserDefaults.standard.set(!reseed, forKey: DebugSeed.seedDisabledKey)
         if reseed {
             DebugSeed.seed(context: modelContext)
+        } else {
+            ensurePlayer(startingOVR: OVREngine.startingOVR(from: DebugSeed.answers))
         }
         // The seed replays through its OWN GameStore instance — re-run the boot
         // fetches so THIS store (the one the UI observes) sees the new world.
         player = Self.fetchPlayer(in: modelContext)
         activeChallenge = Self.fetchActiveChallenge(in: modelContext)
-        pendingRankUp = nil
     }
 
     /// Ends the active challenge as `.completed` right now (no day-log closure —

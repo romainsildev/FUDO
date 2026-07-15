@@ -169,4 +169,26 @@ struct OVREngineTests {
         #expect(Int(OVREngine.project(from: 43, days: 90).rounded(.down)) == 96)
         #expect(OVREngine.project(from: 43, days: 0) == 43)
     }
+
+    // MARK: display floor (§3f)
+
+    @Test func displayedOVRFloorsInsteadOfRounding() {
+        #expect(OVREngine.displayedOVR(69.0) == 69)
+        #expect(OVREngine.displayedOVR(69.5) == 69)    // half-up would read 70
+        #expect(OVREngine.displayedOVR(69.99) == 69)
+        #expect(OVREngine.displayedOVR(70.0) == 70)
+        #expect(OVREngine.displayedOVR(0) == 0)
+    }
+
+    /// The lock (audit 2026-07-15): a rank must never be announced before it is
+    /// earned. Rounding half-up broke this at every x.5 band edge — 69.5 is an
+    /// Ascetic that would have displayed "70", the Warrior floor.
+    @Test func displayedOVRNeverAnnouncesARankEarly() {
+        for step in 0...396 {                          // 0 → 99 in 0.25 increments
+            let stored = Double(step) * 0.25
+            let shown = OVREngine.displayedOVR(stored)
+            #expect(Rank.from(ovr: Double(shown)) == Rank.from(ovr: stored),
+                    "stored \(stored) displayed as \(shown) — crossed a rank floor")
+        }
+    }
 }

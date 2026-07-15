@@ -40,7 +40,7 @@ Persona : homme 16-25, TikTok self-improvement, cluster monk mode / lock in / di
 ## Conventions
 
 - MVVM léger : `@Observable` (jamais `ObservableObject`), un ViewModel par feature, pas par sous-view.
-- Un fichier = une view. Organisation par feature (voir `STRUCTURE.md` du pack de build).
+- Un fichier = une view. Organisation par feature : `FUDO/Features/<Feature>/` (le ViewModel à la racine, les views dans `Views/`) ; le transverse vit dans `FUDO/Core/` (`DesignSystem`, `Game`, `Models`, `Navigation`, `Services`, `Extensions`) et la coquille dans `FUDO/App/`.
 - `NavigationStack` (jamais `NavigationView`). **TabView NATIF 4 onglets** (Today · Progress · Stats · Settings) — Liquid Glass système sur iOS 26, barre standard avant ; JAMAIS de tab bar custom (décision 2026-07-12, pattern RiteOff). Masquage en push = `.fudoHidesTabBar()` (= `.toolbar(.hidden, for: .tabBar)`). Tint barre = textPrimary, contenu re-tinté accent. Conventions nav (prd/12 §1) : **tab switch** (jamais de push cross-onglet) · **sheet** medium (flamme, time picker, share) · **push** (tab bar MASQUÉE : habit detail, sous-écrans Settings) · **cover** (onboarding, paywall, setup standalone, challenge complete, rank-up) · **alert ×2** destructif. Onboarding/paywall/covers en `.fullScreenCover`.
 - Noms en anglais (code + fichiers). UI strings en anglais.
 - Pas de force unwrap (`!`), pas de `try!` sur les opérations SwiftData — toujours gérer l'erreur.

@@ -66,7 +66,8 @@ final class HomeViewModel {
     /// killed-then-relaunched app never re-shows a banner the user already closed
     /// (known-pitfalls list). A new rollover day is a new banner.
     private var dismissedBannerDay: Date?
-    private static let dismissedBannerDayKey = "home.incompleteBanner.dismissedDay"
+    /// Internal, not private: the tests clear it so they never inherit a dismissal.
+    static let dismissedBannerDayKey = "home.incompleteBanner.dismissedDay"
     /// Fire just past the 2 AM boundary, never on it.
     private static let rolloverTimerSlack: TimeInterval = 1
 

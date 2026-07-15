@@ -27,7 +27,7 @@
 		B55F68613002C6C8003FC32B /* FUDO.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FUDO.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B55F686E3002C6C9003FC32B /* FUDOTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FUDOTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B55F68783002C6C9003FC32B /* FUDOUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FUDOUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		B57B4B533003E88200BB187C /* FUDO.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = file; path = FUDO.xctestplan; sourceTree = "<group>"; };
+		B57B4B533003E88200BB187C /* FUDO.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = FUDO.xctestplan; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -426,7 +426,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.romain.FUDO;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fudoapp.fudo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -459,7 +459,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.romain.FUDO;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fudoapp.fudo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;

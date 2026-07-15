@@ -19,9 +19,9 @@ private enum HomeHeroMetrics {
     static let miniRingWidth: CGFloat = 3.5
     static let rankBarHeight: CGFloat = 3
     /// Expanded hero (frame 01 v2) — sensei centered in the ring arc, compact stage.
-    static let expandedStageHeight: CGFloat = 264
+    static let expandedStageHeight: CGFloat = 268
     static let expandedRingDiameter: CGFloat = 248
-    static let expandedSenseiHeight: CGFloat = 244
+    static let expandedSenseiHeight: CGFloat = 264
 }
 
 /// Home ("Today") — the core action screen. Answers in one second: where am I

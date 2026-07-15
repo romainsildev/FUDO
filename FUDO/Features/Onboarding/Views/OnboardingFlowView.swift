@@ -142,8 +142,26 @@ struct OnboardingFlowView: View {
         case .socialProof:
             SocialProofScreen(flags: flags, onAdvance: viewModel.advance)
 
+        // MARK: Act 3 — engagement, contract, paywall
+
+        case .commitment:
+            CommitmentScreen(selection: $viewModel.draft.commitment, onAdvance: viewModel.advance)
+        case .contract:
+            ContractScreen(startingOVR: viewModel.diagnosticOVR,
+                           rank: viewModel.diagnosticRank,
+                           projectedOVR: OVREngine.displayedOVR(viewModel.projectedOVR),
+                           projectedRank: viewModel.projectedRank,
+                           date: viewModel.projectionDate,
+                           durationDays: viewModel.setup.durationDays,
+                           hasSignature: viewModel.hasSignature,
+                           onSign: viewModel.signContract,
+                           onSignatureStroke: viewModel.registerSignature)
+        case .paywall:
+            PaywallGateView(contract: flags.contract, date: viewModel.projectionDate,
+                            onContinue: viewModel.passPaywall)
+
         default:
-            // Acts 3-4 land here, screen by screen.
+            // Act 4 lands here, screen by screen.
             actUnderConstruction
         }
     }

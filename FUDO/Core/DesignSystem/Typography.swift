@@ -14,10 +14,14 @@ import SwiftUI
 struct FudoFont {
     /// Growth caps (Romain, 2026-07-15). CONTAINER geometry is fixed — the 112 pt hero
     /// card, the 56 pt CTA, the 44 pt chips, the rings. Only text scales, and only this
-    /// far, or it overflows them.
-    static let textMaxGrowth: CGFloat = 1.6
+    /// far, or it overflows them. Tightened from 1.6 after a device pass at the
+    /// accessibility sizes: 1.6 still crowded the 56 pt rows.
+    /// NOTE: these reach FUDO's own text only. System chrome (tab bar labels, nav
+    /// titles, alerts, DatePicker) is drawn by UIKit and scales uncapped — the only
+    /// lever there is `.dynamicTypeSize(...)` on an ancestor.
+    static let textMaxGrowth: CGFloat = 1.35
     /// Display numerals live inside rings and fixed tiles: tighter leash.
-    static let numeralMaxGrowth: CGFloat = 1.25
+    static let numeralMaxGrowth: CGFloat = 1.15
 
     let size: CGFloat
     let weight: Font.Weight

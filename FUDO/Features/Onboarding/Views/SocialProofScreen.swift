@@ -69,3 +69,19 @@ struct SocialProofScreen: View {
         requestReview()
     }
 }
+
+#if DEBUG
+/// No stars, no "4.8" — D4. The canvas is also where the placeholder testimonials
+/// stay visible: they must be replaced by real, consented tester quotes before
+/// submit (docs/ONBOARDING-PLAN.md §"Le point resté ouvert").
+///
+/// The preview passes flags with reviewPrompted already true: the canvas must not
+/// fire the system review sheet.
+#Preview("OB 15 — social proof") {
+    let flags = OnboardingPreviewFactory.flags("preview.socialProof")
+    flags.reviewPrompted = true
+    return OnboardingPreviewChrome {
+        SocialProofScreen(flags: flags, onAdvance: {})
+    }
+}
+#endif

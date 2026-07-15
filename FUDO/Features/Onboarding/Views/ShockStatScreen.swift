@@ -92,3 +92,36 @@ struct ShockStatScreen: View {
         Haptics.medium()   // the blow lands WITH the number, not before it
     }
 }
+
+#if DEBUG
+/// Three profiles, three numbers, three recuts — this screen only exists if it
+/// says something different to different men.
+private struct ShockPreviewHost: View {
+    let draft: OnboardingDraft
+
+    var body: some View {
+        OnboardingPreviewChrome {
+            if let age = draft.age, let scroll = draft.scrollTime, let pain = draft.pain {
+                ShockStatScreen(shock: ShockMath.result(age: age, scroll: scroll),
+                                pain: pain, onAdvance: {}, onBack: {})
+            }
+        }
+    }
+}
+
+/// 18-24, 4-6 h, training → "1.9 years" · "not spent training."
+#Preview("OB 06 — 1.9 years (training)") {
+    ShockPreviewHost(draft: .previewAnswered)
+}
+
+/// 13-17, 6 h+, doomscrolling → "4.4 years", the heaviest number the funnel says.
+#Preview("OB 06 — 4.4 years (doomscrolling)") {
+    ShockPreviewHost(draft: .previewHeavy)
+}
+
+/// Under 2 h → below a year, so the headline flips to DAYS ("205 days").
+/// "0.6 years" would land on nobody — this is the case that proves the unit swap.
+#Preview("OB 06 — 205 days (reading)") {
+    ShockPreviewHost(draft: .previewLight)
+}
+#endif

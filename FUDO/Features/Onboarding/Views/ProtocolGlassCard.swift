@@ -99,3 +99,20 @@ struct ProtocolGlassCard: View {
         .clipShape(shape)
     }
 }
+
+#if DEBUG
+/// Over the doors clip: glass only reads against what's behind it.
+#Preview("OB 01c — protocol card (filled)") {
+    OnboardingPreviewChrome(clip: .doors) {
+        ProtocolGlassCard(checksRevealed: 3)
+            .padding(.horizontal, FudoSpacing.screenMargin)
+    }
+}
+
+#Preview("OB 01c — protocol card (empty)") {
+    OnboardingPreviewChrome(clip: .doors) {
+        ProtocolGlassCard(checksRevealed: 0)
+            .padding(.horizontal, FudoSpacing.screenMargin)
+    }
+}
+#endif

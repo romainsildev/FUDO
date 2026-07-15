@@ -172,3 +172,30 @@ struct ComposeProtocolScreen: View {
         .background { FudoColor.bgPrimary.opacity(0.94).ignoresSafeArea(edges: .bottom) }
     }
 }
+
+#if DEBUG
+#Preview("OB 11 — compose (recommended 30)") {
+    OnboardingPreviewChrome {
+        ComposeProtocolScreen(viewModel: OnboardingPreviewFactory.viewModel(step: .compose))
+    }
+}
+
+/// A chip he picked himself: the preset line drops the green "RECOMMENDED FOR
+/// YOU" and shows the tagline instead, and the rules reload from the preset.
+#Preview("OB 11 — compose (Classic 75 picked)") {
+    let viewModel = OnboardingPreviewFactory.viewModel(step: .compose)
+    viewModel.setup.selectDuration(days: 75)
+    return OnboardingPreviewChrome {
+        ComposeProtocolScreen(viewModel: viewModel)
+    }
+}
+
+/// Hardcore 90 ships 8 rules — the "More rules = more failure." warning fires.
+#Preview("OB 11 — compose (Hardcore 90, warning)") {
+    let viewModel = OnboardingPreviewFactory.viewModel(step: .compose)
+    viewModel.setup.selectDuration(days: 90)
+    return OnboardingPreviewChrome {
+        ComposeProtocolScreen(viewModel: viewModel)
+    }
+}
+#endif

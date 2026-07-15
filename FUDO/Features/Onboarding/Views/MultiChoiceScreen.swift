@@ -44,3 +44,29 @@ struct MultiChoiceScreen: View {
         }
     }
 }
+
+#if DEBUG
+private struct MultiChoicePreviewHost: View {
+    @State var selection: Set<Goal>
+
+    var body: some View {
+        OnboardingPreviewChrome {
+            MultiChoiceScreen(step: .goals, eyebrow: "YOUR TARGETS",
+                              title: "What do you actually\nwant?",
+                              subtitle: "Pick all that apply",
+                              options: Goal.allCases,
+                              selection: $selection,
+                              onAdvance: {}, onBack: {})
+        }
+    }
+}
+
+/// Empty is the state to judge: the CTA must be visibly dead until he picks one.
+#Preview("OB 07 — goals (none picked)") {
+    MultiChoicePreviewHost(selection: [])
+}
+
+#Preview("OB 07 — goals (three picked)") {
+    MultiChoicePreviewHost(selection: [.leanerBody, .killScrolling, .harderMindset])
+}
+#endif

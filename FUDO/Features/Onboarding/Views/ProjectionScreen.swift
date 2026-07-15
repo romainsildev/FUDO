@@ -51,3 +51,37 @@ struct ProjectionScreen: View {
         Haptics.medium()
     }
 }
+
+#if DEBUG
+/// Every number here comes from OVREngine — including the rank, which is why 78
+/// reads WARRIOR and not the frame's "MASTER".
+private struct ProjectionPreviewHost: View {
+    let base: Double
+    let days: Int
+
+    var body: some View {
+        let projected = OVREngine.project(from: base, days: days)
+        let date = Calendar.current.date(byAdding: .day, value: days - 1, to: .now) ?? .now
+        return OnboardingPreviewChrome {
+            ProjectionScreen(base: base, days: days, projectedOVR: projected,
+                             projectedRank: OVREngine.rank(forOVR: projected),
+                             date: date, onAdvance: {}, onBack: {})
+        }
+    }
+}
+
+/// The canonical run: 43 → ~78 in 30 days. Warrior.
+#Preview("OB 13 — 43 → ~78 (30 days)") {
+    ProjectionPreviewHost(base: 43, days: 30)
+}
+
+/// 90 perfect days from the floor — the steepest promise the funnel can make.
+#Preview("OB 13 — 40 → ~96 (Hardcore 90)") {
+    ProjectionPreviewHost(base: 40, days: 90)
+}
+
+/// The flattest: a disciplined starter over 30 days.
+#Preview("OB 13 — 50 → ~81 (30 days)") {
+    ProjectionPreviewHost(base: 50, days: 30)
+}
+#endif

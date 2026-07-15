@@ -82,3 +82,32 @@ struct OnboardingLoaderScreen: View {
         onFinished()
     }
 }
+
+#if DEBUG
+/// The step names carry HIS numbers — that's the whole reason the wait works.
+#Preview("OB 12 — building your protocol") {
+    OnboardingLoaderScreen(
+        title: "Building your protocol…",
+        steps: ["Reading your weak spot",
+                "Calibrating your daily rules",
+                "Setting your start — OVR 44",
+                "Projecting your 30-day climb"],
+        footer: "Locking in your numbers. A few seconds.",
+        duration: OnboardingMetrics.buildLoaderDuration,
+        onFinished: {})
+        .preferredColorScheme(.dark)
+}
+
+#Preview("OB 19 — setting up your protocol") {
+    OnboardingLoaderScreen(
+        title: "Setting up your protocol…",
+        steps: ["Saving your protocol",
+                "Scheduling your daily reminder",
+                "Preparing your dojo",
+                "Lighting your streak"],
+        footer: "Day 1 starts today. Almost there.",
+        duration: OnboardingMetrics.setupLoaderDuration,
+        onFinished: {})
+        .preferredColorScheme(.dark)
+}
+#endif

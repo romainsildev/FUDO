@@ -67,3 +67,11 @@ struct SplashScreen: View {
             .opacity(hasAppeared ? (breathing ? Self.hintPeak : Self.hintIdle) : 0)
     }
 }
+
+#if DEBUG
+#Preview("OB 00 — splash") {
+    OnboardingPreviewChrome(clip: .dojo, isSplash: true) {
+        SplashScreen(onTap: {})
+    }
+}
+#endif

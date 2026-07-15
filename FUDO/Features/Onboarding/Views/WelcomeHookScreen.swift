@@ -173,6 +173,26 @@ private enum ProtocolGlassCardChecks {
     static let all = 0..<3
 }
 
+#if DEBUG
+#Preview("OB 01a — the transformation") {
+    OnboardingPreviewChrome(clip: .dojo) {
+        WelcomeHookScreen(hook: .transformation, onAdvance: {})
+    }
+}
+
+#Preview("OB 01b — the pain") {
+    OnboardingPreviewChrome(clip: .phone) {
+        WelcomeHookScreen(hook: .pain, onAdvance: {})
+    }
+}
+
+#Preview("OB 01c — the mechanism") {
+    OnboardingPreviewChrome(clip: .doors) {
+        WelcomeHookScreen(hook: .mechanism, onAdvance: {})
+    }
+}
+#endif
+
 /// OB 01a's strip: the past on the left (small, blurred, faded), the future on the
 /// right (large, haloed, grounded). Vermillon dots grow between them — progression,
 /// not an arrow. The focal point is the man he becomes.

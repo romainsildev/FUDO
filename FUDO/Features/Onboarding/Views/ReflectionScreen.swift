@@ -82,3 +82,30 @@ struct ReflectionScreen: View {
         Haptics.medium()   // the enemy line IS the beat
     }
 }
+
+#if DEBUG
+#Preview("OB 09 — reflection (three goals)") {
+    OnboardingPreviewChrome {
+        ReflectionScreen(goals: [.leanerBody, .killScrolling, .harderMindset],
+                         pain: .trainingConsistently, struggle: .threeDaysMax,
+                         onAdvance: {})
+    }
+}
+
+/// One goal, one clause — the sentence must still read like a sentence.
+#Preview("OB 09 — reflection (one goal)") {
+    OnboardingPreviewChrome {
+        ReflectionScreen(goals: [.coldShowers], pain: .wakingUpEarly,
+                         struggle: .startStrongThenQuit, onAdvance: {})
+    }
+}
+
+/// Goals can't be empty in the funnel (the CTA gates it), but the fallback is the
+/// copy engine's contract — worth seeing it hold.
+#Preview("OB 09 — reflection (pain fallback)") {
+    OnboardingPreviewChrome {
+        ReflectionScreen(goals: [], pain: .doomscrolling,
+                         struggle: .cantEvenStart, onAdvance: {})
+    }
+}
+#endif

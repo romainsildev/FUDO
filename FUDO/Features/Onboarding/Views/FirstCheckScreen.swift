@@ -163,3 +163,13 @@ struct FirstCheckScreen: View {
         }
     }
 }
+
+#if DEBUG
+/// The hold and the seal only exist under a finger — the canvas shows the resting
+/// state. The gesture itself is a device check.
+#Preview("OB 14 — first hold") {
+    OnboardingPreviewChrome {
+        FirstCheckScreen(onAdvance: {})
+    }
+}
+#endif

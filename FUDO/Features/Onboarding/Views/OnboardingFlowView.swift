@@ -27,7 +27,7 @@ struct OnboardingFlowView: View {
                 WelcomeStageView(clip: viewModel.welcomeClip)
                     .ignoresSafeArea()
                     .transition(.opacity)
-                welcomeScrim
+                WelcomeScrim(isSplash: viewModel.step == .splash)
                     .ignoresSafeArea()
                     .transition(.opacity)
             }
@@ -37,27 +37,6 @@ struct OnboardingFlowView: View {
         }
         .animation(AppAnimation.standard, value: viewModel.step)
     }
-
-    // MARK: - Scrim
-    //
-    // Two layers, always BETWEEN the video and the text: a vertical wash so the
-    // copy holds on any frame, and the focus vignette the brief asks for. The
-    // splash reinforces it — it's a focal point, not a set.
-
-    private var welcomeScrim: some View {
-        ZStack {
-            LinearGradient(colors: [FudoColor.bgPrimary.opacity(0.35),
-                                    FudoColor.bgPrimary.opacity(0.92)],
-                           startPoint: .top, endPoint: .bottom)
-            RadialGradient(colors: [.clear, FudoColor.bgPrimary.opacity(isSplash ? 0.85 : 0.75)],
-                           center: .center,
-                           startRadius: isSplash ? 60 : 120,
-                           endRadius: 420)
-        }
-        .allowsHitTesting(false)
-    }
-
-    private var isSplash: Bool { viewModel.step == .splash }
 
     // MARK: - Routing
 
@@ -184,32 +163,12 @@ struct OnboardingFlowView: View {
 }
 
 #if DEBUG
-/// Pattern acté 2026-07-15: the factory OWNS the container in a `static let` —
-/// `container.mainContext` does not retain it, and a deallocated container makes
-/// SwiftData reset the context mid-preview ("destroyed by ModelContext.reset").
-@MainActor
-private enum OnboardingPreviewFactory {
-    static let container: ModelContainer = {
-        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
-        // ONE shared Schema — never the variadic ModelContainer(for:) initializer
-        // (iOS 17 duplicate-metadata crash, carnet 2026-07-12).
-        guard let container = try? ModelContainer(for: FudoSchema.schema,
-                                                  configurations: configuration) else {
-            fatalError("preview container")
-        }
-        return container
-    }()
-
-    /// No player, no challenge — the state the funnel actually runs against.
-    static let store = GameStore(modelContext: container.mainContext)
-
-    static let flags = OnboardingFlags(
-        defaults: UserDefaults(suiteName: "preview.onboarding") ?? .standard)
-}
-
+/// The whole funnel, walkable from OB 00. Every other screen has its own
+/// #Preview; this one is for the transitions between them.
+/// Container + store come from OnboardingPreviewFactory — ONE per process.
 #Preview("Onboarding — full funnel") {
     OnboardingFlowView(store: OnboardingPreviewFactory.store,
-                       flags: OnboardingPreviewFactory.flags)
+                       flags: OnboardingPreviewFactory.flags())
         .preferredColorScheme(.dark)
 }
 #endif

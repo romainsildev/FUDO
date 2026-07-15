@@ -81,3 +81,27 @@ struct DiagnosticScreen: View {
         Haptics.medium()
     }
 }
+
+#if DEBUG
+/// The PRD's canonical number.
+#Preview("OB 10 — OVR 43 (Novice)") {
+    OnboardingPreviewChrome {
+        DiagnosticScreen(ovr: 43, rank: .novice, onAdvance: {}, onBack: {})
+    }
+}
+
+/// The engine's floor: every answer at its worst. Still Novice — as it must be.
+#Preview("OB 10 — OVR 40 (floor)") {
+    OnboardingPreviewChrome {
+        DiagnosticScreen(ovr: 40, rank: .novice, onAdvance: {}, onBack: {})
+    }
+}
+
+/// The engine's ceiling for a starting player: 50 = Disciple, the only rank
+/// besides Novice this screen can ever show.
+#Preview("OB 10 — OVR 50 (ceiling, Disciple)") {
+    OnboardingPreviewChrome {
+        DiagnosticScreen(ovr: 50, rank: .disciple, onAdvance: {}, onBack: {})
+    }
+}
+#endif

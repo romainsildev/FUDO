@@ -53,3 +53,71 @@ struct SingleChoiceScreen<Option: Hashable>: View {
         .onAppear { revealed = true }
     }
 }
+
+#if DEBUG
+/// The five questions this one view serves. Unanswered vs answered is the state
+/// worth judging: the CTA must read dead, not absent.
+private struct SingleChoicePreviewHost<Option: Hashable>: View {
+    let step: OnboardingStep
+    let eyebrow: String
+    let title: String
+    let options: [Option]
+    let titleFor: (Option) -> String
+    @State var selection: Option?
+    var hint: String?
+
+    var body: some View {
+        OnboardingPreviewChrome {
+            SingleChoiceScreen(step: step, eyebrow: eyebrow, title: title,
+                               options: options, titleFor: titleFor,
+                               selection: $selection, hint: hint,
+                               onAdvance: {}, onBack: {})
+        }
+    }
+}
+
+#Preview("OB 02 — pain point (untouched)") {
+    SingleChoicePreviewHost(step: .painPoint, eyebrow: "START HERE",
+                            title: "What's the ONE thing\nyou can't control alone?",
+                            options: Pain.allCases, titleFor: \.optionTitle,
+                            selection: nil)
+}
+
+#Preview("OB 02 — pain point (answered)") {
+    SingleChoicePreviewHost(step: .painPoint, eyebrow: "START HERE",
+                            title: "What's the ONE thing\nyou can't control alone?",
+                            options: Pain.allCases, titleFor: \.optionTitle,
+                            selection: .doomscrolling)
+}
+
+#Preview("OB 03 — scroll hours") {
+    SingleChoicePreviewHost(step: .scrollHours, eyebrow: "BE HONEST",
+                            title: "How many hours a day\ndo you scroll?",
+                            options: OnboardingAnswers.ScrollTime.allCases,
+                            titleFor: \.optionTitle,
+                            selection: .fourToSixHours)
+}
+
+#Preview("OB 04 — age") {
+    SingleChoicePreviewHost(step: .age, eyebrow: "QUICK ONE",
+                            title: "How old are you?",
+                            options: AgeBracket.allCases, titleFor: \.optionTitle,
+                            selection: .young1824)
+}
+
+#Preview("OB 05 — procrastination") {
+    SingleChoicePreviewHost(step: .procrastination, eyebrow: "NO JUDGMENT",
+                            title: "How often do you say\n\"I'll start Monday\"?",
+                            options: OnboardingAnswers.Procrastination.displayOrder,
+                            titleFor: \.optionTitle,
+                            selection: .everyWeek)
+}
+
+#Preview("OB 08 — struggle") {
+    SingleChoicePreviewHost(step: .struggle, eyebrow: "THE REAL TALK",
+                            title: "What's your real problem?",
+                            options: OnboardingAnswers.Struggle.allCases,
+                            titleFor: \.optionTitle,
+                            selection: .threeDaysMax)
+}
+#endif

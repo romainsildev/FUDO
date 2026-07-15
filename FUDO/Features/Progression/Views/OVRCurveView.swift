@@ -150,7 +150,7 @@ private struct PointPopover: View {
     @ViewBuilder private var deltaLine: some View {
         let rounded = Int(point.delta.rounded())
         if rounded == 0 {
-            Text("OVR \(Int(point.value.rounded()))")
+            Text("OVR \(OVREngine.displayedOVR(point.value))")
                 .font(FudoFont.caption(12))
                 .foregroundStyle(FudoColor.textSecondary)
         } else {

@@ -34,7 +34,7 @@ private struct PastChallengeCard: View {
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(ChallengePresetNaming.name(for: challenge.preset, days: challenge.durationDays))
+                Text(PresetCatalog.title(for: challenge.preset, days: challenge.durationDays))
                     .font(FudoFont.title(17))
                     .foregroundStyle(FudoColor.textPrimary)
                 Text(dateRange)
@@ -50,7 +50,7 @@ private struct PastChallengeCard: View {
                     .tracking(0.5)
                     .foregroundStyle(completed ? FudoColor.accent : FudoColor.textSecondary)
                 if let endOVR = challenge.endOVR {
-                    Text("OVR \(Int(endOVR.rounded(.down)))")
+                    Text("OVR \(OVREngine.displayedOVR(endOVR))")
                         .font(FudoFont.body(15).weight(.semibold).monospacedDigit())
                         .foregroundStyle(FudoColor.textPrimary)
                 }
@@ -69,18 +69,5 @@ private struct PastChallengeCard: View {
 
     private var dateRange: String {
         "\(ProgressionViewModel.shortDate(challenge.startDate)) – \(ProgressionViewModel.shortDate(challenge.endDate))"
-    }
-}
-
-/// EN preset names, Progression-local (the presets live as a raw enum in Core with no display copy).
-enum ChallengePresetNaming {
-    static func name(for preset: ChallengePreset, days: Int) -> String {
-        switch preset {
-        case .monk30:     "Monk Mode 30"
-        case .monk60:     "Monk Mode 60"
-        case .hardcore90: "Hardcore 90"
-        case .classic75:  "Classic 75"
-        case .custom:     "Custom \(days)"
-        }
     }
 }

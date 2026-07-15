@@ -107,7 +107,7 @@ struct HomeView: View {
                         .padding(.top, FudoSpacing.sectionGap)
                 }
                 .padding(.horizontal, FudoSpacing.screenMargin)
-                .padding(.bottom, 100)   // clear of the floating tab pill
+                .padding(.bottom, FudoSpacing.contentBottom)
                 .animation(AppAnimation.standard, value: viewModel.screenState)
                 .animation(AppAnimation.standard, value: viewModel.showsIncompleteBanner)
                 .background {
@@ -459,7 +459,7 @@ struct HomeView: View {
                             .background { Capsule().fill(FudoColor.accent) }
                     }
                     .buttonStyle(.plain)
-                    .padding(.bottom, 90)   // clear of the floating tab pill
+                    .padding(.bottom, FudoSpacing.contentBottom)
                 }
                 .padding(.horizontal, FudoSpacing.screenMargin)
                 .frame(minHeight: geo.size.height)

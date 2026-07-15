@@ -95,6 +95,13 @@ enum PresetCatalog {
         all.first { $0.preset == preset } ?? all[0]
     }
 
+    /// Display name of any preset — the ONE source (audit 2026-07-15: Progression
+    /// used to re-declare its own list and drifted to "Classic 75"). `.custom` has
+    /// no catalog entry, so it is named from its own duration.
+    static func title(for preset: ChallengePreset, days: Int) -> String {
+        all.first { $0.preset == preset }?.title ?? "Custom \(days)"
+    }
+
     /// Frame-04 duration chips: 30 / 60 / 75 / 90 each map to a preset.
     static func definition(forDays days: Int) -> PresetDefinition? {
         all.first { $0.durationDays == days }

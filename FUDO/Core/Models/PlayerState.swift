@@ -34,6 +34,6 @@ final class PlayerState {
 extension PlayerState {
     var rank: Rank { Rank.from(ovr: ovrValue) }
     /// Never show an unearned point: floor, not rounding.
-    var displayedOVR: Int { Int(ovrValue.rounded(.down)) }
+    var displayedOVR: Int { OVREngine.displayedOVR(ovrValue) }
     var highestRank: Rank { Rank(rawValue: highestRankReached) ?? .novice }
 }

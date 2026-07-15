@@ -114,6 +114,16 @@ enum OVREngine {
         return ovr
     }
 
+    // MARK: - Display (§3f)
+
+    /// The ONE way to turn a stored OVR into the integer the user reads: FLOOR,
+    /// never rounding. 69.6 in the Ascetic band (opens at 70) must read 69 — a
+    /// rank is never announced before it is earned. Every screen goes through
+    /// here; `PlayerState.displayedOVR` is the same call on the live player.
+    static func displayedOVR(_ value: Double) -> Int {
+        Int(value.rounded(.down))
+    }
+
     // MARK: - Rank & projection
 
     static func rank(forOVR ovr: Double) -> Rank {

@@ -78,7 +78,7 @@ struct StatsView: View {
                 StatsAdviceCard(text: viewModel.overallAdvice(for: challenge))
             }
             .padding(.horizontal, FudoSpacing.screenMargin)
-            .padding(.bottom, 100)   // clear of the floating tab pill
+            .padding(.bottom, FudoSpacing.contentBottom)
             .animation(AppAnimation.standard, value: viewModel.period)
         }
     }
@@ -103,8 +103,8 @@ struct StatsView: View {
         let completion = StatsAggregator(challenge: last, calendar: store.displayCalendar,
                                          today: store.effectiveToday)
             .summary(.challenge).completionPercent
-        let from = Int(last.startOVR.rounded())
-        let to = Int((last.endOVR ?? last.startOVR).rounded())
+        let from = OVREngine.displayedOVR(last.startOVR)
+        let to = OVREngine.displayedOVR(last.endOVR ?? last.startOVR)
 
         return VStack(spacing: 14) {
             Text("You showed up last run.")
@@ -158,7 +158,7 @@ struct StatsView: View {
             Spacer(minLength: 40)
 
             startButton
-                .padding(.bottom, 90)
+                .padding(.bottom, FudoSpacing.contentBottom)
         }
         .padding(.horizontal, FudoSpacing.screenMargin)
     }

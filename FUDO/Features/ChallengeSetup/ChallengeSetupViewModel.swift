@@ -84,7 +84,7 @@ final class ChallengeSetupViewModel {
 
     // MARK: - Recap (screen 3 / standalone CTA)
 
-    var startingOVR: Int { Int((store.player?.ovrValue ?? 0).rounded()) }
+    var startingOVR: Int { OVREngine.displayedOVR(store.player?.ovrValue ?? 0) }
     var startDate: Date { store.effectiveToday }
 
     /// Exact last day of the challenge — day 1 is today (decision 2026-07-12).

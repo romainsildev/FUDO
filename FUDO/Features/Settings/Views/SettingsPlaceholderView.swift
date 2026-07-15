@@ -8,7 +8,7 @@ struct SettingsPlaceholderView: View {
             // submitted build (no dead buttons, known-pitfalls list).
             NavigationLink(value: PushDemoDestination(title: "Settings subscreen")) {
                 Text("Push demo →")
-                    .font(FudoFont.body())
+                    .fudoFont(.body())
                     .foregroundStyle(FudoColor.accent)
             }
             DebugMenuSection()

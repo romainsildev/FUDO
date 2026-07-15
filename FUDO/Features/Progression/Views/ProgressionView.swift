@@ -15,7 +15,7 @@ struct ProgressionView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: FudoSpacing.sectionGap) {
                 Text("Progression")
-                    .font(FudoFont.title(34))
+                    .fudoFont(.title(34))
                     .foregroundStyle(FudoColor.textPrimary)
                     .padding(.top, 4)
 

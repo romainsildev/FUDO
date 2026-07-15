@@ -33,10 +33,10 @@ struct RankPathNodeView: View {
     private func label(alignment: HorizontalAlignment) -> some View {
         VStack(alignment: alignment, spacing: 3) {
             Text(node.name.uppercased())
-                .font(FudoFont.title(19))
+                .fudoFont(.title(19))
                 .foregroundStyle(nameColor)
             Text(node.subtitle)
-                .font(FudoFont.caption(13))
+                .fudoFont(.caption(13))
                 .foregroundStyle(FudoColor.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: alignment == .leading ? .leading : .trailing)
@@ -85,7 +85,7 @@ private struct RankPortrait: View {
                 .brightness(node.state == .future ? -0.55 : 0)   // silhouette — tuned on device
         } else {
             Image(systemName: "person.fill")
-                .font(.system(size: diameter * 0.42))
+                .fudoFont(.glyph(diameter * 0.42))
                 .foregroundStyle(node.state == .future
                                  ? FudoColor.textSecondary.opacity(0.4)
                                  : FudoColor.textSecondary)

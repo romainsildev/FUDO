@@ -12,9 +12,9 @@ struct AddRuleRow: View {
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "plus")
-                    .font(.system(size: 14, weight: .semibold))
+                    .fudoFont(.body(14, weight: .semibold))
                 Text("Add rule")
-                    .font(FudoFont.body(15))
+                    .fudoFont(.body(15))
             }
             .foregroundStyle(FudoColor.textSecondary.opacity(isEnabled ? 1 : 0.4))
             .frame(maxWidth: .infinity)

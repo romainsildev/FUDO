@@ -16,7 +16,7 @@ struct HabitBarChart: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Text(title)
-                    .font(FudoFont.caption(13))
+                    .fudoFont(.caption(13))
                     .tracking(1.5)
                     .foregroundStyle(FudoColor.textSecondary)
                 Spacer()
@@ -50,7 +50,7 @@ struct HabitBarChart: View {
                             .frame(height: height(for: bar))
                     }
                     Text(bar.label)
-                        .font(.system(size: 11, weight: .medium))
+                        .fudoFont(.caption(11, weight: .medium))
                         .foregroundStyle(FudoColor.textSecondary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
@@ -77,7 +77,7 @@ struct HabitBarChart: View {
 
     private var emptyState: some View {
         Text("No days logged yet in this window.")
-            .font(FudoFont.body(15))
+            .fudoFont(.body(15))
             .foregroundStyle(FudoColor.textSecondary)
             .frame(maxWidth: .infinity, minHeight: maxHeight, alignment: .leading)
     }

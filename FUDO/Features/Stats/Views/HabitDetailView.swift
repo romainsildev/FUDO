@@ -32,11 +32,11 @@ struct HabitDetailView: View {
                 HStack(spacing: 7) {
                     if let rule {
                         Image(systemName: rule.iconName)
-                            .font(.system(size: 14, weight: .semibold))
+                            .fudoFont(.headline(14))
                             .foregroundStyle(FudoColor.accent)
                     }
                     Text(rule?.title ?? "Habit")
-                        .font(.system(size: 17, weight: .semibold))
+                        .fudoFont(.headline(17))
                         .foregroundStyle(FudoColor.textPrimary)
                 }
             }
@@ -72,7 +72,7 @@ struct HabitDetailView: View {
 
     private func sectionLabel(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 12, weight: .semibold))
+            .fudoFont(.label(12))
             .kerning(1.5)
             .foregroundStyle(FudoColor.textSecondary)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -81,10 +81,10 @@ struct HabitDetailView: View {
     private var unavailable: some View {
         VStack(spacing: 8) {
             Text("Habit unavailable")
-                .font(FudoFont.title())
+                .fudoFont(.title())
                 .foregroundStyle(FudoColor.textPrimary)
             Text("This habit is no longer part of an active challenge.")
-                .font(FudoFont.body())
+                .fudoFont(.body())
                 .foregroundStyle(FudoColor.textSecondary)
                 .multilineTextAlignment(.center)
         }

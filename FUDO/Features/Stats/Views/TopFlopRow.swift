@@ -35,21 +35,21 @@ struct TopFlopRow: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 5) {
                 Image(systemName: icon)
-                    .font(.system(size: 11, weight: .bold))
+                    .fudoFont(.label(11, weight: .bold))
                 Text(marker)
-                    .font(.system(size: 11, weight: .bold))
+                    .fudoFont(.label(11, weight: .bold))
                     .kerning(1)
             }
             .foregroundStyle(tint)
 
             Text(habit.title)
-                .font(.system(size: 16, weight: .semibold))
+                .fudoFont(.headline(16))
                 .foregroundStyle(FudoColor.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
 
             Text(detail)
-                .font(FudoFont.caption(13))
+                .fudoFont(.caption(13))
                 .foregroundStyle(FudoColor.textSecondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
@@ -68,10 +68,10 @@ struct TopFlopRow: View {
     private var tooEarly: some View {
         HStack(spacing: 10) {
             Image(systemName: "hourglass")
-                .font(.system(size: 14, weight: .semibold))
+                .fudoFont(.caption(14, weight: .semibold))
                 .foregroundStyle(FudoColor.textSecondary)
             Text("Strengths and weak spots need 5 days of data. Keep going.")
-                .font(FudoFont.caption(13))
+                .fudoFont(.caption(13))
                 .foregroundStyle(FudoColor.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)

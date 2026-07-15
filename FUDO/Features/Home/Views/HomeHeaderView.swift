@@ -23,7 +23,7 @@ struct HomeHeaderView: View {
             .accessibilityLabel("Your sensei — open Progress")
 
             Text(dayPillLabel)
-                .font(.system(size: 13, weight: .semibold))
+                .fudoFont(.label(13, weight: .semibold))
                 .kerning(1.5)
                 .foregroundStyle(FudoColor.textPrimary)
                 .padding(.horizontal, 16)
@@ -35,12 +35,12 @@ struct HomeHeaderView: View {
             Button(action: onFlameTap) {
                 HStack(spacing: 5) {
                     Image(systemName: "flame.fill")
-                        .font(.system(size: 14, weight: .semibold))
+                        .fudoFont(.stat(14, weight: .semibold))
                         .foregroundStyle(streakIsAlive
                                          ? AnyShapeStyle(FudoGradient.flame)
                                          : AnyShapeStyle(FudoColor.textSecondary))
                     Text("\(streak)")
-                        .font(.system(size: 14, weight: .bold).monospacedDigit())
+                        .fudoFont(.stat(14))
                         .foregroundStyle(streakIsAlive ? FudoColor.textPrimary : FudoColor.textSecondary)
                 }
                 .padding(.horizontal, 14)

@@ -26,12 +26,12 @@ struct PeriodSummaryCard: View {
     private func stat(value: String, caption: String, accent: Bool) -> some View {
         VStack(spacing: 6) {
             Text(value)
-                .font(.system(size: 30, weight: .heavy).monospacedDigit())
+                .fudoFont(.metric(30))
                 .foregroundStyle(accent ? FudoColor.accent : FudoColor.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
             Text(caption)
-                .font(.system(size: 11, weight: .semibold))
+                .fudoFont(.label(11))
                 .kerning(1)
                 .foregroundStyle(FudoColor.textSecondary)
         }

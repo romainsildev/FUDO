@@ -13,7 +13,7 @@ struct HabitStatRow: View {
             HStack(spacing: 12) {
                 iconTile
                 Text(habit.title)
-                    .font(FudoFont.body())
+                    .fudoFont(.body())
                     .foregroundStyle(FudoColor.textPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -24,14 +24,14 @@ struct HabitStatRow: View {
 
                 VStack(spacing: 2) {
                     Text("\(habit.completionPercent)%")
-                        .font(.system(size: 17, weight: .bold).monospacedDigit())
+                        .fudoFont(.stat(17))
                         .foregroundStyle(FudoColor.textPrimary)
                     TrendArrow(trend: habit.trend, size: 10)
                 }
                 .frame(width: 46)
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
+                    .fudoFont(.caption(13, weight: .semibold))
                     .foregroundStyle(FudoColor.textSecondary)
             }
             .padding(FudoSpacing.cardPadding)
@@ -50,7 +50,7 @@ struct HabitStatRow: View {
 
     private var iconTile: some View {
         Image(systemName: habit.iconName)
-            .font(.system(size: 15, weight: .medium))
+            .fudoFont(.glyph(15, weight: .medium))
             .foregroundStyle(FudoColor.textPrimary)
             .frame(width: 36, height: 36)
             .background {

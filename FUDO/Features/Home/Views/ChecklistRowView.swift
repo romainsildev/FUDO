@@ -104,7 +104,7 @@ struct ChecklistRowView: View {
     private var floatingLabel: some View {
         if let delta = floatingDelta {
             Text(String(format: "+%.1f OVR", delta))
-                .font(.system(size: 13, weight: .bold).monospacedDigit())
+                .fudoFont(.stat(13))
                 .foregroundStyle(FudoColor.positive)
                 .padding(.trailing, FudoSpacing.cardPadding)
                 .offset(y: floatOffset)
@@ -119,7 +119,7 @@ struct ChecklistRowView: View {
         HStack(spacing: 12) {
             iconTile
             Text(title)
-                .font(FudoFont.body())
+                .fudoFont(.body())
                 .strikethrough(isChecked, color: FudoColor.textSecondary)
                 .foregroundStyle(isChecked ? FudoColor.textSecondary : FudoColor.textPrimary)
                 .lineLimit(1)
@@ -141,7 +141,7 @@ struct ChecklistRowView: View {
 
     private var iconTile: some View {
         Image(systemName: iconName)
-            .font(.system(size: 15, weight: .medium))
+            .fudoFont(.glyph(15, weight: .medium))
             .foregroundStyle(FudoColor.textPrimary)
             .frame(width: 36, height: 36)
             .background {
@@ -155,7 +155,7 @@ struct ChecklistRowView: View {
             if isChecked {
                 Circle().fill(FudoColor.accent)
                 Image(systemName: "checkmark")
-                    .font(.system(size: 12, weight: .bold))
+                    .fudoFont(.glyph(12, weight: .bold))
                     .foregroundStyle(FudoColor.textPrimary)
             } else {
                 Circle().strokeBorder(FudoColor.border, lineWidth: 1.5)

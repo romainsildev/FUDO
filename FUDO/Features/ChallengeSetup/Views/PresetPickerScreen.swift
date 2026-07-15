@@ -9,7 +9,7 @@ struct PresetPickerScreen: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Pick your challenge")
-                    .font(FudoFont.title())
+                    .fudoFont(.title())
                     .foregroundStyle(FudoColor.textPrimary)
                     .padding(.top, 16)
                     .padding(.bottom, 8)
@@ -33,7 +33,7 @@ struct PresetPickerScreen: View {
                 onNext()
             } label: {
                 Text("Continue")
-                    .font(.system(size: 17, weight: .semibold))
+                    .fudoFont(.headline())
                     .foregroundStyle(FudoColor.textPrimary)
                     .frame(maxWidth: .infinity)
                     .frame(height: FudoSpacing.ctaHeight)

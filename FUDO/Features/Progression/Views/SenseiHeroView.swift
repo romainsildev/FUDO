@@ -24,17 +24,17 @@ struct SenseiHeroView: View {
 
             VStack(spacing: 2) {
                 Text("\(ovr)")
-                    .font(FudoFont.ovr(96))
+                    .fudoFont(.ovr(96))
                     .foregroundStyle(FudoColor.textPrimary)
                     .contentTransition(.numericText())
                 Text("OVR")
-                    .font(FudoFont.caption(15))
+                    .fudoFont(.caption(15))
                     .tracking(3)
                     .foregroundStyle(FudoColor.textSecondary)
             }
 
             Text("\(rankName.uppercased())  —  \(ordinal.uppercased())")
-                .font(FudoFont.caption(14).weight(.semibold))
+                .fudoFont(.caption(14, weight: .semibold))
                 .tracking(1.5)
                 .foregroundStyle(FudoColor.accent)
         }

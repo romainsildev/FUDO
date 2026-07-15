@@ -60,15 +60,15 @@ struct FlameSheetView: View {
                 }
             }
             Text("\(viewModel.streak)")
-                .font(FudoFont.ovr(76))
+                .fudoFont(.ovr(76))
                 .foregroundStyle(FudoColor.textPrimary)
             if isDead {
                 Text("Streak dead. Rebuild.")
-                    .font(.system(size: 17, weight: .semibold))
+                    .fudoFont(.headline(17))
                     .foregroundStyle(FudoColor.textPrimary)
             } else {
                 Text("day streak")
-                    .font(FudoFont.body())
+                    .fudoFont(.body())
                     .foregroundStyle(FudoColor.textSecondary)
             }
         }
@@ -76,7 +76,7 @@ struct FlameSheetView: View {
 
     private var flameSymbol: some View {
         Image(systemName: "flame.fill")
-            .font(.system(size: FlameSheetMetrics.heroFlameSize, weight: .semibold))
+            .fudoFont(.glyph(FlameSheetMetrics.heroFlameSize, weight: .semibold))
     }
 
     // MARK: - Week (M T W T F S S)
@@ -89,7 +89,7 @@ struct FlameSheetView: View {
                         .frame(width: FlameSheetMetrics.pastilleSize,
                                height: FlameSheetMetrics.pastilleSize)
                     Text(day.letter)
-                        .font(.system(size: 12, weight: .semibold))
+                        .fudoFont(.label(12, weight: .semibold))
                         .foregroundStyle(day.isToday ? FudoColor.accent : FudoColor.textSecondary)
                 }
                 .frame(maxWidth: .infinity)
@@ -104,14 +104,14 @@ struct FlameSheetView: View {
             ZStack {
                 Circle().fill(FudoColor.accent)
                 Image(systemName: "checkmark")
-                    .font(.system(size: 13, weight: .bold))
+                    .fudoFont(.glyph(13, weight: .bold))
                     .foregroundStyle(FudoColor.textPrimary)
             }
         case .missed:
             ZStack {
                 Circle().fill(FudoColor.border.opacity(0.5))
                 Image(systemName: "line.diagonal")
-                    .font(.system(size: 15, weight: .semibold))
+                    .fudoFont(.glyph(15, weight: .semibold))
                     .foregroundStyle(FudoColor.textSecondary)
             }
         case .today(let progress):
@@ -150,10 +150,10 @@ struct FlameSheetView: View {
     private func stat(value: Int, label: String) -> some View {
         VStack(spacing: 6) {
             Text("\(value)")
-                .font(.system(size: 24, weight: .bold).monospacedDigit())
+                .fudoFont(.metric(24, weight: .bold))
                 .foregroundStyle(FudoColor.textPrimary)
             Text(label)
-                .font(.system(size: 11, weight: .semibold))
+                .fudoFont(.label(11))
                 .kerning(1.2)
                 .foregroundStyle(FudoColor.textSecondary)
         }

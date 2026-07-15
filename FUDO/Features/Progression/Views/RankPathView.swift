@@ -28,7 +28,7 @@ struct RankPathView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             Text("THE PATH")
-                .font(FudoFont.caption(13))
+                .fudoFont(.caption(13))
                 .tracking(1.5)
                 .foregroundStyle(FudoColor.textSecondary)
 

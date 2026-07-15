@@ -24,7 +24,7 @@ struct TrendArrow: View {
 
     var body: some View {
         Image(systemName: symbol)
-            .font(.system(size: size, weight: .bold))
+            .fudoFont(.glyph(size, weight: .bold))
             .foregroundStyle(color)
             .accessibilityLabel(trend == .up ? "Trending up" : trend == .down ? "Trending down" : "Steady")
     }

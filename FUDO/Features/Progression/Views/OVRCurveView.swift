@@ -48,14 +48,14 @@ struct OVRCurveView: View {
     private var header: some View {
         HStack {
             Text(windowLabel.uppercased())
-                .font(FudoFont.caption(13))
+                .fudoFont(.caption(13))
                 .tracking(1.5)
                 .foregroundStyle(FudoColor.textSecondary)
             Spacer()
             if let weekNet, weekNet != 0 {
                 let up = weekNet > 0
                 Label("\(up ? "+" : "")\(weekNet) this week", systemImage: up ? "arrowtriangle.up.fill" : "arrowtriangle.down.fill")
-                    .font(FudoFont.caption(13).weight(.semibold))
+                    .fudoFont(.caption(13, weight: .semibold))
                     .foregroundStyle(up ? FudoColor.positive : FudoColor.negative)
                     .labelStyle(.titleAndIcon)
             }
@@ -64,7 +64,7 @@ struct OVRCurveView: View {
 
     private var caption: some View {
         Text("Your OVR curve fills in as the challenge goes. Come back tomorrow.")
-            .font(FudoFont.body(15))
+            .fudoFont(.body(15))
             .foregroundStyle(FudoColor.textSecondary)
             .frame(maxWidth: .infinity, minHeight: 100, alignment: .leading)
     }
@@ -126,12 +126,12 @@ private struct PointPopover: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(ProgressionViewModel.shortDate(point.date))
-                .font(FudoFont.caption(13).weight(.semibold))
+                .fudoFont(.caption(13, weight: .semibold))
                 .foregroundStyle(FudoColor.textPrimary)
             deltaLine
             if let complete = point.isComplete {
                 Text(complete ? "Complete" : "Incomplete")
-                    .font(FudoFont.caption(12))
+                    .fudoFont(.caption(12))
                     .foregroundStyle(complete ? FudoColor.positive : FudoColor.negative)
             }
         }
@@ -151,12 +151,12 @@ private struct PointPopover: View {
         let rounded = Int(point.delta.rounded())
         if rounded == 0 {
             Text("OVR \(OVREngine.displayedOVR(point.value))")
-                .font(FudoFont.caption(12))
+                .fudoFont(.caption(12))
                 .foregroundStyle(FudoColor.textSecondary)
         } else {
             let up = rounded > 0
             Label("\(up ? "+" : "")\(rounded) OVR", systemImage: up ? "arrowtriangle.up.fill" : "arrowtriangle.down.fill")
-                .font(FudoFont.caption(12).weight(.semibold))
+                .fudoFont(.caption(12, weight: .semibold))
                 .foregroundStyle(up ? FudoColor.positive : FudoColor.negative)
                 .labelStyle(.titleAndIcon)
         }

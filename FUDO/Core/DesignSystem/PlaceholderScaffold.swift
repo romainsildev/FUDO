@@ -17,10 +17,10 @@ struct PlaceholderScaffold<Extra: View>: View {
             FudoColor.bgPrimary.ignoresSafeArea()
             VStack(spacing: FudoSpacing.cardPadding) {
                 Text(title)
-                    .font(FudoFont.title())
+                    .fudoFont(.title())
                     .foregroundStyle(FudoColor.textPrimary)
                 Text(subtitle)
-                    .font(FudoFont.body())
+                    .fudoFont(.body())
                     .foregroundStyle(FudoColor.textSecondary)
                     .multilineTextAlignment(.center)
                 extra()

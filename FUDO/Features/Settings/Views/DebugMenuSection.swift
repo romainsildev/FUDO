@@ -43,7 +43,7 @@ struct DebugMenuSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("DEBUG")
-                .font(.system(size: 11, weight: .bold))
+                .fudoFont(.label(11, weight: .bold))
                 .kerning(1.2)
                 .foregroundStyle(FudoColor.textSecondary)
 
@@ -53,11 +53,11 @@ struct DebugMenuSection: View {
                 } label: {
                     HStack {
                         Text(action.label)
-                            .font(FudoFont.body(15))
+                            .fudoFont(.body(15))
                             .foregroundStyle(FudoColor.textPrimary)
                         Spacer()
                         Image(systemName: "exclamationmark.triangle")
-                            .font(.system(size: 12))
+                            .fudoFont(.glyph(12))
                             .foregroundStyle(FudoColor.textSecondary)
                     }
                     .padding(.horizontal, FudoSpacing.cardPadding)

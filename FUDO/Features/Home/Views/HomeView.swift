@@ -137,12 +137,12 @@ struct HomeView: View {
             HStack(spacing: 16) {
                 miniSenseiRing
                 Text("\(viewModel.displayedOVR)")
-                    .font(FudoFont.ovr(40))
+                    .fudoFont(.ovr(40))
                     .foregroundStyle(FudoColor.textPrimary)
                 VStack(alignment: .leading, spacing: 7) {
                     HStack(spacing: 8) {
                         Text(viewModel.rank.displayName)
-                            .font(.system(size: 13, weight: .heavy))
+                            .fudoFont(.label(13, weight: .heavy))
                             .kerning(1.5)
                             .foregroundStyle(FudoColor.accent)
                         Spacer(minLength: 8)
@@ -150,7 +150,7 @@ struct HomeView: View {
                     }
                     rankProgressBar
                     Text(viewModel.nextRankBarLabel)
-                        .font(.system(size: 10, weight: .semibold).monospacedDigit())
+                        .fudoFont(.stat(10, weight: .semibold))
                         .kerning(1)
                         .foregroundStyle(FudoColor.textSecondary)
                 }
@@ -240,15 +240,15 @@ struct HomeView: View {
         HStack(spacing: 16) {
             VStack(alignment: .trailing, spacing: 3) {
                 Text("RANK")
-                    .font(.system(size: 10, weight: .semibold))
+                    .fudoFont(.label(10, weight: .semibold))
                     .kerning(1.5)
                     .foregroundStyle(FudoColor.textSecondary)
                 Text(viewModel.rank.displayName)
-                    .font(.system(size: 16, weight: .heavy))
+                    .fudoFont(.label(16, weight: .heavy))
                     .kerning(1.2)
                     .foregroundStyle(FudoColor.accent)
                 Text(viewModel.nextRankHint)
-                    .font(.system(size: 10, weight: .semibold).monospacedDigit())
+                    .fudoFont(.stat(10, weight: .semibold))
                     .kerning(0.8)
                     .foregroundStyle(FudoColor.textSecondary)
             }
@@ -258,7 +258,7 @@ struct HomeView: View {
                 .frame(width: 3, height: 44)
 
             Text("\(viewModel.displayedOVR)")
-                .font(FudoFont.ovr(60))
+                .fudoFont(.ovr(60))
                 .foregroundStyle(FudoColor.textPrimary)
 
             Capsule()
@@ -267,7 +267,7 @@ struct HomeView: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text("TODAY")
-                    .font(.system(size: 10, weight: .semibold))
+                    .fudoFont(.label(10, weight: .semibold))
                     .kerning(1.5)
                     .foregroundStyle(FudoColor.textSecondary)
                 todayDelta(viewModel.ovrDeltaToday, fontSize: 15)
@@ -283,14 +283,14 @@ struct HomeView: View {
         if let delta {
             HStack(spacing: 3) {
                 Image(systemName: delta >= 0 ? "arrowtriangle.up.fill" : "arrowtriangle.down.fill")
-                    .font(.system(size: fontSize * 0.6, weight: .bold))
+                    .fudoFont(.stat(fontSize * 0.6))
                 Text(String(format: "%+.1f", delta))
-                    .font(.system(size: fontSize, weight: .bold).monospacedDigit())
+                    .fudoFont(.stat(fontSize))
             }
             .foregroundStyle(delta >= 0 ? FudoColor.positive : FudoColor.negative)
         } else {
             Text("—")
-                .font(.system(size: fontSize, weight: .bold))
+                .fudoFont(.stat(fontSize))
                 .foregroundStyle(FudoColor.textSecondary)
         }
     }
@@ -298,12 +298,12 @@ struct HomeView: View {
     private var rankLine: some View {
         HStack(spacing: 6) {
             Text(viewModel.rank.displayName)
-                .font(.system(size: 14, weight: .bold))
+                .fudoFont(.label(14, weight: .bold))
                 .kerning(2)
                 .foregroundStyle(FudoColor.accent)
             if let delta = viewModel.ovrDeltaToday {
                 Text("•")
-                    .font(.system(size: 12, weight: .bold))
+                    .fudoFont(.label(12, weight: .bold))
                     .foregroundStyle(FudoColor.textSecondary)
                 deltaBadge(delta)
                     .transition(.opacity.combined(with: .scale(scale: 0.85)))
@@ -316,9 +316,9 @@ struct HomeView: View {
     private func deltaBadge(_ delta: Double) -> some View {
         HStack(spacing: 3) {
             Image(systemName: delta >= 0 ? "arrowtriangle.up.fill" : "arrowtriangle.down.fill")
-                .font(.system(size: 9, weight: .bold))
+                .fudoFont(.stat(9, weight: .bold))
             Text(String(format: "%+.1f today", delta))
-                .font(.system(size: 13, weight: .semibold).monospacedDigit())
+                .fudoFont(.stat(13, weight: .semibold))
         }
         .foregroundStyle(delta >= 0 ? FudoColor.positive : FudoColor.negative)
     }
@@ -335,7 +335,7 @@ struct HomeView: View {
                 + Text(String(format: "OVR -%.1f.", summary.ovrDrop))
                     .foregroundStyle(FudoColor.negative)
             )
-            .font(.system(size: 15, weight: .medium))
+            .fudoFont(.body(15, weight: .medium))
             .lineLimit(1)
             .minimumScaleFactor(0.8)
 
@@ -345,7 +345,7 @@ struct HomeView: View {
                 withAnimation(AppAnimation.standard) { viewModel.dismissIncompleteBanner() }
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 12, weight: .semibold))
+                    .fudoFont(.body(12, weight: .semibold))
                     .foregroundStyle(FudoColor.textSecondary)
                     .padding(4)
             }
@@ -364,15 +364,15 @@ struct HomeView: View {
     private var completionBlock: some View {
         VStack(spacing: 8) {
             Text(viewModel.completionMessage)
-                .font(.system(size: 17, weight: .semibold))
+                .fudoFont(.headline(17))
                 .foregroundStyle(FudoColor.textPrimary)
             // Stub — wired to the share card in the share session.
             Button {} label: {
                 HStack(spacing: 4) {
                     Text("Share my day")
-                        .font(.system(size: 15, weight: .semibold))
+                        .fudoFont(.headline(15))
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 11, weight: .semibold))
+                        .fudoFont(.headline(11))
                 }
                 .foregroundStyle(FudoColor.accent)
             }
@@ -384,12 +384,12 @@ struct HomeView: View {
         VStack(spacing: 12) {
             HStack {
                 Text("TODAY'S PROTOCOL")
-                    .font(.system(size: 12, weight: .semibold))
+                    .fudoFont(.label(12))
                     .kerning(1.5)
                     .foregroundStyle(FudoColor.textSecondary)
                 Spacer()
                 Text("\(viewModel.checkedCount) / \(viewModel.totalCount)")
-                    .font(.system(size: 13, weight: .bold).monospacedDigit())
+                    .fudoFont(.stat(13))
                     .foregroundStyle(FudoColor.accent)
             }
             VStack(spacing: 10) {
@@ -426,7 +426,7 @@ struct HomeView: View {
                                         pulseTrigger: 0,
                                         celebrationTrigger: 0)
                         Text("\(viewModel.displayedOVR)")
-                            .font(FudoFont.ovr(84))
+                            .fudoFont(.ovr(84))
                             .foregroundStyle(FudoColor.textPrimary)
                         rankLine
                     }
@@ -437,10 +437,10 @@ struct HomeView: View {
 
                     VStack(spacing: 8) {
                         Text("Your rank awaits.")
-                            .font(FudoFont.title())
+                            .fudoFont(.title())
                             .foregroundStyle(FudoColor.textPrimary)
                         Text("The dojo doesn't close. Start again.")
-                            .font(FudoFont.body())
+                            .fudoFont(.body())
                             .foregroundStyle(FudoColor.textSecondary)
                     }
                     .padding(.top, 28)
@@ -452,7 +452,7 @@ struct HomeView: View {
                         viewModel.presentedCover = .challengeSetup
                     } label: {
                         Text("Start a new challenge")
-                            .font(.system(size: 17, weight: .semibold))
+                            .fudoFont(.headline(17))
                             .foregroundStyle(FudoColor.textPrimary)
                             .frame(maxWidth: .infinity)
                             .frame(height: FudoSpacing.ctaHeight)

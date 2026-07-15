@@ -25,7 +25,7 @@ struct StatsPeriodPicker: View {
     private func segment(_ option: StatsPeriod) -> some View {
         let selected = option == period
         return Text(option.label)
-            .font(.system(size: 12, weight: .bold))
+            .fudoFont(.label(12, weight: .bold))
             .kerning(0.8)
             .foregroundStyle(selected ? FudoColor.textPrimary : FudoColor.textSecondary)
             .frame(maxWidth: .infinity)

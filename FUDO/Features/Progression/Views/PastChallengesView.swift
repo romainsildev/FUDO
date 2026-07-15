@@ -15,7 +15,7 @@ struct PastChallengesView: View {
         if !finished.isEmpty {
             VStack(alignment: .leading, spacing: 14) {
                 Text("PAST CHALLENGES")
-                    .font(FudoFont.caption(13))
+                    .fudoFont(.caption(13))
                     .tracking(1.5)
                     .foregroundStyle(FudoColor.textSecondary)
 
@@ -35,10 +35,10 @@ private struct PastChallengeCard: View {
         HStack(alignment: .center, spacing: 14) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(PresetCatalog.title(for: challenge.preset, days: challenge.durationDays))
-                    .font(FudoFont.title(17))
+                    .fudoFont(.title(17))
                     .foregroundStyle(FudoColor.textPrimary)
                 Text(dateRange)
-                    .font(FudoFont.caption(13))
+                    .fudoFont(.caption(13))
                     .foregroundStyle(FudoColor.textSecondary)
             }
 
@@ -46,12 +46,12 @@ private struct PastChallengeCard: View {
 
             VStack(alignment: .trailing, spacing: 4) {
                 Text(completed ? "Completed" : "Abandoned")
-                    .font(FudoFont.caption(12).weight(.semibold))
+                    .fudoFont(.caption(12, weight: .semibold))
                     .tracking(0.5)
                     .foregroundStyle(completed ? FudoColor.accent : FudoColor.textSecondary)
                 if let endOVR = challenge.endOVR {
                     Text("OVR \(OVREngine.displayedOVR(endOVR))")
-                        .font(FudoFont.body(15).weight(.semibold).monospacedDigit())
+                        .fudoFont(.stat(15, weight: .semibold))
                         .foregroundStyle(FudoColor.textPrimary)
                 }
             }

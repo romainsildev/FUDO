@@ -11,12 +11,12 @@ struct RuleRowEditor: View {
         Button(action: onEdit) {
             HStack(spacing: 12) {
                 Image(systemName: rule.iconName)
-                    .font(.system(size: 17, weight: .medium))
+                    .fudoFont(.glyph(17, weight: .medium))
                     .foregroundStyle(rule.isEnabled ? FudoColor.textPrimary : FudoColor.textSecondary)
                     .frame(width: 28)
 
                 Text(rule.title)
-                    .font(FudoFont.body(16))
+                    .fudoFont(.body(16))
                     .foregroundStyle(rule.isEnabled ? FudoColor.textPrimary : FudoColor.textSecondary)
                     .lineLimit(1)
 
@@ -50,7 +50,7 @@ struct RuleRowEditor: View {
                     .strokeBorder(rule.isEnabled ? Color.clear : FudoColor.border, lineWidth: 1.5)
                 if rule.isEnabled {
                     Image(systemName: "checkmark")
-                        .font(.system(size: 11, weight: .bold))
+                        .fudoFont(.glyph(11, weight: .bold))
                         .foregroundStyle(FudoColor.textPrimary)
                 }
             }

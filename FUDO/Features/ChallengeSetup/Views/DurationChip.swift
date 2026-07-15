@@ -12,7 +12,7 @@ struct DurationChip: View {
             action()
         } label: {
             Text("\(days) d")
-                .font(.system(size: 16, weight: .semibold))
+                .fudoFont(.headline(16))
                 .foregroundStyle(FudoColor.textPrimary)
                 .padding(.horizontal, 18)
                 .frame(height: 44)

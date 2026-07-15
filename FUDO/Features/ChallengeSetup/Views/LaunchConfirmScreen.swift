@@ -15,7 +15,7 @@ struct LaunchConfirmScreen: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: FudoSpacing.cardPadding) {
                 Text("Lock it in")
-                    .font(FudoFont.title())
+                    .fudoFont(.title())
                     .foregroundStyle(FudoColor.textPrimary)
                     .padding(.top, 16)
 
@@ -57,11 +57,11 @@ struct LaunchConfirmScreen: View {
     private func recapRow(_ label: String, _ value: String) -> some View {
         HStack {
             Text(label)
-                .font(FudoFont.body(15))
+                .fudoFont(.body(15))
                 .foregroundStyle(FudoColor.textSecondary)
             Spacer()
             Text(value)
-                .font(.system(size: 15, weight: .semibold).monospacedDigit())
+                .fudoFont(.stat(15, weight: .semibold))
                 .foregroundStyle(FudoColor.textPrimary)
         }
     }
@@ -69,17 +69,17 @@ struct LaunchConfirmScreen: View {
     private var rulesCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("YOUR PROTOCOL")
-                .font(.system(size: 11, weight: .bold))
+                .fudoFont(.label(11, weight: .bold))
                 .kerning(1.2)
                 .foregroundStyle(FudoColor.textSecondary)
             ForEach(viewModel.enabledRules) { rule in
                 HStack(spacing: 10) {
                     Image(systemName: rule.iconName)
-                        .font(.system(size: 14, weight: .medium))
+                        .fudoFont(.glyph(14, weight: .medium))
                         .foregroundStyle(FudoColor.accent)
                         .frame(width: 22)
                     Text(rule.title)
-                        .font(FudoFont.body(15))
+                        .fudoFont(.body(15))
                         .foregroundStyle(FudoColor.textPrimary)
                 }
             }
@@ -99,7 +99,7 @@ struct LaunchConfirmScreen: View {
     private var reminderCard: some View {
         HStack {
             Text("Daily reminder")
-                .font(FudoFont.body(15))
+                .fudoFont(.body(15))
                 .foregroundStyle(FudoColor.textSecondary)
             Spacer()
             DatePicker("", selection: $reminderTime, displayedComponents: .hourAndMinute)
@@ -124,7 +124,7 @@ struct LaunchConfirmScreen: View {
 
     private var failureRule: some View {
         Text("Incomplete day = your OVR drops. The challenge goes on. No reset. No excuses.")
-            .font(FudoFont.body(15))
+            .fudoFont(.body(15))
             .foregroundStyle(FudoColor.textSecondary)
             .padding(.top, 4)
     }
@@ -133,7 +133,7 @@ struct LaunchConfirmScreen: View {
 
     private var commitCTA: some View {
         Text("Hold to commit.")
-            .font(.system(size: 17, weight: .semibold))
+            .fudoFont(.headline())
             .foregroundStyle(FudoColor.textPrimary)
             .frame(maxWidth: .infinity)
             .frame(height: FudoSpacing.ctaHeight)

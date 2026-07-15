@@ -47,14 +47,14 @@ struct RuleEditSheet: View {
     private var header: some View {
         HStack {
             Text(rule == nil ? "New rule" : "Edit rule")
-                .font(FudoFont.title(20))
+                .fudoFont(.title(20))
                 .foregroundStyle(FudoColor.textPrimary)
             Spacer()
             Button {
                 dismiss()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .semibold))
+                    .fudoFont(.glyph(14, weight: .semibold))
                     .foregroundStyle(FudoColor.textSecondary)
                     .padding(8)
             }
@@ -64,7 +64,7 @@ struct RuleEditSheet: View {
 
     private var titleField: some View {
         TextField("Rule name", text: $title)
-            .font(FudoFont.body())
+            .fudoFont(.body())
             .foregroundStyle(FudoColor.textPrimary)
             .tint(FudoColor.accent)
             .padding(.horizontal, FudoSpacing.cardPadding)
@@ -89,7 +89,7 @@ struct RuleEditSheet: View {
                     iconName = symbol
                 } label: {
                     Image(systemName: symbol)
-                        .font(.system(size: 16, weight: .medium))
+                        .fudoFont(.glyph(16, weight: .medium))
                         .foregroundStyle(FudoColor.textPrimary)
                         .frame(maxWidth: .infinity)
                         .frame(height: 40)
@@ -111,7 +111,7 @@ struct RuleEditSheet: View {
     private var timePicker: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Up before")
-                .font(FudoFont.caption())
+                .fudoFont(.caption())
                 .foregroundStyle(FudoColor.textSecondary)
             DatePicker("", selection: $wakeTime, displayedComponents: .hourAndMinute)
                 .datePickerStyle(.wheel)
@@ -125,7 +125,7 @@ struct RuleEditSheet: View {
             save()
         } label: {
             Text("Save")
-                .font(.system(size: 17, weight: .semibold))
+                .fudoFont(.headline())
                 .foregroundStyle(FudoColor.textPrimary)
                 .frame(maxWidth: .infinity)
                 .frame(height: FudoSpacing.ctaHeight)

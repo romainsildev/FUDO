@@ -9,11 +9,11 @@ struct StatsAdviceCard: View {
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "lightbulb.fill")
-                .font(.system(size: 14, weight: .semibold))
+                .fudoFont(.body(14, weight: .semibold))
                 .foregroundStyle(FudoColor.accent)
                 .padding(.top, 1)
             Text(text)
-                .font(FudoFont.body(15))
+                .fudoFont(.body(15))
                 .foregroundStyle(FudoColor.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)

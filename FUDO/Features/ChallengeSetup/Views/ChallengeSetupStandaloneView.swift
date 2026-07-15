@@ -35,13 +35,13 @@ struct ChallengeSetupStandaloneView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
                     Text("YOUR PROTOCOL")
-                        .font(.system(size: 13, weight: .bold))
+                        .fudoFont(.label(13, weight: .bold))
                         .kerning(2)
                         .foregroundStyle(FudoColor.accent)
                         .padding(.top, 16)
 
                     Text("Your Monk Mode.\nYour rules.")
-                        .font(FudoFont.title(32))
+                        .fudoFont(.title(32))
                         .foregroundStyle(FudoColor.textPrimary)
                         .padding(.top, 8)
 
@@ -56,13 +56,13 @@ struct ChallengeSetupStandaloneView: View {
 
                     if viewModel.showRuleCountWarning {
                         Text("More rules = more failure.")
-                            .font(FudoFont.caption())
+                            .fudoFont(.caption())
                             .foregroundStyle(FudoColor.negative)
                             .padding(.top, 12)
                     }
 
                     Text("Tap a rule to adjust it. This is YOUR protocol.")
-                        .font(FudoFont.caption())
+                        .fudoFont(.caption())
                         .foregroundStyle(FudoColor.textSecondary)
                         .padding(.top, 16)
 
@@ -85,7 +85,7 @@ struct ChallengeSetupStandaloneView: View {
     private var navHeader: some View {
         ZStack {
             Text("New challenge")
-                .font(.system(size: 17, weight: .semibold))
+                .fudoFont(.headline())
                 .foregroundStyle(FudoColor.textPrimary)
             HStack {
                 Button {
@@ -93,7 +93,7 @@ struct ChallengeSetupStandaloneView: View {
                     onExit()
                 } label: {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
+                        .fudoFont(.headline())
                         .foregroundStyle(FudoColor.textSecondary)
                         .padding(.vertical, 8)
                         .padding(.trailing, 12)
@@ -128,7 +128,7 @@ struct ChallengeSetupStandaloneView: View {
         return Text(isRecommended
                     ? "\(definition.title.uppercased()) · RECOMMENDED FOR YOU"
                     : "\(definition.title.uppercased()) · \(definition.tagline.uppercased())")
-            .font(.system(size: 12, weight: .bold))
+            .fudoFont(.label(12, weight: .bold))
             .kerning(1.2)
             .foregroundStyle(isRecommended ? FudoColor.positive : FudoColor.textSecondary)
     }
@@ -150,7 +150,7 @@ struct ChallengeSetupStandaloneView: View {
 
     private var startCTA: some View {
         Text("Start challenge — Day 1")
-            .font(.system(size: 17, weight: .semibold))
+            .fudoFont(.headline())
             .foregroundStyle(FudoColor.textPrimary)
             .frame(maxWidth: .infinity)
             .frame(height: FudoSpacing.ctaHeight)

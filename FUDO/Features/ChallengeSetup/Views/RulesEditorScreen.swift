@@ -23,12 +23,12 @@ struct RulesEditorScreen: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Adjust your rules")
-                    .font(FudoFont.title())
+                    .fudoFont(.title())
                     .foregroundStyle(FudoColor.textPrimary)
                     .padding(.top, 16)
 
                 Text("Every rule is daily. Tap to edit, toggle to drop.")
-                    .font(FudoFont.body(15))
+                    .fudoFont(.body(15))
                     .foregroundStyle(FudoColor.textSecondary)
                     .padding(.bottom, 10)
 
@@ -42,7 +42,7 @@ struct RulesEditorScreen: View {
 
                 if viewModel.showRuleCountWarning {
                     Text("More rules = more failure.")
-                        .font(FudoFont.caption())
+                        .fudoFont(.caption())
                         .foregroundStyle(FudoColor.negative)
                         .padding(.top, 6)
                 }
@@ -58,7 +58,7 @@ struct RulesEditorScreen: View {
                 onNext()
             } label: {
                 Text("Continue")
-                    .font(.system(size: 17, weight: .semibold))
+                    .fudoFont(.headline())
                     .foregroundStyle(FudoColor.textPrimary)
                     .frame(maxWidth: .infinity)
                     .frame(height: FudoSpacing.ctaHeight)

@@ -16,7 +16,7 @@ struct PresetCard: View {
             VStack(alignment: .leading, spacing: 8) {
                 if isRecommended {
                     Text("RECOMMENDED FOR YOU")
-                        .font(.system(size: 11, weight: .bold))
+                        .fudoFont(.label(11, weight: .bold))
                         .kerning(1.2)
                         .foregroundStyle(FudoColor.textPrimary)
                         .padding(.horizontal, 10)
@@ -26,20 +26,20 @@ struct PresetCard: View {
 
                 HStack(alignment: .firstTextBaseline) {
                     Text(definition.title)
-                        .font(FudoFont.title(20))
+                        .fudoFont(.title(20))
                         .foregroundStyle(FudoColor.textPrimary)
                     Spacer()
                     Text("\(definition.durationDays) days")
-                        .font(FudoFont.caption())
+                        .fudoFont(.caption())
                         .foregroundStyle(FudoColor.textSecondary)
                 }
 
                 Text(definition.tagline)
-                    .font(FudoFont.body(15))
+                    .fudoFont(.body(15))
                     .foregroundStyle(FudoColor.textSecondary)
 
                 Text("\(definition.defaultRules.count) rules")
-                    .font(FudoFont.caption())
+                    .fudoFont(.caption())
                     .foregroundStyle(FudoColor.textSecondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

@@ -22,7 +22,7 @@ struct HabitTimelineView: View {
             gutter(entry, isFirst: isFirst, isLast: isLast)
             HStack {
                 Text("Day \(entry.dayNumber)")
-                    .font(.system(size: 16, weight: .semibold))
+                    .fudoFont(.headline(16))
                     .foregroundStyle(FudoColor.textPrimary)
                 Spacer(minLength: 8)
                 trailing(entry)
@@ -56,24 +56,23 @@ struct HabitTimelineView: View {
         case .held:
             HStack(spacing: 5) {
                 Image(systemName: "checkmark")
-                    .font(.system(size: 12, weight: .bold))
+                    .fudoFont(.body(12, weight: .bold))
                     .foregroundStyle(FudoColor.positive)
                 Text(entry.timeLabel ?? "checked")
-                    .font(FudoFont.body(15))
+                    .fudoFont(.stat(15, weight: .regular))
                     .foregroundStyle(FudoColor.textSecondary)
-                    .monospacedDigit()
             }
         case .missed:
             HStack(spacing: 5) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 12, weight: .bold))
+                    .fudoFont(.body(12, weight: .bold))
                 Text("missed")
-                    .font(FudoFont.body(15))
+                    .fudoFont(.body(15))
             }
             .foregroundStyle(FudoColor.negative)
         case .todayOpen:
             Text("in progress")
-                .font(FudoFont.body(15))
+                .fudoFont(.body(15))
                 .foregroundStyle(FudoColor.textSecondary)
         }
     }

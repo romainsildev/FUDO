@@ -56,7 +56,7 @@ struct StatsView: View {
         return ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: FudoSpacing.sectionGap) {
                 Text("Stats")
-                    .font(FudoFont.title(34))
+                    .fudoFont(.title(34))
                     .foregroundStyle(FudoColor.textPrimary)
                     .padding(.top, 4)
 
@@ -108,17 +108,17 @@ struct StatsView: View {
 
         return VStack(spacing: 14) {
             Text("You showed up last run.")
-                .font(FudoFont.title(24))
+                .fudoFont(.title(24))
                 .foregroundStyle(FudoColor.textPrimary)
                 .multilineTextAlignment(.center)
 
             Text("\(completion)% completion · OVR \(from) → \(to)")
-                .font(FudoFont.body(15))
+                .fudoFont(.body(15))
                 .foregroundStyle(FudoColor.textSecondary)
                 .multilineTextAlignment(.center)
 
             Text("The dojo doesn't close. Go earn the next one.")
-                .font(FudoFont.body(15))
+                .fudoFont(.body(15))
                 .foregroundStyle(FudoColor.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.bottom, 4)
@@ -138,7 +138,7 @@ struct StatsView: View {
     private var emptyState: some View {
         VStack(spacing: 0) {
             Text("Stats")
-                .font(FudoFont.title(34))
+                .fudoFont(.title(34))
                 .foregroundStyle(FudoColor.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 4)
@@ -147,10 +147,10 @@ struct StatsView: View {
 
             VStack(spacing: 8) {
                 Text("Your habits, measured.")
-                    .font(FudoFont.title())
+                    .fudoFont(.title())
                     .foregroundStyle(FudoColor.textPrimary)
                 Text("Start a challenge and this fills with your real numbers — completion, streaks, weak spots.")
-                    .font(FudoFont.body())
+                    .fudoFont(.body())
                     .foregroundStyle(FudoColor.textSecondary)
                     .multilineTextAlignment(.center)
             }
@@ -171,7 +171,7 @@ struct StatsView: View {
             setupCover = .challengeSetup
         } label: {
             Text("Start a new challenge")
-                .font(.system(size: 17, weight: .semibold))
+                .fudoFont(.headline(17))
                 .foregroundStyle(FudoColor.textPrimary)
                 .frame(maxWidth: .infinity)
                 .frame(height: FudoSpacing.ctaHeight)
@@ -182,7 +182,7 @@ struct StatsView: View {
 
     private func sectionLabel(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 12, weight: .semibold))
+            .fudoFont(.label(12))
             .kerning(1.5)
             .foregroundStyle(FudoColor.textSecondary)
     }

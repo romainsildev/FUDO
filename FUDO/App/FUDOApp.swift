@@ -8,13 +8,16 @@ struct FUDOApp: App {
     @State private var gameStore: GameStore?
 
     init() {
-        // Unit tests run HOSTED inside this app: if the app also built its real
-        // container (+ seed, + RootView rollovers) the process would juggle several
-        // live SwiftData containers → EXC_BREAKPOINT on insert (iOS 17 multi-container
-        // bug). Under a test session the app stays an empty shell; tests own their
-        // single in-memory container (SwiftDataTestSupport).
+        // Unit tests AND Xcode previews run HOSTED inside this app: if the app also
+        // built its real container (+ seed, + RootView rollovers) the process would
+        // juggle several live SwiftData containers → EXC_BREAKPOINT on insert (iOS 17
+        // multi-container bug; "Fatal Error in BackingData.swift" in the canvas).
+        // Under either session the app stays an empty shell; tests own their single
+        // in-memory container (SwiftDataTestSupport), previews own theirs
+        // (per-preview factory, e.g. HomePreviewFactory).
         let env = ProcessInfo.processInfo.environment
-        if env["XCTestSessionIdentifier"] != nil || env["XCTestConfigurationFilePath"] != nil {
+        if env["XCTestSessionIdentifier"] != nil || env["XCTestConfigurationFilePath"] != nil
+            || env["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
             container = nil
             _gameStore = State(initialValue: nil)
             return

@@ -1,0 +1,94 @@
+import SwiftUI
+
+/// OB 06 — the AHA, under a minute from opening. He isn't reading a statistic:
+/// he's reading HIS OWN multiplication. Then the pivot — we don't leave him in
+/// the pain, we tell him monk mode exists exactly for this, and why the stake is
+/// 30 days.
+///
+/// Nothing on this screen claims a study. The number is his two answers, times
+/// each other (ShockMath). That's the whole point, and it's why it survives a
+/// fact-check.
+struct ShockStatScreen: View {
+    let shock: ShockMath.Result
+    let pain: Pain
+    let onAdvance: () -> Void
+    let onBack: () -> Void
+
+    @State private var counted: Double = 0
+    @State private var revealed = false
+
+    /// The recut lands AFTER the number: he takes the hit, then we name it.
+    private static let recutDelay: TimeInterval = OnboardingMetrics.countUpDuration
+    private static let pivotDelay: TimeInterval = OnboardingMetrics.countUpDuration + 0.4
+    private static let stakeDelay: TimeInterval = OnboardingMetrics.countUpDuration + 0.6
+
+    var body: some View {
+        OnboardingScaffold(step: .shockStat, eyebrow: "THE MATH",
+                           title: OnboardingCopy.shockLead(shock: shock),
+                           canAdvance: true, onBack: onBack, onAdvance: onAdvance) {
+            VStack(alignment: .leading, spacing: 0) {
+                number
+                Text("of your life.")
+                    .fudoFont(.title(24, weight: .bold))
+                    .foregroundStyle(FudoColor.textPrimary)
+
+                Text(OnboardingCopy.shockRecut(pain: pain, shock: shock))
+                    .fudoFont(.body(15, weight: .medium))
+                    .foregroundStyle(FudoColor.accent)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 16)
+                    .opacity(revealed ? 1 : 0)
+                    .animation(AppAnimation.standard.delay(Self.recutDelay), value: revealed)
+
+                separator
+                    .padding(.top, 28)
+                    .opacity(revealed ? 1 : 0)
+                    .animation(AppAnimation.standard.delay(Self.pivotDelay), value: revealed)
+
+                Text(OnboardingCopy.shockPivot)
+                    .fudoFont(.body(15))
+                    .foregroundStyle(FudoColor.textSecondary)
+                    .padding(.top, 22)
+                    .opacity(revealed ? 1 : 0)
+                    .animation(AppAnimation.standard.delay(Self.pivotDelay), value: revealed)
+
+                Text(OnboardingCopy.shockStake)
+                    .fudoFont(.caption(13))
+                    .foregroundStyle(FudoColor.textSecondary.opacity(0.85))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 8)
+                    .opacity(revealed ? 1 : 0)
+                    .animation(AppAnimation.standard.delay(Self.stakeDelay), value: revealed)
+            }
+        }
+        .onboardingWarmWash()
+        .task { await runCountUp() }
+    }
+
+    /// The count-up re-formats through ShockMath's own rule — "1.9 years" or
+    /// "205 days", never two spellings of one number.
+    private var number: some View {
+        CountUpText(value: counted) { ShockMath.headline(for: max(0, $0)) }
+            .fudoFont(.ovr(56))
+            .foregroundStyle(FudoColor.accent)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+    }
+
+    private var separator: some View {
+        Rectangle()
+            .fill(FudoColor.accent)
+            .frame(width: 32, height: 2)
+    }
+
+    /// Sober: it climbs, it stops, it hits. No bounce, no scale — the number
+    /// doesn't need help.
+    private func runCountUp() async {
+        revealed = true
+        withAnimation(.easeOut(duration: OnboardingMetrics.countUpDuration)) {
+            counted = shock.years
+        }
+        try? await Task.sleep(for: .seconds(OnboardingMetrics.countUpDuration))
+        Haptics.medium()   // the blow lands WITH the number, not before it
+    }
+}

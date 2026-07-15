@@ -58,7 +58,11 @@ struct OnboardingFlowView: View {
     // MARK: - Routing
 
     @ViewBuilder private var content: some View {
+        @Bindable var viewModel = viewModel
         switch viewModel.step {
+
+        // MARK: Act 0 — welcome
+
         case .splash:
             SplashScreen(onTap: viewModel.advance)
         case .transformation:
@@ -67,8 +71,70 @@ struct OnboardingFlowView: View {
             WelcomeHookScreen(hook: .pain, onAdvance: viewModel.advance)
         case .mechanism:
             WelcomeHookScreen(hook: .mechanism, onAdvance: viewModel.advance)
+
+        // MARK: Act 1 — diagnostic & self-persuasion
+        //
+        // The question and its options sit at the SAME call site: a table of
+        // anonymous descriptors would hide what the user is actually asked.
+
+        case .painPoint:
+            SingleChoiceScreen(step: .painPoint, eyebrow: "START HERE",
+                               title: "What's the ONE thing\nyou can't control alone?",
+                               options: Pain.allCases, titleFor: \.optionTitle,
+                               selection: $viewModel.draft.pain,
+                               onAdvance: viewModel.advance, onBack: viewModel.back)
+        case .scrollHours:
+            SingleChoiceScreen(step: .scrollHours, eyebrow: "BE HONEST",
+                               title: "How many hours a day\ndo you scroll?",
+                               options: OnboardingAnswers.ScrollTime.allCases,
+                               titleFor: \.optionTitle,
+                               selection: $viewModel.draft.scrollTime,
+                               onAdvance: viewModel.advance, onBack: viewModel.back)
+        case .age:
+            SingleChoiceScreen(step: .age, eyebrow: "QUICK ONE",
+                               title: "How old are you?",
+                               options: AgeBracket.allCases, titleFor: \.optionTitle,
+                               selection: $viewModel.draft.age,
+                               onAdvance: viewModel.advance, onBack: viewModel.back)
+        case .procrastination:
+            SingleChoiceScreen(step: .procrastination, eyebrow: "NO JUDGMENT",
+                               title: "How often do you say\n\"I'll start Monday\"?",
+                               // Frame order (worst first) — NOT allCases, which
+                               // is ordered by the OVR scale.
+                               options: OnboardingAnswers.Procrastination.displayOrder,
+                               titleFor: \.optionTitle,
+                               selection: $viewModel.draft.procrastination,
+                               onAdvance: viewModel.advance, onBack: viewModel.back)
+        case .shockStat:
+            if let shock = viewModel.shock, let pain = viewModel.draft.pain {
+                ShockStatScreen(shock: shock, pain: pain,
+                                onAdvance: viewModel.advance, onBack: viewModel.back)
+            }
+        case .goals:
+            MultiChoiceScreen(step: .goals, eyebrow: "YOUR TARGETS",
+                              title: "What do you actually\nwant?",
+                              subtitle: "Pick all that apply",
+                              options: Goal.allCases,
+                              selection: $viewModel.draft.goals,
+                              onAdvance: viewModel.advance, onBack: viewModel.back)
+        case .struggle:
+            SingleChoiceScreen(step: .struggle, eyebrow: "THE REAL TALK",
+                               title: "What's your real problem?",
+                               options: OnboardingAnswers.Struggle.allCases,
+                               titleFor: \.optionTitle,
+                               selection: $viewModel.draft.struggle,
+                               onAdvance: viewModel.advance, onBack: viewModel.back)
+        case .reflection:
+            if let struggle = viewModel.draft.struggle {
+                ReflectionScreen(goals: viewModel.draft.goals, pain: viewModel.draft.pain,
+                                 struggle: struggle, onAdvance: viewModel.advance)
+            }
+        case .diagnostic:
+            DiagnosticScreen(ovr: viewModel.diagnosticOVR, rank: viewModel.diagnosticRank,
+                             onAdvance: viewModel.advance, onBack: viewModel.back)
+
         default:
-            // Acts 1-4 land here, screen by screen.
+            // Acts 2-4 land here, screen by screen.
             actUnderConstruction
         }
     }

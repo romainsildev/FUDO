@@ -33,6 +33,14 @@ struct SenseiStageView: View {
     let showsRingProgress: Bool
     let pulseTrigger: Int
     let celebrationTrigger: Int
+    /// Stage geometry — defaults are the original (01b no-challenge) cotes; the
+    /// v2 active hero passes compact values from `HomeHeroMetrics`.
+    var stageHeight: CGFloat = 340
+    var ringDiameter: CGFloat = 292
+    var senseiHeight: CGFloat = 318
+    /// true = sensei centered in the ring arc (v2 hero); false = original
+    /// bottom-anchored stance.
+    var centersSensei = false
 
     @State private var senseiScale: CGFloat = 1
     @State private var auraBoost: Double = 0
@@ -40,10 +48,6 @@ struct SenseiStageView: View {
     @State private var ringFlash: Double = 0
     @State private var ringScale: CGFloat = 1
     @State private var showsBurst = false
-
-    private let stageHeight: CGFloat = 340
-    private let ringDiameter: CGFloat = 292
-    private let senseiHeight: CGFloat = 318
 
     var body: some View {
         ZStack {
@@ -74,10 +78,10 @@ struct SenseiStageView: View {
     /// Warm vermillon halo behind the sensei; near-extinct while resting.
     private var aura: some View {
         RadialGradient(colors: [FudoColor.accent.opacity(baseAuraOpacity + auraBoost), .clear],
-                       center: .center, startRadius: 20, endRadius: 190)
+                       center: .center, startRadius: 20, endRadius: ringDiameter * 0.65)
             .overlay {
                 RadialGradient(colors: [FudoColor.celebrationGold.opacity(goldFlash), .clear],
-                               center: .center, startRadius: 10, endRadius: 170)
+                               center: .center, startRadius: 10, endRadius: ringDiameter * 0.58)
             }
             .animation(AppAnimation.slow, value: mood)
     }
@@ -123,12 +127,12 @@ struct SenseiStageView: View {
             .resizable()
             .scaledToFit()
             .frame(height: senseiHeight)
-            .scaleEffect(senseiScale * postureScale, anchor: .bottom)
+            .scaleEffect(senseiScale * postureScale, anchor: centersSensei ? .center : .bottom)
             .offset(y: postureOffset)
             .saturation(postureSaturation)
             .opacity(postureOpacity)
             .animation(AppAnimation.slow, value: mood)
-            .frame(maxHeight: stageHeight, alignment: .bottom)
+            .frame(maxHeight: stageHeight, alignment: centersSensei ? .center : .bottom)
     }
 
     // MARK: - Posture (placeholder-art hooks — real art swaps pose assets here)

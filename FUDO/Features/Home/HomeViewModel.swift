@@ -163,6 +163,39 @@ final class HomeViewModel {
         return nil
     }
 
+    // MARK: - Rank progression (v2 hero — derived from Rank.floorOVR, no new data)
+
+    var nextRank: Rank? { Rank(rawValue: rank.rawValue + 1) }
+
+    /// Whole points left to the next rank floor — the "· 13" of the hint.
+    /// Nil at Sensei (max rank).
+    var pointsToNextRank: Int? {
+        guard let next = nextRank else { return nil }
+        return max(0, Int(next.floorOVR) - displayedOVR)
+    }
+
+    /// 0…1 position inside the current rank band — the collapsed card's thin bar.
+    /// Full at Sensei.
+    var rankProgress: Double {
+        guard let next = nextRank else { return 1 }
+        let floor = rank.floorOVR
+        let span = next.floorOVR - floor
+        guard span > 0 else { return 1 }
+        return min(1, max(0, (Double(displayedOVR) - floor) / span))
+    }
+
+    /// Expanded hero hint under the rank name: "▸ ASCETIC · 13" — "MAX RANK" at Sensei.
+    var nextRankHint: String {
+        guard let next = nextRank, let points = pointsToNextRank else { return "MAX RANK" }
+        return "▸ \(next.displayName) · \(points)"
+    }
+
+    /// Collapsed card bar label: "NEXT ASCETIC · 13 PTS" — "MAX RANK" at Sensei.
+    var nextRankBarLabel: String {
+        guard let next = nextRank, let points = pointsToNextRank else { return "MAX RANK" }
+        return "NEXT \(next.displayName) · \(points) PTS"
+    }
+
     /// Drives the slumped sensei posture (Duolingo pattern — the sensei carries the shame).
     var isYesterdayIncomplete: Bool {
         guard store.activeChallenge != nil, let log = yesterdayLog else { return false }

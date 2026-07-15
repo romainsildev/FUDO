@@ -4,16 +4,24 @@ import SwiftUI
 /// never inline. All values drive DIRECT scroll interpolation (no animations),
 /// so the collapse tracks the finger at 60 fps and reverses for free.
 private enum HomeHeroMetrics {
-    /// Scroll distance over which the hero fully condenses into the strip.
+    /// Scroll distance over which the hero fully condenses into the card.
     /// Must stay well under the available scroll range (~150-250 pt with 5 cards
     /// on a tall iPhone) or the collapse never completes — device bug 2026-07-12.
     static let collapseDistance: CGFloat = 150
-    /// Fraction of the collapse at which the compact strip starts fading in.
-    static let stripAppearStart: CGFloat = 0.45
-    static let stripHeight: CGFloat = 44
+    /// Fraction of the collapse at which the collapsed card starts fading in.
+    static let cardAppearStart: CGFloat = 0.45
+    /// Collapsed hero card (frame 01-collapsed) — one horizontal card ~112 pt.
+    static let collapsedHeight: CGFloat = 112
+    static let collapsedAppearScale: CGFloat = 0.96
     static let heroMinScale: CGFloat = 0.86
-    static let miniRingSize: CGFloat = 22
-    static let miniRingWidth: CGFloat = 3
+    /// Mini sensei in its small ring arc, left side of the collapsed card.
+    static let miniSenseiSize: CGFloat = 62
+    static let miniRingWidth: CGFloat = 3.5
+    static let rankBarHeight: CGFloat = 3
+    /// Expanded hero (frame 01 v2) — sensei centered in the ring arc, compact stage.
+    static let expandedStageHeight: CGFloat = 264
+    static let expandedRingDiameter: CGFloat = 248
+    static let expandedSenseiHeight: CGFloat = 244
 }
 
 /// Home ("Today") — the core action screen. Answers in one second: where am I
@@ -36,9 +44,9 @@ struct HomeView: View {
         min(1, max(0, scrollOffset / HomeHeroMetrics.collapseDistance))
     }
 
-    /// Strip fade-in, riding the tail of the hero collapse.
-    private var stripT: CGFloat {
-        let start = HomeHeroMetrics.stripAppearStart
+    /// Collapsed-card fade-in, riding the tail of the hero collapse.
+    private var cardT: CGFloat {
+        let start = HomeHeroMetrics.cardAppearStart
         return min(1, max(0, (heroT - start) / (1 - start)))
     }
 
@@ -112,43 +120,68 @@ struct HomeView: View {
             .coordinateSpace(name: "homeScroll")
             .modifier(HomeScrollOffsetReader { scrollOffset = $0 })
 
-            compactStrip
-                .opacity(stripT)
-                .offset(y: (1 - stripT) * -8)
-                .allowsHitTesting(stripT > 0.6)
+            collapsedHeroCard
+                .opacity(cardT)
+                .scaleEffect(HomeHeroMetrics.collapsedAppearScale
+                             + (1 - HomeHeroMetrics.collapsedAppearScale) * cardT,
+                             anchor: .top)
+                .allowsHitTesting(cardT > 0.6)
         }
     }
 
-    /// Condensed hero pinned under the header once the full hero scrolls away:
-    /// head + "61 · ASCETIC" + mini day ring, one 44 pt glass row → Progress.
-    private var compactStrip: some View {
+    /// Collapsed hero (frame 01-collapsed) pinned under the header once the full
+    /// hero scrolls away: mini sensei in its day-ring arc + OVR + rank with the
+    /// thin next-rank bar + today delta, one ~112 pt card → Progress.
+    private var collapsedHeroCard: some View {
         Button(action: goToProgress) {
-            HStack(spacing: 10) {
-                SenseiAvatarView(rank: viewModel.rank, diameter: 28)
+            HStack(spacing: 16) {
+                miniSenseiRing
                 Text("\(viewModel.displayedOVR)")
-                    .font(.system(size: 17, weight: .heavy).monospacedDigit())
+                    .font(FudoFont.ovr(40))
                     .foregroundStyle(FudoColor.textPrimary)
-                Text("· \(viewModel.rank.displayName)")
-                    .font(.system(size: 12, weight: .bold))
-                    .kerning(1.5)
-                    .foregroundStyle(FudoColor.accent)
-                Spacer(minLength: 8)
-                Text("\(viewModel.checkedCount)/\(viewModel.totalCount)")
-                    .font(.system(size: 12, weight: .semibold).monospacedDigit())
-                    .foregroundStyle(FudoColor.textSecondary)
-                miniDayRing
+                VStack(alignment: .leading, spacing: 7) {
+                    HStack(spacing: 8) {
+                        Text(viewModel.rank.displayName)
+                            .font(.system(size: 13, weight: .heavy))
+                            .kerning(1.5)
+                            .foregroundStyle(FudoColor.accent)
+                        Spacer(minLength: 8)
+                        todayDelta(viewModel.ovrDeltaToday, fontSize: 13)
+                    }
+                    rankProgressBar
+                    Text(viewModel.nextRankBarLabel)
+                        .font(.system(size: 10, weight: .semibold).monospacedDigit())
+                        .kerning(1)
+                        .foregroundStyle(FudoColor.textSecondary)
+                }
             }
-            .padding(.horizontal, 14)
-            .frame(height: HomeHeroMetrics.stripHeight)
-            .fudoGlassCapsule()
+            .padding(.horizontal, FudoSpacing.cardPadding)
+            .frame(maxWidth: .infinity)
+            .frame(height: HomeHeroMetrics.collapsedHeight)
+            .background {
+                RoundedRectangle(cornerRadius: FudoSpacing.radiusCard, style: .continuous)
+                    .fill(FudoColor.bgCard)
+                    .strokeBorder(FudoColor.border, lineWidth: 1)
+            }
         }
         .buttonStyle(.plain)
         .padding(.horizontal, FudoSpacing.screenMargin)
-        .accessibilityLabel("OVR \(viewModel.displayedOVR), \(viewModel.rank.displayName), \(viewModel.checkedCount) of \(viewModel.totalCount) done — open Progress")
+        .accessibilityLabel("OVR \(viewModel.displayedOVR), \(viewModel.rank.displayName), \(viewModel.nextRankBarLabel) — open Progress")
     }
 
-    private var miniDayRing: some View {
+    /// Mini sensei in a small ring arc — the arc mirrors today's progress,
+    /// same signal as the big stage ring.
+    private var miniSenseiRing: some View {
         ZStack {
+            Circle()
+                .fill(FudoColor.bgPrimary)
+            SenseiAssetProvider.image(for: viewModel.rank)
+                .resizable()
+                .scaledToFit()
+                .frame(height: HomeHeroMetrics.miniSenseiSize - 12)
+                .frame(width: HomeHeroMetrics.miniSenseiSize,
+                       height: HomeHeroMetrics.miniSenseiSize)
+                .clipShape(Circle())
             Circle()
                 .stroke(FudoColor.border, lineWidth: HomeHeroMetrics.miniRingWidth)
             Circle()
@@ -157,33 +190,109 @@ struct HomeView: View {
                         style: StrokeStyle(lineWidth: HomeHeroMetrics.miniRingWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
         }
-        .frame(width: HomeHeroMetrics.miniRingSize, height: HomeHeroMetrics.miniRingSize)
+        .frame(width: HomeHeroMetrics.miniSenseiSize, height: HomeHeroMetrics.miniSenseiSize)
         .animation(AppAnimation.standard, value: viewModel.dayProgress)
     }
 
-    /// Sensei stage + giant OVR + rank line. Tappable as one block → Progress
+    /// Thin bar inside the current rank band — full + "MAX RANK" at Sensei.
+    private var rankProgressBar: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(FudoColor.border)
+                Capsule()
+                    .fill(FudoColor.accent)
+                    .frame(width: max(HomeHeroMetrics.rankBarHeight,
+                                      geo.size.width * viewModel.rankProgress))
+            }
+        }
+        .frame(height: HomeHeroMetrics.rankBarHeight)
+    }
+
+    /// Sensei stage + stat line (frame 01 v2). Tappable as one block → Progress
     /// (double affordance with the header avatar, D2).
     private var senseiAndOVRBlock: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 10) {
             SenseiStageView(rank: viewModel.rank,
                             mood: viewModel.isYesterdayIncomplete ? .slumped : .focused,
                             progress: viewModel.dayProgress,
                             showsRingProgress: true,
                             pulseTrigger: viewModel.checkPulseTrigger,
-                            celebrationTrigger: viewModel.celebrationTrigger)
+                            celebrationTrigger: viewModel.celebrationTrigger,
+                            stageHeight: HomeHeroMetrics.expandedStageHeight,
+                            ringDiameter: HomeHeroMetrics.expandedRingDiameter,
+                            senseiHeight: HomeHeroMetrics.expandedSenseiHeight,
+                            centersSensei: true)
                 .padding(.top, 4)
 
-            Text("\(viewModel.displayedOVR)")
-                .font(FudoFont.ovr(84))
-                .foregroundStyle(FudoColor.textPrimary)
-
-            rankLine
+            heroStatLine
         }
         .contentShape(Rectangle())
         .onTapGesture { goToProgress() }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
         .accessibilityLabel("OVR \(viewModel.displayedOVR), \(viewModel.rank.displayName) — open Progress")
+    }
+
+    /// Single stat line under the stage (frame 01 v2): rank block (right-aligned)
+    /// | vermillon divider | giant OVR — biggest number on screen | thin divider
+    /// | today delta. The 7 dots / totals moved to the flame sheet.
+    private var heroStatLine: some View {
+        HStack(spacing: 16) {
+            VStack(alignment: .trailing, spacing: 3) {
+                Text("RANK")
+                    .font(.system(size: 10, weight: .semibold))
+                    .kerning(1.5)
+                    .foregroundStyle(FudoColor.textSecondary)
+                Text(viewModel.rank.displayName)
+                    .font(.system(size: 16, weight: .heavy))
+                    .kerning(1.2)
+                    .foregroundStyle(FudoColor.accent)
+                Text(viewModel.nextRankHint)
+                    .font(.system(size: 10, weight: .semibold).monospacedDigit())
+                    .kerning(0.8)
+                    .foregroundStyle(FudoColor.textSecondary)
+            }
+
+            Capsule()
+                .fill(FudoColor.accent)
+                .frame(width: 3, height: 44)
+
+            Text("\(viewModel.displayedOVR)")
+                .font(FudoFont.ovr(60))
+                .foregroundStyle(FudoColor.textPrimary)
+
+            Capsule()
+                .fill(FudoColor.border)
+                .frame(width: 1, height: 36)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("TODAY")
+                    .font(.system(size: 10, weight: .semibold))
+                    .kerning(1.5)
+                    .foregroundStyle(FudoColor.textSecondary)
+                todayDelta(viewModel.ovrDeltaToday, fontSize: 15)
+            }
+        }
+        .animation(AppAnimation.standard, value: viewModel.ovrDeltaToday != nil)
+    }
+
+    /// The ARROW carries the green/red (2026-07-11). Quiet dash when nothing
+    /// moved yet today.
+    @ViewBuilder
+    private func todayDelta(_ delta: Double?, fontSize: CGFloat) -> some View {
+        if let delta {
+            HStack(spacing: 3) {
+                Image(systemName: delta >= 0 ? "arrowtriangle.up.fill" : "arrowtriangle.down.fill")
+                    .font(.system(size: fontSize * 0.6, weight: .bold))
+                Text(String(format: "%+.1f", delta))
+                    .font(.system(size: fontSize, weight: .bold).monospacedDigit())
+            }
+            .foregroundStyle(delta >= 0 ? FudoColor.positive : FudoColor.negative)
+        } else {
+            Text("—")
+                .font(.system(size: fontSize, weight: .bold))
+                .foregroundStyle(FudoColor.textSecondary)
+        }
     }
 
     private var rankLine: some View {

@@ -36,7 +36,7 @@ struct ProjectionScreen: View {
 
     private var curveCard: some View {
         ProjectionCurveView(base: base, days: days,
-                            rankName: ProgressionRankNaming.name(for: projectedRank),
+                            rankName: projectedRank.displayName,
                             drawnDays: drawnDays)
             .padding(.horizontal, FudoSpacing.screenMargin)
             .padding(.top, 96)

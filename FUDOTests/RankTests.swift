@@ -7,6 +7,14 @@ struct RankTests {
         #expect(Rank.allCases == [.novice, .disciple, .ascetic, .warrior, .master, .sensei])
     }
 
+    @Test func everyRankNamesItself() {
+        // The ONE source: Progression and the onboarding both read this. A rank
+        // that renders empty would ship a blank label, not a crash.
+        #expect(Rank.allCases.allSatisfy { !$0.displayName.isEmpty })
+        #expect(Set(Rank.allCases.map(\.displayName)).count == Rank.allCases.count)
+        #expect(Rank.from(ovr: 78).displayName == "Warrior")
+    }
+
     @Test func fromOVRBoundaries() {
         #expect(Rank.from(ovr: 0) == .novice)
         #expect(Rank.from(ovr: 49.9) == .novice)

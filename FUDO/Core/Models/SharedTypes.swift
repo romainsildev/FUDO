@@ -25,6 +25,19 @@ enum Rank: Int, CaseIterable {
     /// Decay floor = bottom of the rank band. Thresholds live here (single source), not in GameConfig.
     var floorOVR: Double { [0, 50, 60, 70, 80, 90][rawValue] }
 
+    /// EN display name — the ONE source (Progression, the onboarding, and every
+    /// screen after them read this). UI strings are English per CLAUDE.md.
+    var displayName: String {
+        switch self {
+        case .novice: return "Novice"
+        case .disciple: return "Disciple"
+        case .ascetic: return "Ascetic"
+        case .warrior: return "Warrior"
+        case .master: return "Master"
+        case .sensei: return "Sensei"
+        }
+    }
+
     static func from(ovr: Double) -> Rank {
         switch ovr {
         case ..<50: return .novice

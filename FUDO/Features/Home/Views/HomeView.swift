@@ -141,7 +141,7 @@ struct HomeView: View {
                     .foregroundStyle(FudoColor.textPrimary)
                 VStack(alignment: .leading, spacing: 7) {
                     HStack(spacing: 8) {
-                        Text(viewModel.rank.displayName)
+                        Text(viewModel.rank.displayName.uppercased())
                             .fudoFont(.label(13, weight: .heavy))
                             .kerning(1.5)
                             .foregroundStyle(FudoColor.accent)
@@ -243,7 +243,7 @@ struct HomeView: View {
                     .fudoFont(.label(10, weight: .semibold))
                     .kerning(1.5)
                     .foregroundStyle(FudoColor.textSecondary)
-                Text(viewModel.rank.displayName)
+                Text(viewModel.rank.displayName.uppercased())
                     .fudoFont(.label(16, weight: .heavy))
                     .kerning(1.2)
                     .foregroundStyle(FudoColor.accent)
@@ -297,7 +297,7 @@ struct HomeView: View {
 
     private var rankLine: some View {
         HStack(spacing: 6) {
-            Text(viewModel.rank.displayName)
+            Text(viewModel.rank.displayName.uppercased())
                 .fudoFont(.label(14, weight: .bold))
                 .kerning(2)
                 .foregroundStyle(FudoColor.accent)

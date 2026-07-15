@@ -59,7 +59,7 @@ struct DiagnosticScreen: View {
                     .fudoFont(.ovr(76))
                     .foregroundStyle(FudoColor.textPrimary)
 
-                Text(ProgressionRankNaming.name(for: rank).uppercased())
+                Text(rank.displayName.uppercased())
                     .fudoFont(.label(12, weight: .semibold))
                     .kerning(2.5)
                     .foregroundStyle(FudoColor.textSecondary)

@@ -188,13 +188,13 @@ final class HomeViewModel {
     /// Expanded hero hint under the rank name: "▸ ASCETIC · 13" — "MAX RANK" at Sensei.
     var nextRankHint: String {
         guard let next = nextRank, let points = pointsToNextRank else { return "MAX RANK" }
-        return "▸ \(next.displayName) · \(points)"
+        return "▸ \(next.displayName.uppercased()) · \(points)"
     }
 
     /// Collapsed card bar label: "NEXT ASCETIC · 13 PTS" — "MAX RANK" at Sensei.
     var nextRankBarLabel: String {
         guard let next = nextRank, let points = pointsToNextRank else { return "MAX RANK" }
-        return "NEXT \(next.displayName) · \(points) PTS"
+        return "NEXT \(next.displayName.uppercased()) · \(points) PTS"
     }
 
     /// Drives the slumped sensei posture (Duolingo pattern — the sensei carries the shame).
@@ -286,16 +286,3 @@ final class HomeViewModel {
     }
 }
 
-extension Rank {
-    /// UPPERCASE display name — Home OVR block and no-challenge state.
-    var displayName: String {
-        switch self {
-        case .novice:   return "NOVICE"
-        case .disciple: return "DISCIPLE"
-        case .ascetic:  return "ASCETIC"
-        case .warrior:  return "WARRIOR"
-        case .master:   return "MASTER"
-        case .sensei:   return "SENSEI"
-        }
-    }
-}

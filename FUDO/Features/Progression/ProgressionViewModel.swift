@@ -28,21 +28,6 @@ struct RankNode: Identifiable, Equatable {
     let reachedDate: Date?   // discovered/current only; nil when unknown (started above the floor)
 }
 
-/// EN rank display names. Local to Progression on purpose: `Rank` (Core/Models) has none and
-/// is out of this feature's write scope. UI strings stay English per CLAUDE.md.
-enum ProgressionRankNaming {
-    static func name(for rank: Rank) -> String {
-        switch rank {
-        case .novice:   "Novice"
-        case .disciple: "Disciple"
-        case .ascetic:  "Ascetic"
-        case .warrior:  "Warrior"
-        case .master:   "Master"
-        case .sensei:   "Sensei"
-        }
-    }
-}
-
 // MARK: - View model
 
 /// One `@Observable` view model for the whole Progression tab. Pure read-only projection
@@ -66,7 +51,7 @@ final class ProgressionViewModel {
 
     var displayedOVR: Int { player?.displayedOVR ?? 0 }
     var heroRank: Rank { player?.rank ?? .novice }
-    var heroRankName: String { ProgressionRankNaming.name(for: heroRank) }
+    var heroRankName: String { heroRank.displayName }
     /// "Rank 2 of 6" — the view uppercases it.
     var rankOrdinalLabel: String { "Rank \(heroRank.rawValue + 1) of \(Rank.allCases.count)" }
 
@@ -120,7 +105,7 @@ final class ProgressionViewModel {
             }
             let reached = state == .future ? nil : reachDate(for: rank)
             return RankNode(id: rank.rawValue, rank: rank, state: state,
-                            name: ProgressionRankNaming.name(for: rank),
+                            name: rank.displayName,
                             subtitle: subtitle(for: rank, state: state, reached: reached),
                             reachedDate: reached)
         }

@@ -28,6 +28,9 @@ struct RootView: View {
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { refresh() }
             }
+            // The DEBUG "Replay onboarding" flips this from inside the app: re-route
+            // now rather than wait for the next scene activation.
+            .onChange(of: appState.hasCompletedOnboarding) { _, _ in evaluateRoute() }
     }
 
     private func refresh() {

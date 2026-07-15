@@ -69,6 +69,12 @@ enum DebugSeed {
             clock = clock.addingTimeInterval(7 * 60)
         }
 
+        // A seeded player IS an onboarded player. Without this, every DEBUG launch
+        // would land on the funnel instead of the Home this seed exists to feed —
+        // and the funnel would then find his OVR 61 through ensurePlayer's
+        // fetch-or-create instead of minting the one his answers produce.
+        OnboardingFlags().markFullyCompleted()
+
         assert(store.player?.displayedOVR == 61,
                "Seed drifted: OVR \(store.player?.displayedOVR ?? -1) ≠ 61 — recalibrate answers")
         assert(store.player?.currentStreak == 4,

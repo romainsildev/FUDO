@@ -341,14 +341,36 @@ extension GameStore {
         save()
         UserDefaults.standard.set(!reseed, forKey: DebugSeed.seedDisabledKey)
         if reseed {
-            DebugSeed.seed(context: modelContext)
+            DebugSeed.seed(context: modelContext)   // the seed marks onboarding done itself
         } else {
             ensurePlayer(startingOVR: OVREngine.startingOVR(from: DebugSeed.answers))
+            // A blank-but-onboarded player (frame 01b) has, by definition, been
+            // through the funnel — don't send him back into it.
+            OnboardingFlags().markFullyCompleted()
         }
         // The seed replays through its OWN GameStore instance — re-run the boot
         // fetches so THIS store (the one the UI observes) sees the new world.
         player = Self.fetchPlayer(in: modelContext)
         activeChallenge = Self.fetchActiveChallenge(in: modelContext)
+    }
+
+    /// Wipes everything and leaves the store with NO player — the only state the
+    /// onboarding can actually run against. `ensurePlayer` is fetch-or-create: a
+    /// leftover player would hand the funnel a stale OVR instead of the one his
+    /// answers just produced, and the contract would show a number the quiz never
+    /// computed. Arms seedDisabled so the launch auto-seed doesn't resurrect a
+    /// player behind the funnel, and clears the onboarding flags.
+    func debugReplayOnboarding(flags: OnboardingFlags = OnboardingFlags()) {
+        wipeAll(DayLog.self)
+        wipeAll(TaskRule.self)
+        wipeAll(Challenge.self)
+        wipeAll(PlayerState.self)
+        player = nil
+        activeChallenge = nil
+        pendingRankUp = nil
+        save()
+        UserDefaults.standard.set(true, forKey: DebugSeed.seedDisabledKey)
+        flags.reset()
     }
 
     /// Ends the active challenge as `.completed` right now (no day-log closure —

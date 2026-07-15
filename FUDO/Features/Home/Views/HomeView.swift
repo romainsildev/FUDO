@@ -483,6 +483,40 @@ struct HomeView: View {
     }
 }
 
+#if DEBUG
+import SwiftData
+
+/// Xcode canvas preview — ONE in-memory container on the shared FudoSchema
+/// (SwiftData pitfall 2026-07-12), seeded with the standard debug dataset
+/// (day 12, OVR 61, streak 4, 3/5 checked). Scroll the canvas in live mode
+/// to see the collapsed card. Hand-tune `HomeHeroMetrics` against this.
+@MainActor
+private enum HomePreviewFactory {
+    static let store: GameStore? = {
+        do {
+            let config = ModelConfiguration(isStoredInMemoryOnly: true)
+            let container = try ModelContainer(for: FudoSchema.schema, configurations: config)
+            DebugSeed.seed(context: container.mainContext)
+            // Built AFTER the seed — the seed replays through its own GameStore,
+            // so a fresh store fetches the final player/challenge.
+            return GameStore(modelContext: container.mainContext)
+        } catch {
+            return nil
+        }
+    }()
+}
+
+#Preview("Home — day in progress") {
+    if let store = HomePreviewFactory.store {
+        HomeView(store: store)
+            .environment(AppState())
+            .preferredColorScheme(.dark)
+    } else {
+        Text("Preview container failed")
+    }
+}
+#endif
+
 /// Scroll offset of the Home checklist scroll view, in its own coordinate space.
 private struct HomeScrollOffsetKey: PreferenceKey {
     static var defaultValue: CGFloat = 0

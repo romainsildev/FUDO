@@ -371,6 +371,9 @@ extension GameStore {
         save()
         UserDefaults.standard.set(true, forKey: DebugSeed.seedDisabledKey)
         flags.reset()
+        // Otherwise a replayed funnel leaves yesterday's reminder firing for a
+        // challenge that no longer exists.
+        NotificationService.cancelDailyReminder()
     }
 
     /// Ends the active challenge as `.completed` right now (no day-log closure —

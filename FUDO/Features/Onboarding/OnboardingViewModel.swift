@@ -132,6 +132,11 @@ final class OnboardingViewModel {
 
     var reminderMinutes: Int { setup.reminderMinutes }
 
+    /// The rank OB 20 greets him with — read from the REAL player (he exists by
+    /// then: the signature created him). Falls back to the diagnostic rank so the
+    /// dojo can never greet a man who isn't there.
+    var playerRank: Rank { store.player?.rank ?? diagnosticRank }
+
     // MARK: - OB 11
 
     /// Called on entering the compose screen. D3 makes the answer constant today,

@@ -160,22 +160,31 @@ struct OnboardingFlowView: View {
             PaywallGateView(contract: flags.contract, date: viewModel.projectionDate,
                             onContinue: viewModel.passPaywall)
 
-        default:
-            // Act 4 lands here, screen by screen.
-            actUnderConstruction
-        }
-    }
+        // MARK: Act 4 — post-paywall
 
-    /// Temporary — replaced screen by screen as the acts land. Never shipped:
-    /// the funnel is not routable until OnboardingFlags gates it (Task 21).
-    private var actUnderConstruction: some View {
-        VStack(spacing: 12) {
-            Text("\(String(describing: viewModel.step))")
-                .fudoFont(.title(24, weight: .bold))
-                .foregroundStyle(FudoColor.textPrimary)
-            Button("Continue", action: viewModel.advance)
-                .fudoFont(.headline())
-                .foregroundStyle(FudoColor.accent)
+        case .notifications:
+            NotificationsScreen(reminderMinutes: viewModel.reminderMinutes,
+                                onAdvance: viewModel.advance)
+        case .loaderSetup:
+            OnboardingLoaderScreen(
+                title: "Setting up your protocol…",
+                steps: ["Saving your protocol",
+                        "Scheduling your daily reminder",
+                        "Preparing your dojo",
+                        "Lighting your streak"],
+                footer: "Day 1 starts today. Almost there.",
+                duration: OnboardingMetrics.setupLoaderDuration,
+                // "Saving your protocol" is not a lie: the challenge is born here.
+                // Exactly-once is the store's own invariant, so a backgrounded
+                // loader replaying its .task cannot mint a second one.
+                work: viewModel.commitChallenge,
+                onFinished: viewModel.advance)
+        case .welcomeDojo:
+            WelcomeDojoScreen(rank: viewModel.playerRank,
+                              reminderMinutes: viewModel.reminderMinutes,
+                              onAdvance: viewModel.advance)
+        case .widgetPromo:
+            WidgetPromoScreen(onFinish: viewModel.finish)
         }
     }
 }

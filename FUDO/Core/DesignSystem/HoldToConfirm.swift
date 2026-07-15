@@ -48,6 +48,9 @@ struct HoldToConfirm<Ring: InsettableShape>: ViewModifier {
     /// Ring stroke color — default vermillon (dark cards); the vermillon CTAs
     /// pass a cream ring so it isn't invisible on their own accent fill.
     var ringColor: Color = FudoColor.accent
+    /// Stroke width — the card rings keep the 3 pt default; the onboarding's
+    /// 148 pt HOLD circle passes a thicker one (3 pt vanishes at that diameter).
+    var ringWidth: CGFloat = HoldToConfirmMetrics.ringWidth
     let onConfirm: () -> Void
 
     @State private var progress: CGFloat = 0
@@ -63,10 +66,9 @@ struct HoldToConfirm<Ring: InsettableShape>: ViewModifier {
 
     private var ring: some View {
         shape
-            .inset(by: HoldToConfirmMetrics.ringWidth / 2)
+            .inset(by: ringWidth / 2)
             .trim(from: 0, to: progress)
-            .stroke(ringColor,
-                    style: StrokeStyle(lineWidth: HoldToConfirmMetrics.ringWidth, lineCap: .round))
+            .stroke(ringColor, style: StrokeStyle(lineWidth: ringWidth, lineCap: .round))
             .opacity(ringOpacity)
             .allowsHitTesting(false)
     }
@@ -148,17 +150,20 @@ private struct PressDetectorButtonStyle: ButtonStyle {
 
 extension View {
     /// Sugar for ``HoldToConfirm``. Defaults match the checklist card: card-radius
-    /// ring, 1.5 s, success haptic. The challenge confirmation passes `.heavy`.
+    /// ring, `HoldToConfirmMetrics.duration`, success haptic. The challenge
+    /// confirmation passes `.heavy`; the onboarding's big HOLD ring passes a
+    /// thicker `ringWidth`.
     func holdToConfirm(
         in shape: some InsettableShape = RoundedRectangle(cornerRadius: FudoSpacing.radiusCard,
                                                           style: .continuous),
         duration: TimeInterval = HoldToConfirmMetrics.duration,
         completionHaptic: HoldCompletionHaptic = .success,
         ringColor: Color = FudoColor.accent,
+        ringWidth: CGFloat = HoldToConfirmMetrics.ringWidth,
         onConfirm: @escaping () -> Void
     ) -> some View {
         modifier(HoldToConfirm(shape: shape, duration: duration,
                                completionHaptic: completionHaptic, ringColor: ringColor,
-                               onConfirm: onConfirm))
+                               ringWidth: ringWidth, onConfirm: onConfirm))
     }
 }

@@ -6,9 +6,13 @@ import SwiftUI
 /// or a kill, and a kill resumes where he stopped (OnboardingFlags.resumeStep).
 struct OnboardingFlowView: View {
     @State private var viewModel: OnboardingViewModel
+    /// Held for the screens that touch persistence directly — OB 15's one-shot
+    /// review flag. Everything else goes through the view model.
+    private let flags: OnboardingFlags
 
     init(store: GameStore, flags: OnboardingFlags = OnboardingFlags(),
          onFinished: @escaping () -> Void = {}) {
+        self.flags = flags
         _viewModel = State(initialValue: OnboardingViewModel(store: store, flags: flags,
                                                              onFinished: onFinished))
     }
@@ -133,8 +137,34 @@ struct OnboardingFlowView: View {
             DiagnosticScreen(ovr: viewModel.diagnosticOVR, rank: viewModel.diagnosticRank,
                              onAdvance: viewModel.advance, onBack: viewModel.back)
 
+        // MARK: Act 2 — climax
+
+        case .compose:
+            ComposeProtocolScreen(viewModel: viewModel)
+        case .loaderBuilding:
+            OnboardingLoaderScreen(
+                title: "Building your protocol…",
+                steps: ["Reading your weak spot",
+                        "Calibrating your daily rules",
+                        "Setting your start — OVR \(viewModel.diagnosticOVR)",
+                        "Projecting your \(viewModel.setup.durationDays)-day climb"],
+                footer: "Locking in your numbers. A few seconds.",
+                duration: OnboardingMetrics.buildLoaderDuration,
+                onFinished: viewModel.advance)
+        case .projection:
+            ProjectionScreen(base: OVREngine.startingOVR(from: viewModel.draft.answers),
+                             days: viewModel.setup.durationDays,
+                             projectedOVR: viewModel.projectedOVR,
+                             projectedRank: viewModel.projectedRank,
+                             date: viewModel.projectionDate,
+                             onAdvance: viewModel.advance, onBack: viewModel.back)
+        case .firstCheck:
+            FirstCheckScreen(onAdvance: viewModel.advance)
+        case .socialProof:
+            SocialProofScreen(flags: flags, onAdvance: viewModel.advance)
+
         default:
-            // Acts 2-4 land here, screen by screen.
+            // Acts 3-4 land here, screen by screen.
             actUnderConstruction
         }
     }

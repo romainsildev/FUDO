@@ -492,18 +492,24 @@ import SwiftData
 /// to see the collapsed card. Hand-tune `HomeHeroMetrics` against this.
 @MainActor
 private enum HomePreviewFactory {
-    static let store: GameStore? = {
+    /// Retained for the whole preview process: mainContext does NOT keep its
+    /// container alive — let it dealloc and SwiftData resets the context,
+    /// destroying every fetched model ("Fatal Error in BackingData.swift",
+    /// canvas crash 2026-07-15). Same reason FUDOApp stores its container.
+    static let container: ModelContainer? = {
         do {
             let config = ModelConfiguration(isStoredInMemoryOnly: true)
-            let container = try ModelContainer(for: FudoSchema.schema, configurations: config)
-            DebugSeed.seed(context: container.mainContext)
-            // Built AFTER the seed — the seed replays through its own GameStore,
-            // so a fresh store fetches the final player/challenge.
-            return GameStore(modelContext: container.mainContext)
+            let built = try ModelContainer(for: FudoSchema.schema, configurations: config)
+            DebugSeed.seed(context: built.mainContext)
+            return built
         } catch {
             return nil
         }
     }()
+
+    // Built AFTER the seed — the seed replays through its own GameStore,
+    // so a fresh store fetches the final player/challenge.
+    static let store: GameStore? = container.map { GameStore(modelContext: $0.mainContext) }
 }
 
 #Preview("Home — day in progress") {

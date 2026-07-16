@@ -6,7 +6,9 @@ import SwiftUI
 struct WelcomeHook {
     /// What the screen carries under the hook. `.none` is a choice, not an absence:
     /// OB 01b is deliberately BARE — the phone dying on the floor is the whole point.
-    enum Feature { case transformationStrip, none, protocolCard }
+    /// `.senseiHero` (arbitrage 2026-07-16): the strip died — the sensei alone,
+    /// centered, vermillon halo. One figure, one idea.
+    enum Feature { case senseiHero, none, protocolCard }
 
     let clip: WelcomeClip
     let leadLines: [String]
@@ -23,7 +25,7 @@ struct WelcomeHook {
         leadLines: ["IN 30 DAYS,"], leadSize: OnboardingMetrics.Hook.transformationLead,
         climaxLines: ["YOU'RE NOT", "THE SAME GUY."],
         climaxSize: OnboardingMetrics.Hook.transformationClimax,
-        microLine: nil, ctaTitle: "Start", showsWordmark: true, feature: .transformationStrip)
+        microLine: nil, ctaTitle: "Start", showsWordmark: true, feature: .senseiHero)
 
     static let pain = WelcomeHook(
         clip: .phone,
@@ -65,7 +67,7 @@ struct WelcomeHookScreen: View {
             Spacer(minLength: 0)
             feature
             hookStack
-                .padding(.top, hook.feature == .transformationStrip ? 28 : 0)
+                .padding(.top, hook.feature == .senseiHero ? 28 : 0)
             if hook.feature == .protocolCard {
                 // Inset + extra air: the tilt and the glass lensing both reach
                 // past the layout box — 24pt of gap let the corner clip the
@@ -96,8 +98,8 @@ struct WelcomeHookScreen: View {
 
     @ViewBuilder private var feature: some View {
         switch hook.feature {
-        case .transformationStrip:
-            TransformationStrip(haloBreathing: haloBreathing)
+        case .senseiHero:
+            SenseiHero(haloBreathing: haloBreathing)
                 .opacity(revealed ? 1 : 0)
                 .offset(y: revealed ? 0 : 12)
         case .none, .protocolCard:
@@ -197,81 +199,33 @@ private enum ProtocolGlassCardChecks {
 }
 #endif
 
-/// OB 01a's strip, final form (arbitrage 2026-07-16): the past is a PURE BLACK
-/// SILHOUETTE — the exact rank-path treatment (`saturation 0 + brightness −0.55`,
-/// RankPathNodeView's future nodes), so "your past" speaks the same visual
-/// language as "your future ranks". Then three vermillon dots rising, then the
-/// sharp, haloed sensei. No blur anywhere.
-private struct TransformationStrip: View {
+/// OB 01a's figure, final form (arbitrage 2026-07-16 — the peasant strip died
+/// after two device passes): the sensei ALONE, centered, breathing vermillon
+/// halo, grounded by his shadow. One figure, one idea; the hook says the rest.
+private struct SenseiHero: View {
     let haloBreathing: Bool
 
-    private static let stripHeight: CGFloat = 200
-    private static let pastHeight: CGFloat = 132
-    private static let futureHeight: CGFloat = 180
-    /// Three dots: diameter, presence and lift climb together toward the future.
-    private static let dotSteps: [(size: CGFloat, opacity: Double, lift: CGFloat)] = [
-        (4, 0.45, 0), (7, 0.7, 13), (10, 1.0, 27)
-    ]
-    /// Where the dot path takes off — around the silhouette's torso.
-    private static let dotBaseline: CGFloat = 72
+    private static let senseiHeight: CGFloat = 190
 
     var body: some View {
-        // Bottom-aligned: both figures stand on the same implied ground.
-        HStack(alignment: .bottom, spacing: 0) {
-            past
-            Spacer(minLength: 10)
-            dots
-                .padding(.bottom, Self.dotBaseline)
-            Spacer(minLength: 10)
-            future
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: Self.stripHeight)
-        .clipped()
-    }
-
-    /// The rank-path silhouette treatment, verbatim (RankPathNodeView, tuned on
-    /// device): B&W art crushed to a black shape. The alpha of the asset keeps
-    /// the outline crisp — no blur, no fade, a shadow of who he was.
-    private var past: some View {
-        SenseiAssetProvider.image(for: .novice)
-            .resizable()
-            .scaledToFit()
-            .frame(height: Self.pastHeight)
-            .saturation(0)
-            .brightness(-0.55)
-            .padding(.bottom, 4)
-    }
-
-    private var dots: some View {
-        HStack(alignment: .bottom, spacing: 10) {
-            ForEach(Array(Self.dotSteps.enumerated()), id: \.offset) { _, step in
-                Circle()
-                    .fill(FudoColor.accent.opacity(step.opacity))
-                    .frame(width: step.size, height: step.size)
-                    .offset(y: -step.lift)
-            }
-        }
-    }
-
-    private var future: some View {
-        ZStack(alignment: .bottom) {
+        ZStack {
             RadialGradient(colors: [FudoColor.accent.opacity(haloBreathing ? 0.34 : 0.22), .clear],
-                           center: .center, startRadius: 10, endRadius: Self.futureHeight * 0.7)
-                .frame(width: Self.futureHeight * 1.4, height: Self.futureHeight * 1.4)
-                .offset(y: Self.futureHeight * 0.18)
+                           center: .center, startRadius: 10, endRadius: Self.senseiHeight * 0.7)
+                .frame(width: Self.senseiHeight * 1.4, height: Self.senseiHeight * 1.4)
 
             VStack(spacing: 0) {
                 SenseiAssetProvider.image(for: .sensei)
                     .resizable()
                     .scaledToFit()
-                    .frame(height: Self.futureHeight)
+                    .frame(height: Self.senseiHeight)
                 Ellipse()
                     .fill(.black.opacity(0.5))
-                    .frame(width: 90, height: 12)
+                    .frame(width: 95, height: 12)
                     .blur(radius: 8)
                     .offset(y: -6)
             }
         }
+        .frame(maxWidth: .infinity)
+        .frame(height: 200)
     }
 }

@@ -1,14 +1,21 @@
 import Foundation
 
-/// The 25 onboarding screens, in order. The progress bar's total is DERIVED from
+/// The onboarding screens, in order. The progress bar's total is DERIVED from
 /// this enum (never hand-numbered): add a step and every fraction re-computes.
+///
+/// RESTRUCTURED 2026-07-16 (RiteOff pattern): the narrative loader ANALYZES the
+/// quiz and lands BEFORE the OVR reveal — quiz → loader → diagnostic reveal →
+/// compose → projection (which needs the chosen duration, so it stays after
+/// compose, with a short "Locking…" beat instead of a second loader).
 enum OnboardingStep: Int, CaseIterable {
     // Act 0 — welcome (no progress bar)
     case splash, transformation, pain, mechanism
-    // Act 1 — diagnostic & self-persuasion
-    case painPoint, scrollHours, age, procrastination, shockStat, goals, struggle, reflection, diagnostic
+    // Act 1 — the quiz
+    case painPoint, scrollHours, age, procrastination, shockStat, goals, struggle, reflection
+    // Act 1bis — analysis & reveal
+    case loaderAnalysis, diagnostic
     // Act 2 — climax
-    case compose, loaderBuilding, projection, firstCheck, socialProof
+    case compose, projection, firstCheck, socialProof
     // Act 3 — engagement & contract
     case commitment, contract, paywall
     // Act 4 — post-paywall
@@ -16,10 +23,11 @@ enum OnboardingStep: Int, CaseIterable {
 
     /// Hidden on the welcome act, both loaders, the paywall and the whole
     /// post-paywall trio (brief + decision D6: a bar pinned at 100 % is noise).
+    /// The bar covers the quiz AND the reveal that follows the analysis loader.
     var showsProgress: Bool {
         switch self {
         case .splash, .transformation, .pain, .mechanism,
-             .loaderBuilding, .loaderSetup, .paywall,
+             .loaderAnalysis, .loaderSetup, .paywall,
              .notifications, .welcomeDojo, .widgetPromo:
             return false
         default:

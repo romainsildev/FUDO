@@ -14,10 +14,13 @@ struct ProjectionScreen: View {
 
     @State private var drawnDays = 0
     @State private var revealed = false
+    @State private var locking = true
 
     private static let drawDuration: TimeInterval = 0.6
-    private static let titleDelay: TimeInterval = 0.8
-    private static let microDelay: TimeInterval = 1.0
+    /// The short beat replacing the old pre-projection loader (restructure
+    /// 2026-07-16: the narrative loader moved before the reveal): one breath of
+    /// "Locking…", never more than a second.
+    private static let lockingBeat: TimeInterval = 0.9
 
     private var displayedProjection: Int { OVREngine.displayedOVR(projectedOVR) }
 
@@ -34,11 +37,26 @@ struct ProjectionScreen: View {
                 .padding(.top, 28)
                 .opacity(revealed ? 1 : 0)
         }
+        .overlay {
+            if locking {
+                ZStack {
+                    FudoColor.bgPrimary.ignoresSafeArea()
+                    Text("Locking your protocol…")
+                        .fudoFont(.body(15))
+                        .foregroundStyle(FudoColor.textPrimary)
+                        .opacity(0.45)
+                }
+                .transition(.opacity)
+            }
+        }
         .task { await runDraw() }
     }
 
-    /// The line draws itself left to right, then the endpoint lands with the beat.
+    /// One "Locking…" breath, then the line draws itself left to right and the
+    /// endpoint lands with the beat.
     private func runDraw() async {
+        try? await Task.sleep(for: .seconds(Self.lockingBeat))
+        withAnimation(AppAnimation.standard) { locking = false }
         revealed = true
         withAnimation(.easeOut(duration: Self.drawDuration)) { drawnDays = days }
         try? await Task.sleep(for: .seconds(Self.drawDuration))

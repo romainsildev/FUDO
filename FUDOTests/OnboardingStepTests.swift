@@ -11,7 +11,7 @@ struct OnboardingStepTests {
 
     @Test func welcomeLoadersAndPostPaywallHideTheBar() {
         let hidden: [OnboardingStep] = [.splash, .transformation, .pain, .mechanism,
-                                        .loaderBuilding, .loaderSetup, .paywall,
+                                        .loaderAnalysis, .loaderSetup, .paywall,
                                         .notifications, .welcomeDojo, .widgetPromo]
         for step in hidden {
             #expect(step.showsProgress == false, "\(step) must hide the progress bar")
@@ -42,11 +42,19 @@ struct OnboardingStepTests {
         // Walls, loaders, the trio — and the REVEALS (2026-07-16): shock stat,
         // goals, diagnostic and projection are one-way by design.
         for step in [OnboardingStep.splash, .shockStat, .goals, .reflection,
-                     .diagnostic, .projection, .loaderBuilding, .firstCheck,
+                     .diagnostic, .projection, .loaderAnalysis, .firstCheck,
                      .socialProof, .commitment, .contract, .paywall,
                      .notifications, .loaderSetup, .welcomeDojo, .widgetPromo] {
             #expect(step.showsBack == false, "\(step) must block back")
         }
+    }
+
+    /// The restructure (2026-07-16): quiz → analysis loader → reveal → compose
+    /// → projection. Locked so a re-shuffle can't silently undo the order.
+    @Test func theLoaderAnalyzesBeforeTheRevealAndProjectionFollowsCompose() {
+        #expect(OnboardingStep.reflection.next == .loaderAnalysis)
+        #expect(OnboardingStep.loaderAnalysis.next == .diagnostic)
+        #expect(OnboardingStep.compose.next == .projection)
     }
 
     @Test func onlyTheVideoActCrossfades() {

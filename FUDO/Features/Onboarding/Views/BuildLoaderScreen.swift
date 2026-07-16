@@ -1,10 +1,11 @@
 import SwiftUI
 
-/// OB 12 — the narrative build loader (RiteOff 13_LoadingView transposed to
-/// FUDO tokens, 2026-07-16). A vermillon ring fills while HIS OWN numbers
-/// orbit it and a four-step timeline ticks below; at 100 % the percent gives
-/// way to a check, the ring pops, and a glass pill — "Access your report" —
-/// waits for HIS tap. The user drives the exit; nothing auto-advances.
+/// The narrative ANALYSIS loader (RiteOff 13_LoadingView transposed to FUDO
+/// tokens; restructure 2026-07-16: it sits between the quiz and the OVR
+/// reveal). A vermillon ring fills while HIS OWN numbers orbit it and a
+/// four-step timeline ticks below; at 100 % the percent gives way to a check,
+/// the ring pops, and a glass pill — "Access your report" — waits for HIS tap.
+/// The user drives the exit; nothing auto-advances.
 ///
 /// OB 19 keeps the plain `OnboardingLoaderScreen` (auto-advance + the real
 /// challenge-creation work); this screen is pure theater and creates nothing.
@@ -60,7 +61,7 @@ struct BuildLoaderScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Text("BUILDING\nYOUR PROTOCOL")
+            Text("ANALYZING\nYOUR ANSWERS")
                 .fudoFont(.onboardingDisplay(40))
                 .foregroundStyle(FudoColor.textPrimary)
                 .multilineTextAlignment(.center)
@@ -405,14 +406,14 @@ private struct DotsCascade: View {
 }
 
 #if DEBUG
-#Preview("OB 12 — build loader") {
+#Preview("Analysis loader") {
     OnboardingPreviewChrome {
         BuildLoaderScreen(
-            stats: OnboardingCopy.buildLoaderStats(draft: .previewAnswered, ovr: 43, days: 60),
-            steps: ["Reading your weak spot",
-                    "Calibrating your daily rules",
-                    "Setting your start — OVR 43",
-                    "Projecting your 60-day climb"],
+            stats: OnboardingCopy.analysisLoaderStats(draft: .previewAnswered),
+            steps: ["Reading your answers",
+                    "Locating your weak spot",
+                    "Measuring the damage",
+                    "Compiling your report"],
             onAdvance: {})
     }
 }

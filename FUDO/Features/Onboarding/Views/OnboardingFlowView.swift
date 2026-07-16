@@ -120,6 +120,21 @@ struct OnboardingFlowView: View {
                 ReflectionScreen(goals: viewModel.draft.goals, pain: viewModel.draft.pain,
                                  struggle: struggle, onAdvance: viewModel.advance)
             }
+
+        // MARK: Act 1bis — analysis & reveal
+
+        case .loaderAnalysis:
+            // Narrative loader (RiteOff pattern, restructure 2026-07-16): it
+            // ANALYZES the quiz — HIS stats orbit the ring, then HE taps
+            // "Access your report". No OVR and no duration here: the reveal
+            // belongs to the diagnostic, the duration to compose.
+            BuildLoaderScreen(
+                stats: OnboardingCopy.analysisLoaderStats(draft: viewModel.draft),
+                steps: ["Reading your answers",
+                        "Locating your weak spot",
+                        "Measuring the damage",
+                        "Compiling your report"],
+                onAdvance: viewModel.advance)
         case .diagnostic:
             DiagnosticScreen(ovr: viewModel.diagnosticOVR, rank: viewModel.diagnosticRank,
                              onAdvance: viewModel.advance)
@@ -128,18 +143,6 @@ struct OnboardingFlowView: View {
 
         case .compose:
             ComposeProtocolScreen(viewModel: viewModel)
-        case .loaderBuilding:
-            // Narrative loader (RiteOff model, 2026-07-16): HIS stats orbit the
-            // ring, then HE taps "Access your report" — no auto-advance.
-            BuildLoaderScreen(
-                stats: OnboardingCopy.buildLoaderStats(draft: viewModel.draft,
-                                                       ovr: viewModel.diagnosticOVR,
-                                                       days: viewModel.setup.durationDays),
-                steps: ["Reading your weak spot",
-                        "Calibrating your daily rules",
-                        "Setting your start — OVR \(viewModel.diagnosticOVR)",
-                        "Projecting your \(viewModel.setup.durationDays)-day climb"],
-                onAdvance: viewModel.advance)
         case .projection:
             ProjectionScreen(base: OVREngine.startingOVR(from: viewModel.draft.answers),
                              days: viewModel.setup.durationDays,

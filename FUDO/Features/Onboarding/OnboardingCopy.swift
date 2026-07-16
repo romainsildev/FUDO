@@ -69,10 +69,10 @@ enum OnboardingCopy {
     /// Beat 3 — one line, the pivot out of the wound.
     static let reflectionClose = "The protocol is built to kill it."
 
-    // MARK: - OB 12 — the orbiting stats
+    // MARK: - The analysis loader — orbiting stats
 
-    /// One stat orbiting the build loader — his own numbers thrown back at him
-    /// while the protocol "computes".
+    /// One stat orbiting the analysis loader — his own numbers thrown back at
+    /// him while the report "computes".
     struct LoaderStat: Equatable {
         var number: String?
         var label: String
@@ -80,14 +80,17 @@ enum OnboardingCopy {
     }
 
     /// Personalized from the draft — every value is an answer he gave, never an
-    /// invented measurement (D4).
-    static func buildLoaderStats(draft: OnboardingDraft, ovr: Int, days: Int) -> [LoaderStat] {
+    /// invented measurement (D4). Deliberately NO OVR (the reveal belongs to
+    /// the diagnostic, right after) and NO duration (he hasn't chosen it yet —
+    /// restructure 2026-07-16: the loader now precedes the reveal).
+    static func analysisLoaderStats(draft: OnboardingDraft) -> [LoaderStat] {
         var stats: [LoaderStat] = []
         if let scroll = draft.scrollTime {
             stats.append(LoaderStat(number: scroll.optionTitle, label: "scrolled daily"))
         }
-        stats.append(LoaderStat(number: "OVR \(ovr)", label: "your start", emphasis: true))
-        stats.append(LoaderStat(number: "\(days)", label: "days planned"))
+        if let pain = draft.pain {
+            stats.append(LoaderStat(number: nil, label: "Target: \(pain.optionTitle.lowercased())"))
+        }
         if let struggle = draft.struggle {
             stats.append(LoaderStat(number: nil, label: wallLabel(struggle), emphasis: true))
         }

@@ -14,16 +14,25 @@ struct DiagnosticScreen: View {
 
     @State private var counted: Double = 0
     @State private var revealed = false
+    @State private var rankStamped = false
 
     private static let heroHeight: CGFloat = 250
     private static let senseiHeight: CGFloat = 240
-    private static let rankDelay: TimeInterval = OnboardingMetrics.countUpDuration + 0.15
+    /// Faster than OB 06's 1.2 s: this number is smaller and the screen has
+    /// two beats after it (stamp, closing line).
+    private static let countUp: TimeInterval = 0.8
+    /// The rank stamps in like OB 09's seal — same spring, same exception to
+    /// the ease rule.
+    private static let stampAnimation: Animation = .spring(response: 0.4, dampingFraction: 0.65)
+    private static let stampFromScale: CGFloat = 1.45
 
     /// "YOUR STARTING POINT" IS the screen's hierarchy (UX pass 2026-07-16):
     /// Bebas display on top, everything else below it, stripped. The scaffold's
-    /// eyebrow/title stay nil — this headline replaces both.
+    /// title stays nil — this headline replaces it. The block CENTERS between
+    /// the chrome and the CTA (layout fix 2026-07-16), like OB 06/09.
     var body: some View {
-        OnboardingScaffold(step: .diagnostic, canAdvance: true, onAdvance: onAdvance) {
+        OnboardingScaffold(step: .diagnostic, canAdvance: true,
+                           centersVertically: true, onAdvance: onAdvance) {
             VStack(alignment: .leading, spacing: 0) {
                 Text("YOUR\nSTARTING POINT")
                     .fudoFont(.onboardingDisplay(44))
@@ -38,8 +47,8 @@ struct DiagnosticScreen: View {
                     .foregroundStyle(FudoColor.textSecondary)
                     .lineSpacing(3)
                     .padding(.top, 22)
-                    .opacity(revealed ? 0.45 : 0)
-                    .animation(AppAnimation.standard.delay(Self.rankDelay), value: revealed)
+                    .opacity(rankStamped ? 0.45 : 0)
+                    .animation(AppAnimation.standard.delay(0.25), value: rankStamped)
             }
         }
         .task { await runReveal() }
@@ -59,18 +68,19 @@ struct DiagnosticScreen: View {
             Spacer(minLength: 0)
 
             VStack(alignment: .leading, spacing: 2) {
-                // Cream, not vermillon: the present is cream, the FUTURE is vermillon
-                // (OB 13). Same grammar across the two OVR beats.
+                // Muted, drained red — the BAD score. OB 13's full-vermillon ~78
+                // is the deliverance by contrast (Romain 2026-07-16).
                 CountUpText(value: counted) { "\(Int($0.rounded(.down)))" }
                     .fudoFont(.ovr(76))
-                    .foregroundStyle(FudoColor.textPrimary)
+                    .foregroundStyle(FudoColor.accentMuted)
 
+                // Stamps in AFTER the number lands — never alongside it.
                 Text(rank.displayName.uppercased())
                     .fudoFont(.label(12, weight: .semibold))
                     .kerning(2.5)
                     .foregroundStyle(FudoColor.textSecondary)
-                    .opacity(revealed ? 1 : 0)
-                    .animation(AppAnimation.standard.delay(Self.rankDelay), value: revealed)
+                    .opacity(rankStamped ? 1 : 0)
+                    .scaleEffect(rankStamped ? 1 : Self.stampFromScale, anchor: .leading)
             }
 
             Spacer(minLength: 0)
@@ -80,11 +90,12 @@ struct DiagnosticScreen: View {
 
     private func runReveal() async {
         revealed = true
-        withAnimation(.easeOut(duration: OnboardingMetrics.countUpDuration)) {
+        withAnimation(.easeOut(duration: Self.countUp)) {
             counted = Double(ovr)
         }
-        try? await Task.sleep(for: .seconds(OnboardingMetrics.countUpDuration))
-        Haptics.medium()
+        try? await Task.sleep(for: .seconds(Self.countUp))
+        Haptics.medium()   // the landing
+        withAnimation(Self.stampAnimation) { rankStamped = true }
     }
 }
 

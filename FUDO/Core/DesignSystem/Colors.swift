@@ -14,6 +14,10 @@ enum FudoColor {
     static let accent = Color(hex: "E34234")       // vermillon — CTA, rings, flame, ensō, bars
     static let accentPressed = Color(hex: "FF5140")
     static let accentDeep = Color(hex: "7A1F17")   // rank-badge backgrounds
+    /// Dimmed, desaturated vermillon — the BAD number (OB 10's starting OVR):
+    /// legible, but drained, so OB 13's full-accent projection reads as the
+    /// deliverance by contrast. Never for CTAs or live UI accents.
+    static let accentMuted = Color(hex: "9A4238")
 
     static let positive = Color(hex: "34C759")     // OVR delta ▲ only
     static let negative = Color(hex: "FF453A")     // OVR delta ▼ only

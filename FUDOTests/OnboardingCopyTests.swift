@@ -69,10 +69,11 @@ struct OnboardingCopyTests {
                 == "You want to kill doomscrolling.")
     }
 
-    @Test func theEnemyLineComesFromTheStruggle() {
-        #expect(OnboardingCopy.enemyLine(.threeDaysMax) == "Your enemy: 3-day consistency.")
-        #expect(OnboardingCopy.enemyLine(.startStrongThenQuit) == "Your enemy: week two.")
-        #expect(OnboardingCopy.enemyLine(.cantEvenStart) == "Your enemy: the first step.")
+    @Test func theEnemyStampComesFromTheStruggle() {
+        // Bebas stamp (option A, 2026-07-16): all-caps, his failure mode to his face.
+        #expect(OnboardingCopy.enemyStamp(.threeDaysMax) == "YOU QUIT AT DAY 3.")
+        #expect(OnboardingCopy.enemyStamp(.startStrongThenQuit) == "YOU QUIT AT WEEK 2.")
+        #expect(OnboardingCopy.enemyStamp(.cantEvenStart) == "YOU NEVER START.")
     }
 
     // MARK: - OB 11 (Romain 2026-07-16: 60 supersedes D3's 30)

@@ -51,15 +51,21 @@ enum OnboardingCopy {
         }
     }
 
-    static func enemyLine(_ struggle: OnboardingAnswers.Struggle) -> String {
+    /// OB 09 beat 2 — the STAMP (Romain 2026-07-16, option A séquencée). Two
+    /// Bebas lines: the label, then HIS failure mode named to his face. All-caps
+    /// because the display font is the voice here, not the sentence case.
+    static let enemyLabel = "YOUR ENEMY:"
+
+    static func enemyStamp(_ struggle: OnboardingAnswers.Struggle) -> String {
         switch struggle {
-        case .startStrongThenQuit: return "Your enemy: week two."
-        case .threeDaysMax: return "Your enemy: 3-day consistency."
-        case .cantEvenStart: return "Your enemy: the first step."
+        case .startStrongThenQuit: return "YOU QUIT AT WEEK 2."
+        case .threeDaysMax: return "YOU QUIT AT DAY 3."
+        case .cantEvenStart: return "YOU NEVER START."
         }
     }
 
-    static let reflectionClose = "Your protocol will be built on exactly that."
+    /// Beat 3 — one line, the pivot out of the wound.
+    static let reflectionClose = "The protocol is built to kill it."
 
     // MARK: - OB 11 — the recommendation (Romain 2026-07-16: 60 supersedes D3's 30)
 

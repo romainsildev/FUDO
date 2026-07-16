@@ -1,18 +1,26 @@
 import SwiftUI
 
-/// OB 09 — the wall. The app hands him back his own words and doesn't comment on
-/// them. No chevron: what he said is said. And the CTA stops being "Continue" —
-/// he gives the order.
+/// OB 09 — the wall, SEQUENCED (Romain 2026-07-16, option A): three beats, one
+/// idea each. (1) his goals, calm, off-white · (2) the enemy STAMPS in — giant
+/// Bebas vermillon, a seal hitting paper, heavy haptic · (3) one closing line,
+/// then the CTA. No chevron: what he said is said. And the CTA stops being
+/// "Continue" — he gives the order.
 struct ReflectionScreen: View {
     let goals: Set<Goal>
     let pain: Pain?
     let struggle: OnboardingAnswers.Struggle
     let onAdvance: () -> Void
 
-    @State private var revealed = false
+    @State private var goalsShown = false
+    @State private var enemyStamped = false
+    @State private var closeShown = false
 
-    private static let enemyDelay: TimeInterval = 0.5
-    private static let closeDelay: TimeInterval = 1.0
+    /// 0.4–0.6 s between beats — never more (the wall must not drag).
+    private static let beatGap: TimeInterval = 0.55
+    /// The stamp: lands from above at scale, one bounce, done. The spring is a
+    /// deliberate exception to the 0.4-0.6 ease rule — a seal doesn't ease in.
+    private static let stampAnimation: Animation = .spring(response: 0.4, dampingFraction: 0.65)
+    private static let stampFromScale: CGFloat = 1.45
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -27,32 +35,38 @@ struct ReflectionScreen: View {
                 .foregroundStyle(FudoColor.accent)
                 .padding(.top, 56)
 
-            // Derived — no \n: the sentence is built from his goals and wraps naturally.
+            // Beat 1 — his goals, calm. Derived, no \n: the sentence is built
+            // from his answers and wraps naturally.
             Text(OnboardingCopy.reflectionGoals(goals, fallback: pain))
                 .fudoFont(.title(26, weight: .bold))
                 .foregroundStyle(FudoColor.textPrimary)
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 10)
-                .opacity(revealed ? 1 : 0)
-                .offset(y: revealed ? 0 : 10)
-                .animation(AppAnimation.standard, value: revealed)
+                .opacity(goalsShown ? 1 : 0)
+                .offset(y: goalsShown ? 0 : 10)
 
-            Text(OnboardingCopy.enemyLine(struggle))
-                .fudoFont(.title(26, weight: .bold))
-                .foregroundStyle(FudoColor.accent)
-                .lineSpacing(4)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 32)
-                .opacity(revealed ? 1 : 0)
-                .animation(AppAnimation.standard.delay(Self.enemyDelay), value: revealed)
+            // Beat 2 — the stamp. Giant Bebas, vermillon, lands as one block.
+            VStack(alignment: .leading, spacing: 0) {
+                Text(OnboardingCopy.enemyLabel)
+                    .fudoFont(.onboardingDisplay(30))
+                    .foregroundStyle(FudoColor.textPrimary)
+                Text(OnboardingCopy.enemyStamp(struggle))
+                    .fudoFont(.onboardingDisplay(44))
+                    .foregroundStyle(FudoColor.accent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(OnboardingMetrics.Hook.minimumScale)
+            }
+            .padding(.top, 36)
+            .opacity(enemyStamped ? 1 : 0)
+            .scaleEffect(enemyStamped ? 1 : Self.stampFromScale, anchor: .leading)
 
+            // Beat 3 — the pivot out of the wound.
             Text(OnboardingCopy.reflectionClose)
                 .fudoFont(.body(15))
                 .foregroundStyle(FudoColor.textSecondary)
                 .padding(.top, 26)
-                .opacity(revealed ? 1 : 0)
-                .animation(AppAnimation.standard.delay(Self.closeDelay), value: revealed)
+                .opacity(closeShown ? 1 : 0)
 
             Spacer(minLength: 0)
         }
@@ -63,6 +77,8 @@ struct ReflectionScreen: View {
         .task { await runIntro() }
     }
 
+    /// The CTA belongs to beat 3 — invisible before it, and DISABLED while
+    /// invisible (a live button he can't see is the pitfall, not a delayed one).
     private var cta: some View {
         Button(action: onAdvance) {
             Text("Build my protocol")
@@ -73,14 +89,19 @@ struct ReflectionScreen: View {
                 .background { Capsule().fill(FudoColor.accent) }
         }
         .buttonStyle(.plain)
+        .disabled(!closeShown)
+        .opacity(closeShown ? 1 : 0)
         .padding(.horizontal, FudoSpacing.screenMargin)
         .padding(.bottom, 12)
     }
 
     private func runIntro() async {
-        revealed = true
-        try? await Task.sleep(for: .seconds(Self.enemyDelay))
-        Haptics.medium()   // the enemy line IS the beat
+        withAnimation(AppAnimation.standard) { goalsShown = true }
+        try? await Task.sleep(for: .seconds(Self.beatGap))
+        withAnimation(Self.stampAnimation) { enemyStamped = true }
+        Haptics.heavy()   // the seal lands WITH the stamp
+        try? await Task.sleep(for: .seconds(Self.beatGap))
+        withAnimation(AppAnimation.standard) { closeShown = true }
     }
 }
 

@@ -64,14 +64,14 @@ enum OnboardingCopy {
 
     static let reflectionClose = "Your protocol will be built on exactly that."
 
-    // MARK: - OB 11 — the recommendation (D3, Romain 2026-07-15)
+    // MARK: - OB 11 — the recommendation (Romain 2026-07-16: 60 supersedes D3's 30)
 
-    /// Always the 30-day stake. Every welcome hook says "30 DAYS." and the shock
-    /// screen calls 30 days the minimum stake — recommending 75 would call the
-    /// funnel a liar. The chips still offer 60 / 75 / 90 to whoever wants them.
-    /// The draft is taken (and ignored) on purpose: the day the rule changes,
-    /// this signature doesn't.
-    static func recommendedPreset(for draft: OnboardingDraft) -> ChallengePreset { .monk30 }
+    /// Always the 60-day stake — the "Recommended" badge moved to Monk Mode 60
+    /// with the 30/60/90/120 chips. NOTE the standing tension with the welcome
+    /// hooks and shock screen, which still say "30 days": Romain owns that copy
+    /// call. The draft is taken (and ignored) on purpose: the day the rule
+    /// changes, this signature doesn't.
+    static func recommendedPreset(for draft: OnboardingDraft) -> ChallengePreset { .monk60 }
 
     // MARK: - Dates
 

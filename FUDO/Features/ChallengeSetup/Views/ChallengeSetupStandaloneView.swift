@@ -21,7 +21,7 @@ struct ChallengeSetupStandaloneView: View {
                 })
     }
 
-    init(store: GameStore, recommendedPreset: ChallengePreset = .monk30,
+    init(store: GameStore, recommendedPreset: ChallengePreset = .monk60,
          onExit: @escaping () -> Void) {
         _viewModel = State(initialValue: ChallengeSetupViewModel(store: store,
                                                                  recommendedPreset: recommendedPreset))

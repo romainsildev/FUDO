@@ -76,14 +76,14 @@ struct OnboardingCopyTests {
         #expect(OnboardingCopy.enemyLine(.cantEvenStart) == "Your enemy: the first step.")
     }
 
-    // MARK: - OB 11 (D3)
+    // MARK: - OB 11 (Romain 2026-07-16: 60 supersedes D3's 30)
 
-    @Test func theRecommendedPresetIsAlwaysTheThirtyDayStake() {
-        // Every Act-0 hook promises "30 DAYS." — the recommendation never contradicts it.
+    @Test func theRecommendedPresetIsAlwaysTheSixtyDayStake() {
+        // Constant on purpose — the draft never bends the recommendation.
         for struggle in OnboardingAnswers.Struggle.allCases {
             var candidate = draft
             candidate.struggle = struggle
-            #expect(OnboardingCopy.recommendedPreset(for: candidate) == .monk30)
+            #expect(OnboardingCopy.recommendedPreset(for: candidate) == .monk60)
         }
     }
 

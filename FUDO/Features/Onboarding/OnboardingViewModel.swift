@@ -35,7 +35,7 @@ final class OnboardingViewModel {
         self.flags = flags
         self.onFinished = onFinished
         self.step = flags.resumeStep   // kill-safety: a relaunch re-enters where he stopped
-        self.setup = ChallengeSetupViewModel(store: store, recommendedPreset: .monk30)
+        self.setup = ChallengeSetupViewModel(store: store, recommendedPreset: .monk60)
     }
 
     // MARK: - Navigation

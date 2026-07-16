@@ -66,6 +66,15 @@ enum PresetCatalog {
          wakeUpRule()]
     }
 
+    /// Hardcore 90 and Monk Mode 120 share the full protocol — 120 is the same
+    /// discipline held longer, not a different one.
+    private static var hardcoreProtocol: [EditableRule] {
+        monkCore
+            + [EditableRule(title: "Meditate 10 min", iconName: "figure.mind.and.body"),
+               EditableRule(title: "No alcohol", iconName: "wineglass"),
+               EditableRule(title: "One-line journal", iconName: "square.and.pencil")]
+    }
+
     static var all: [PresetDefinition] {
         [PresetDefinition(preset: .monk30, durationDays: 30, title: "Monk Mode 30",
                           tagline: "The standard entry.", defaultRules: monkCore),
@@ -74,22 +83,16 @@ enum PresetCatalog {
                           defaultRules: monkCore
                             + [EditableRule(title: "Meditate 10 min", iconName: "figure.mind.and.body")]),
          PresetDefinition(preset: .hardcore90, durationDays: 90, title: "Hardcore 90",
-                          tagline: "Elite. Brutal by design.",
-                          defaultRules: monkCore
-                            + [EditableRule(title: "Meditate 10 min", iconName: "figure.mind.and.body"),
-                               EditableRule(title: "No alcohol", iconName: "wineglass"),
-                               EditableRule(title: "One-line journal", iconName: "square.and.pencil")]),
-         PresetDefinition(preset: .classic75, durationDays: 75, title: "The Classic 75",
-                          tagline: "The proven protocol.",
-                          // Progress photo ships toggle-OFF: that's the "optional".
-                          defaultRules:
-                            [EditableRule(title: "Two workouts", iconName: "figure.run"),
-                             EditableRule(title: "Diet held", iconName: "fork.knife"),
-                             EditableRule(title: "Read 10 pages", iconName: "book.fill"),
-                             EditableRule(title: "Water goal", iconName: "waterbottle.fill"),
-                             EditableRule(title: "Progress photo", iconName: "camera.fill",
-                                          isEnabled: false)])]
+                          tagline: "Elite. Brutal by design.", defaultRules: hardcoreProtocol),
+         PresetDefinition(preset: .monk120, durationDays: 120, title: "Monk Mode 120",
+                          tagline: "The long game.", defaultRules: hardcoreProtocol)]
     }
+
+    /// Retired presets keep their display name for PAST challenges — they are no
+    /// longer launchable (chips 2026-07-16: the 75 gave its slot to the 120).
+    private static let retiredTitles: [ChallengePreset: String] = [
+        .classic75: "The Classic 75"
+    ]
 
     static func definition(for preset: ChallengePreset) -> PresetDefinition {
         all.first { $0.preset == preset } ?? all[0]
@@ -99,10 +102,10 @@ enum PresetCatalog {
     /// used to re-declare its own list and drifted to "Classic 75"). `.custom` has
     /// no catalog entry, so it is named from its own duration.
     static func title(for preset: ChallengePreset, days: Int) -> String {
-        all.first { $0.preset == preset }?.title ?? "Custom \(days)"
+        all.first { $0.preset == preset }?.title ?? retiredTitles[preset] ?? "Custom \(days)"
     }
 
-    /// Frame-04 duration chips: 30 / 60 / 75 / 90 each map to a preset.
+    /// Duration chips: 30 / 60 / 90 / 120 each map to a preset (2026-07-16).
     static func definition(forDays days: Int) -> PresetDefinition? {
         all.first { $0.durationDays == days }
     }

@@ -20,7 +20,7 @@ final class ChallengeSetupViewModel {
     var rules: [EditableRule]
     var reminderMinutes: Int = ChallengeSetupViewModel.defaultReminderMinutes
 
-    init(store: GameStore, recommendedPreset: ChallengePreset = .monk30) {
+    init(store: GameStore, recommendedPreset: ChallengePreset = .monk60) {
         self.store = store
         self.recommendedPreset = recommendedPreset
         self.selectedPreset = recommendedPreset

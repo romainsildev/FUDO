@@ -28,9 +28,9 @@ struct ChallengeSetupViewModelTests {
 
     @Test func chipDaysMapToPresets() throws {
         let (vm, _) = try makeViewModel()
-        #expect(PresetCatalog.chipDays == [30, 60, 75, 90])
-        vm.selectDuration(days: 75)
-        #expect(vm.selectedPreset == .classic75)
+        #expect(PresetCatalog.chipDays == [30, 60, 90, 120])
+        vm.selectDuration(days: 120)
+        #expect(vm.selectedPreset == .monk120)
         vm.selectDuration(days: 60)
         #expect(vm.selectedPreset == .monk60)
     }
@@ -52,11 +52,19 @@ struct ChallengeSetupViewModelTests {
         }
     }
 
-    @Test func classic75ProgressPhotoShipsDisabled() throws {
-        let (vm, _) = try makeViewModel(recommended: .classic75)
-        let photo = try #require(vm.rules.first { $0.title == "Progress photo" })
-        #expect(!photo.isEnabled)
-        #expect(vm.enabledRules.count == 4)
+    /// Retired 2026-07-16 (chip slot given to the 120): no longer launchable,
+    /// but PAST 75-day challenges must keep their display name.
+    @Test func classic75IsRetiredButKeepsItsName() throws {
+        #expect(!PresetCatalog.all.contains { $0.preset == .classic75 })
+        #expect(PresetCatalog.title(for: .classic75, days: 75) == "The Classic 75")
+    }
+
+    @Test func monk120SharesTheHardcoreProtocol() throws {
+        let definition = PresetCatalog.definition(for: .monk120)
+        #expect(definition.durationDays == 120)
+        #expect(definition.defaultRules.count == 8)
+        #expect(definition.defaultRules.map(\.title)
+                == PresetCatalog.definition(for: .hardcore90).defaultRules.map(\.title))
     }
 
     // MARK: - Rule editing
@@ -107,12 +115,14 @@ struct ChallengeSetupViewModelTests {
     // MARK: - Commit
 
     @Test func commitStartsChallengeWithEnabledRulesOnly() throws {
-        let (vm, store) = try makeViewModel(recommended: .classic75)
+        let (vm, store) = try makeViewModel(recommended: .monk120)
+        let first = try #require(vm.rules.first)
+        vm.toggleRule(id: first.id)   // disabled → must not be created
         #expect(vm.commit())
         let challenge = try #require(store.activeChallenge)
-        #expect(challenge.preset == .classic75)
-        #expect(challenge.durationDays == 75)
-        #expect(challenge.rules.count == 4)   // progress photo disabled → not created
+        #expect(challenge.preset == .monk120)
+        #expect(challenge.durationDays == 120)
+        #expect(challenge.rules.count == 7)
         #expect(challenge.reminderMinutes == ChallengeSetupViewModel.defaultReminderMinutes)
     }
 

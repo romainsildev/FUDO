@@ -11,7 +11,7 @@ struct ChallengeSetupFlowView: View {
     @State private var path: [Step] = []
     let onFinished: () -> Void
 
-    init(store: GameStore, recommendedPreset: ChallengePreset = .monk30,
+    init(store: GameStore, recommendedPreset: ChallengePreset = .monk60,
          onFinished: @escaping () -> Void) {
         _viewModel = State(initialValue: ChallengeSetupViewModel(store: store,
                                                                  recommendedPreset: recommendedPreset))

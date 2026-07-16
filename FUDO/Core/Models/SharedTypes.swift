@@ -14,7 +14,9 @@ struct OVRPoint: Codable, Equatable {
     let value: Double       // ovrValue after the day's delta
 }
 
-enum ChallengePreset: String, Codable { case monk30, monk60, hardcore90, classic75, custom }
+/// `classic75` is RETIRED (chips 2026-07-16: 30/60/90/120) — the case stays so
+/// past 75-day challenges keep decoding and their display name.
+enum ChallengePreset: String, Codable { case monk30, monk60, hardcore90, monk120, classic75, custom }
 enum ChallengeStatus: String, Codable { case active, completed, abandoned }
 
 /// Derived from OVR, never persisted.

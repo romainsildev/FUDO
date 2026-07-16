@@ -182,9 +182,9 @@ struct ComposeProtocolScreen: View {
 
 /// A chip he picked himself: the preset line drops the green "RECOMMENDED FOR
 /// YOU" and shows the tagline instead, and the rules reload from the preset.
-#Preview("OB 11 — compose (Classic 75 picked)") {
+#Preview("OB 11 — compose (Monk Mode 120 picked)") {
     let viewModel = OnboardingPreviewFactory.viewModel(step: .compose)
-    viewModel.setup.selectDuration(days: 75)
+    viewModel.setup.selectDuration(days: 120)
     return OnboardingPreviewChrome {
         ComposeProtocolScreen(viewModel: viewModel)
     }

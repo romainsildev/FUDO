@@ -23,13 +23,10 @@ enum OnboardingCopy {
         }
     }
 
-    /// The Mao comfort pivot + the 30-day beat (brief, 2026-07-13). Commitment
-    /// framing — a stake, never "studies say".
+    /// The Mao comfort pivot (brief, 2026-07-13). Commitment framing, never
+    /// "studies say". The 30-day stake paragraph died in the UX pass 2026-07-16
+    /// (strict minimum on OB 06).
     static let shockPivot = "Monk mode exists exactly for this."
-    static let shockStake = """
-        Good habit or bad one, it holds the same way: about 30 days without breaking it. \
-        That's the minimum stake to prove you own it.
-        """
 
     // MARK: - OB 09 — the reflection
 

@@ -28,10 +28,10 @@ struct ContractScreen: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Full bar, no chevron: this is the end of the persuasion tunnel.
-            OnboardingProgressBar(fraction: OnboardingStep.contract.progressFraction)
-                .padding(.top, 8)
+            // The chrome slot — the bar renders at flow level, outside the slide.
+            Color.clear
                 .frame(height: 24)
+                .padding(.top, 8)
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {

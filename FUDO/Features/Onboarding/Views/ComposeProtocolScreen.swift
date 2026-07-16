@@ -33,7 +33,9 @@ struct ComposeProtocolScreen: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            header
+            // The chrome slot — back + bar render at flow level, outside the slide.
+            Color.clear
+                .frame(height: 24)
                 .padding(.top, 8)
 
             ScrollView(showsIndicators: false) {
@@ -87,24 +89,6 @@ struct ComposeProtocolScreen: View {
             viewModel.prepareCompose()
             revealed = true
         }
-    }
-
-    private var header: some View {
-        HStack(spacing: 12) {
-            Button {
-                Haptics.light()
-                viewModel.back()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .fudoFont(.headline())
-                    .foregroundStyle(FudoColor.textSecondary)
-                    .padding(.vertical, 8)
-                    .padding(.trailing, 4)
-            }
-            .buttonStyle(.plain)
-            OnboardingProgressBar(fraction: OnboardingStep.compose.progressFraction)
-        }
-        .frame(height: 24)
     }
 
     private var chipsRow: some View {

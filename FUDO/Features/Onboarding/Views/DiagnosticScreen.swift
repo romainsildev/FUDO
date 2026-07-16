@@ -11,7 +11,6 @@ struct DiagnosticScreen: View {
     let ovr: Int
     let rank: Rank
     let onAdvance: () -> Void
-    let onBack: () -> Void
 
     @State private var counted: Double = 0
     @State private var revealed = false
@@ -19,21 +18,28 @@ struct DiagnosticScreen: View {
     private static let heroHeight: CGFloat = 250
     private static let senseiHeight: CGFloat = 240
     private static let rankDelay: TimeInterval = OnboardingMetrics.countUpDuration + 0.15
-    private static let copyDelay: TimeInterval = 0.6
 
+    /// "YOUR STARTING POINT" IS the screen's hierarchy (UX pass 2026-07-16):
+    /// Bebas display on top, everything else below it, stripped. The scaffold's
+    /// eyebrow/title stay nil — this headline replaces both.
     var body: some View {
-        OnboardingScaffold(step: .diagnostic, eyebrow: "YOUR STARTING POINT",
-                           title: "This is where\neveryone starts.",
-                           canAdvance: true, onBack: onBack, onAdvance: onAdvance) {
+        OnboardingScaffold(step: .diagnostic, canAdvance: true, onAdvance: onAdvance) {
             VStack(alignment: .leading, spacing: 0) {
+                Text("YOUR\nSTARTING POINT")
+                    .fudoFont(.onboardingDisplay(44))
+                    .foregroundStyle(FudoColor.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+
                 hero
+                    .padding(.top, 24)
+
                 Text("Almost no one moves from here.\nThe protocol is how you do.")
                     .fudoFont(.body(15))
                     .foregroundStyle(FudoColor.textSecondary)
                     .lineSpacing(3)
                     .padding(.top, 22)
-                    .opacity(revealed ? 1 : 0)
-                    .animation(AppAnimation.standard.delay(Self.copyDelay), value: revealed)
+                    .opacity(revealed ? 0.45 : 0)
+                    .animation(AppAnimation.standard.delay(Self.rankDelay), value: revealed)
             }
         }
         .task { await runReveal() }
@@ -86,14 +92,14 @@ struct DiagnosticScreen: View {
 /// The PRD's canonical number.
 #Preview("OB 10 — OVR 43 (Novice)") {
     OnboardingPreviewChrome {
-        DiagnosticScreen(ovr: 43, rank: .novice, onAdvance: {}, onBack: {})
+        DiagnosticScreen(ovr: 43, rank: .novice, onAdvance: {})
     }
 }
 
 /// The engine's floor: every answer at its worst. Still Novice — as it must be.
 #Preview("OB 10 — OVR 40 (floor)") {
     OnboardingPreviewChrome {
-        DiagnosticScreen(ovr: 40, rank: .novice, onAdvance: {}, onBack: {})
+        DiagnosticScreen(ovr: 40, rank: .novice, onAdvance: {})
     }
 }
 
@@ -101,7 +107,7 @@ struct DiagnosticScreen: View {
 /// besides Novice this screen can ever show.
 #Preview("OB 10 — OVR 50 (ceiling, Disciple)") {
     OnboardingPreviewChrome {
-        DiagnosticScreen(ovr: 50, rank: .disciple, onAdvance: {}, onBack: {})
+        DiagnosticScreen(ovr: 50, rank: .disciple, onAdvance: {})
     }
 }
 #endif

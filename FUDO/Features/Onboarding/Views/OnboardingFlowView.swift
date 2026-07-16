@@ -34,6 +34,14 @@ struct OnboardingFlowView: View {
 
             content
                 .transition(viewModel.transition)
+
+            // Stable chrome (UX pass 2026-07-16): the bar and the chevron sit
+            // ABOVE the sliding screens, so the bar only fills — it never slides
+            // in with a screen. Screens keep an empty slot where it renders.
+            if viewModel.step.showsProgress {
+                OnboardingChromeHeader(step: viewModel.step, onBack: viewModel.back)
+                    .transition(.opacity)
+            }
         }
         .animation(AppAnimation.standard, value: viewModel.step)
     }
@@ -65,20 +73,20 @@ struct OnboardingFlowView: View {
                                title: "What's the ONE thing\nyou can't control alone?",
                                options: Pain.allCases, titleFor: \.optionTitle,
                                selection: $viewModel.draft.pain,
-                               onAdvance: viewModel.advance, onBack: viewModel.back)
+                               onAdvance: viewModel.advance)
         case .scrollHours:
             SingleChoiceScreen(step: .scrollHours, eyebrow: "BE HONEST",
                                title: "How many hours a day\ndo you scroll?",
                                options: OnboardingAnswers.ScrollTime.allCases,
                                titleFor: \.optionTitle,
                                selection: $viewModel.draft.scrollTime,
-                               onAdvance: viewModel.advance, onBack: viewModel.back)
+                               onAdvance: viewModel.advance)
         case .age:
             SingleChoiceScreen(step: .age, eyebrow: "QUICK ONE",
                                title: "How old are you?",
                                options: AgeBracket.allCases, titleFor: \.optionTitle,
                                selection: $viewModel.draft.age,
-                               onAdvance: viewModel.advance, onBack: viewModel.back)
+                               onAdvance: viewModel.advance)
         case .procrastination:
             SingleChoiceScreen(step: .procrastination, eyebrow: "NO JUDGMENT",
                                title: "How often do you say\n\"I'll start Monday\"?",
@@ -87,11 +95,11 @@ struct OnboardingFlowView: View {
                                options: OnboardingAnswers.Procrastination.displayOrder,
                                titleFor: \.optionTitle,
                                selection: $viewModel.draft.procrastination,
-                               onAdvance: viewModel.advance, onBack: viewModel.back)
+                               onAdvance: viewModel.advance)
         case .shockStat:
             if let shock = viewModel.shock, let pain = viewModel.draft.pain {
                 ShockStatScreen(shock: shock, pain: pain,
-                                onAdvance: viewModel.advance, onBack: viewModel.back)
+                                onAdvance: viewModel.advance)
             }
         case .goals:
             MultiChoiceScreen(step: .goals, eyebrow: "YOUR TARGETS",
@@ -99,14 +107,14 @@ struct OnboardingFlowView: View {
                               subtitle: "Pick all that apply",
                               options: Goal.allCases,
                               selection: $viewModel.draft.goals,
-                              onAdvance: viewModel.advance, onBack: viewModel.back)
+                              onAdvance: viewModel.advance)
         case .struggle:
             SingleChoiceScreen(step: .struggle, eyebrow: "THE REAL TALK",
                                title: "What's your real problem?",
                                options: OnboardingAnswers.Struggle.allCases,
                                titleFor: \.optionTitle,
                                selection: $viewModel.draft.struggle,
-                               onAdvance: viewModel.advance, onBack: viewModel.back)
+                               onAdvance: viewModel.advance)
         case .reflection:
             if let struggle = viewModel.draft.struggle {
                 ReflectionScreen(goals: viewModel.draft.goals, pain: viewModel.draft.pain,
@@ -114,7 +122,7 @@ struct OnboardingFlowView: View {
             }
         case .diagnostic:
             DiagnosticScreen(ovr: viewModel.diagnosticOVR, rank: viewModel.diagnosticRank,
-                             onAdvance: viewModel.advance, onBack: viewModel.back)
+                             onAdvance: viewModel.advance)
 
         // MARK: Act 2 — climax
 
@@ -136,7 +144,7 @@ struct OnboardingFlowView: View {
                              projectedOVR: viewModel.projectedOVR,
                              projectedRank: viewModel.projectedRank,
                              date: viewModel.projectionDate,
-                             onAdvance: viewModel.advance, onBack: viewModel.back)
+                             onAdvance: viewModel.advance)
         case .firstCheck:
             FirstCheckScreen(onAdvance: viewModel.advance)
         case .socialProof:

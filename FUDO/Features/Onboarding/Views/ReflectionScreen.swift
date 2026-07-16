@@ -16,9 +16,10 @@ struct ReflectionScreen: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            OnboardingProgressBar(fraction: OnboardingStep.reflection.progressFraction)
-                .padding(.top, 8)
+            // The chrome slot — the bar renders at flow level, outside the slide.
+            Color.clear
                 .frame(height: 24)
+                .padding(.top, 8)
 
             Text("GOT IT")
                 .fudoFont(.label(13, weight: .bold))

@@ -2,8 +2,8 @@ import SwiftUI
 
 /// OB 06 — the AHA, under a minute from opening. He isn't reading a statistic:
 /// he's reading HIS OWN multiplication. Then the pivot — we don't leave him in
-/// the pain, we tell him monk mode exists exactly for this, and why the stake is
-/// 30 days.
+/// the pain, we tell him monk mode exists exactly for this. Strict minimum on
+/// screen (UX pass 2026-07-16): the giant number, one context line, the pivot.
 ///
 /// Nothing on this screen claims a study. The number is his two answers, times
 /// each other (ShockMath). That's the whole point, and it's why it survives a
@@ -12,53 +12,45 @@ struct ShockStatScreen: View {
     let shock: ShockMath.Result
     let pain: Pain
     let onAdvance: () -> Void
-    let onBack: () -> Void
 
     @State private var counted: Double = 0
     @State private var revealed = false
 
-    /// The recut lands AFTER the number: he takes the hit, then we name it.
-    private static let recutDelay: TimeInterval = OnboardingMetrics.countUpDuration
-    private static let pivotDelay: TimeInterval = OnboardingMetrics.countUpDuration + 0.4
-    private static let stakeDelay: TimeInterval = OnboardingMetrics.countUpDuration + 0.6
+    /// ONE beat after the number (UX pass 2026-07-16): everything below it fades
+    /// in together. He takes the hit, then we name it — once.
+    private static let afterNumberDelay: TimeInterval = OnboardingMetrics.countUpDuration
 
     var body: some View {
         OnboardingScaffold(step: .shockStat, eyebrow: "THE MATH",
                            title: OnboardingCopy.shockLead(shock: shock),
-                           canAdvance: true, onBack: onBack, onAdvance: onAdvance) {
+                           canAdvance: true, onAdvance: onAdvance) {
             VStack(alignment: .leading, spacing: 0) {
                 number
                 Text("of your life.")
                     .fudoFont(.title(24, weight: .bold))
                     .foregroundStyle(FudoColor.textPrimary)
 
-                Text(OnboardingCopy.shockRecut(pain: pain, shock: shock))
-                    .fudoFont(.body(15, weight: .medium))
-                    .foregroundStyle(FudoColor.accent)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 16)
-                    .opacity(revealed ? 1 : 0)
-                    .animation(AppAnimation.standard.delay(Self.recutDelay), value: revealed)
+                // The strict minimum below the number: his wound at 45 % —
+                // present, never shouting — then the pivot. The 30-day stake
+                // paragraph is gone (UX pass 2026-07-16: too much to read).
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(OnboardingCopy.shockRecut(pain: pain, shock: shock))
+                        .fudoFont(.body(15, weight: .medium))
+                        .foregroundStyle(FudoColor.textPrimary)
+                        .opacity(0.45)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 16)
 
-                separator
-                    .padding(.top, 28)
-                    .opacity(revealed ? 1 : 0)
-                    .animation(AppAnimation.standard.delay(Self.pivotDelay), value: revealed)
+                    separator
+                        .padding(.top, 28)
 
-                Text(OnboardingCopy.shockPivot)
-                    .fudoFont(.body(15))
-                    .foregroundStyle(FudoColor.textSecondary)
-                    .padding(.top, 22)
-                    .opacity(revealed ? 1 : 0)
-                    .animation(AppAnimation.standard.delay(Self.pivotDelay), value: revealed)
-
-                Text(OnboardingCopy.shockStake)
-                    .fudoFont(.caption(13))
-                    .foregroundStyle(FudoColor.textSecondary.opacity(0.85))
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 8)
-                    .opacity(revealed ? 1 : 0)
-                    .animation(AppAnimation.standard.delay(Self.stakeDelay), value: revealed)
+                    Text(OnboardingCopy.shockPivot)
+                        .fudoFont(.body(15))
+                        .foregroundStyle(FudoColor.textSecondary)
+                        .padding(.top, 22)
+                }
+                .opacity(revealed ? 1 : 0)
+                .animation(AppAnimation.standard.delay(Self.afterNumberDelay), value: revealed)
             }
         }
         .onboardingWarmWash()
@@ -103,7 +95,7 @@ private struct ShockPreviewHost: View {
         OnboardingPreviewChrome {
             if let age = draft.age, let scroll = draft.scrollTime, let pain = draft.pain {
                 ShockStatScreen(shock: ShockMath.result(age: age, scroll: scroll),
-                                pain: pain, onAdvance: {}, onBack: {})
+                                pain: pain, onAdvance: {})
             }
         }
     }

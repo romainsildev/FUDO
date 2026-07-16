@@ -19,26 +19,19 @@ struct SingleChoiceScreen<Option: Hashable>: View {
     var hint: String?
     var ctaTitle: String = "Continue"
     let onAdvance: () -> Void
-    let onBack: () -> Void
 
-    private static var rowStagger: TimeInterval { 0.04 }
-
-    @State private var revealed = false
-
+    // ONE choreography per screen (UX pass 2026-07-16): the slide-in IS the
+    // entrance. No per-row stagger stacked on top of it.
     var body: some View {
         OnboardingScaffold(step: step, eyebrow: eyebrow, title: title, subtitle: subtitle,
                            ctaTitle: ctaTitle, canAdvance: selection != nil,
-                           onBack: onBack, onAdvance: onAdvance) {
+                           onAdvance: onAdvance) {
             VStack(alignment: .leading, spacing: 10) {
-                ForEach(Array(options.enumerated()), id: \.element) { index, option in
+                ForEach(options, id: \.self) { option in
                     OptionRow(title: titleFor(option),
                               isSelected: selection == option) {
                         selection = option
                     }
-                    .opacity(revealed ? 1 : 0)
-                    .offset(y: revealed ? 0 : 8)
-                    .animation(AppAnimation.standard.delay(Double(index) * Self.rowStagger),
-                               value: revealed)
                 }
 
                 if let hint {
@@ -46,11 +39,9 @@ struct SingleChoiceScreen<Option: Hashable>: View {
                         .fudoFont(.caption(13))
                         .foregroundStyle(FudoColor.textSecondary)
                         .padding(.top, 8)
-                        .opacity(revealed ? 1 : 0)
                 }
             }
         }
-        .onAppear { revealed = true }
     }
 }
 
@@ -71,7 +62,7 @@ private struct SingleChoicePreviewHost<Option: Hashable>: View {
             SingleChoiceScreen(step: step, eyebrow: eyebrow, title: title,
                                options: options, titleFor: titleFor,
                                selection: $selection, hint: hint,
-                               onAdvance: {}, onBack: {})
+                               onAdvance: {})
         }
     }
 }

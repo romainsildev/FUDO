@@ -42,12 +42,11 @@ struct OnboardingCopyTests {
                 == "At this pace, by age 40\nyou will have scrolled away")
     }
 
-    @Test func theThirtyDayBeatIsAStakeNotAStudy() {
-        // The brief is explicit: commitment framing, never pseudo-science.
-        #expect(OnboardingCopy.shockStake.contains("30 days"))
-        #expect(OnboardingCopy.shockStake.contains("stake"))
+    @Test func thePivotStaysCommitmentFramedNeverPseudoScience() {
+        // The brief is explicit: commitment framing, never "studies say".
+        // (The 30-day stake paragraph died in the UX pass 2026-07-16.)
         for banned in ["studies", "science", "research", "proven"] {
-            #expect(OnboardingCopy.shockStake.lowercased().contains(banned) == false)
+            #expect(OnboardingCopy.shockPivot.lowercased().contains(banned) == false)
         }
     }
 

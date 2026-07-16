@@ -11,7 +11,6 @@ struct ProjectionScreen: View {
     let projectedRank: Rank
     let date: Date
     let onAdvance: () -> Void
-    let onBack: () -> Void
 
     @State private var drawnDays = 0
     @State private var revealed = false
@@ -25,7 +24,7 @@ struct ProjectionScreen: View {
     var body: some View {
         OnboardingScaffold(step: .projection, eyebrow: "YOUR TRAJECTORY",
                            title: "On \(OnboardingCopy.longDate(date)), you will be\nat ~\(displayedProjection).",
-                           canAdvance: true, onBack: onBack, onAdvance: onAdvance) {
+                           canAdvance: true, onAdvance: onAdvance) {
             EmptyView()
         }
         // The card sits ABOVE the title on this screen (frame): the curve is the
@@ -65,7 +64,7 @@ private struct ProjectionPreviewHost: View {
         return OnboardingPreviewChrome {
             ProjectionScreen(base: base, days: days, projectedOVR: projected,
                              projectedRank: OVREngine.rank(forOVR: projected),
-                             date: date, onAdvance: {}, onBack: {})
+                             date: date, onAdvance: {})
         }
     }
 }

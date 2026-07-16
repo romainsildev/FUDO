@@ -10,30 +10,22 @@ struct MultiChoiceScreen: View {
     let options: [Goal]
     @Binding var selection: Set<Goal>
     let onAdvance: () -> Void
-    let onBack: () -> Void
 
-    private static var rowStagger: TimeInterval { 0.04 }
-
-    @State private var revealed = false
-
+    // ONE choreography per screen (UX pass 2026-07-16): the slide-in IS the
+    // entrance. No per-row stagger stacked on top of it.
     var body: some View {
         OnboardingScaffold(step: step, eyebrow: eyebrow, title: title, subtitle: subtitle,
                            canAdvance: !selection.isEmpty,
-                           onBack: onBack, onAdvance: onAdvance) {
+                           onAdvance: onAdvance) {
             VStack(alignment: .leading, spacing: 10) {
-                ForEach(Array(options.enumerated()), id: \.element) { index, option in
+                ForEach(options, id: \.self) { option in
                     OptionRow(title: option.optionTitle,
                               isSelected: selection.contains(option)) {
                         toggle(option)
                     }
-                    .opacity(revealed ? 1 : 0)
-                    .offset(y: revealed ? 0 : 8)
-                    .animation(AppAnimation.standard.delay(Double(index) * Self.rowStagger),
-                               value: revealed)
                 }
             }
         }
-        .onAppear { revealed = true }
     }
 
     private func toggle(_ option: Goal) {
@@ -56,7 +48,7 @@ private struct MultiChoicePreviewHost: View {
                               subtitle: "Pick all that apply",
                               options: Goal.allCases,
                               selection: $selection,
-                              onAdvance: {}, onBack: {})
+                              onAdvance: {})
         }
     }
 }

@@ -21,25 +21,20 @@ struct ProjectionScreen: View {
 
     private var displayedProjection: Int { OVREngine.displayedOVR(projectedOVR) }
 
+    /// Title on top, curve below, the whole block centered like OB 06/09/10 —
+    /// layout fix 2026-07-16: the old top-overlay card sat ON the title and left
+    /// the lower two-thirds of the screen dead. Nothing overlaps in a VStack.
     var body: some View {
-        OnboardingScaffold(step: .projection, 
+        OnboardingScaffold(step: .projection,
                            title: "On \(OnboardingCopy.longDate(date)), you will be\nat ~\(displayedProjection).",
-                           canAdvance: true, onAdvance: onAdvance) {
-            EmptyView()
+                           canAdvance: true, centersVertically: true, onAdvance: onAdvance) {
+            ProjectionCurveView(base: base, days: days,
+                                rankName: projectedRank.displayName,
+                                drawnDays: drawnDays)
+                .padding(.top, 28)
+                .opacity(revealed ? 1 : 0)
         }
-        // The card sits ABOVE the title on this screen (frame): the curve is the
-        // subject, the sentence is its caption.
-        .overlay(alignment: .top) { curveCard }
         .task { await runDraw() }
-    }
-
-    private var curveCard: some View {
-        ProjectionCurveView(base: base, days: days,
-                            rankName: projectedRank.displayName,
-                            drawnDays: drawnDays)
-            .padding(.horizontal, FudoSpacing.screenMargin)
-            .padding(.top, 96)
-            .opacity(revealed ? 1 : 0)
     }
 
     /// The line draws itself left to right, then the endpoint lands with the beat.

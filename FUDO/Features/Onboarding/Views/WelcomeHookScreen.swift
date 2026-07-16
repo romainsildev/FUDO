@@ -202,12 +202,12 @@ private struct TransformationStrip: View {
     let haloBreathing: Bool
 
     private static let stripHeight: CGFloat = 200
-    private static let pastHeight: CGFloat = 120
+    private static let pastHeight: CGFloat = 132
     private static let futureHeight: CGFloat = 180
     /// One step per dot: diameter, opacity and lift climb together — a clean
     /// ramp toward the future, not three equal crumbs.
     private static let dotSteps: [(size: CGFloat, opacity: Double, lift: CGFloat)] = [
-        (3, 0.35, 0), (4.5, 0.55, 8), (6, 0.75, 17), (8, 1.0, 27)
+        (4, 0.45, 0), (6, 0.65, 10), (8, 0.85, 21), (10, 1.0, 32)
     ]
     /// Where the dot path takes off — around the silhouette's torso.
     private static let dotBaseline: CGFloat = 72
@@ -227,17 +227,18 @@ private struct TransformationStrip: View {
         .clipped()
     }
 
-    /// The silhouette of who he was: color drained, pushed into the dark, out of
-    /// focus. The blur comes LAST in the chain so it softens the whole treatment.
+    /// The ghost of who he was: drained and soft, but VISIBLE — device pass 2
+    /// (2026-07-16): the first crush (blur 4 / −0.18 / 0.38) made him vanish
+    /// against the dark dojo. A silhouette the eye can't find says nothing.
     private var past: some View {
         SenseiAssetProvider.image(for: .novice)
             .resizable()
             .scaledToFit()
             .frame(height: Self.pastHeight)
-            .saturation(0.25)
-            .brightness(-0.18)
-            .blur(radius: 4)
-            .opacity(0.38)
+            .saturation(0.45)
+            .brightness(-0.06)
+            .blur(radius: 2)
+            .opacity(0.62)
             .padding(.bottom, 4)
     }
 

@@ -67,8 +67,12 @@ struct WelcomeHookScreen: View {
             hookStack
                 .padding(.top, hook.feature == .transformationStrip ? 28 : 0)
             if hook.feature == .protocolCard {
+                // Inset + extra air: the tilt and the glass lensing both reach
+                // past the layout box — 24pt of gap let the corner clip the
+                // micro-line on device (pass 2, 2026-07-16).
                 ProtocolGlassCard(checksRevealed: cardChecks)
-                    .padding(.top, 24)
+                    .padding(.horizontal, 10)
+                    .padding(.top, 36)
                     .opacity(revealed ? 1 : 0)
                     .scaleEffect(revealed ? 1 : 0.97)
                     .offset(y: revealed ? 0 : 14)

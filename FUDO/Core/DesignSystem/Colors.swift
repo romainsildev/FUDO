@@ -26,6 +26,10 @@ enum FudoColor {
     // these are frosted-glass tints, applied via opacity, never as a foreground color.
     static let surfaceGlass = Color.white.opacity(0.06)       // default glass tint
     static let surfaceGlassStrong = Color.white.opacity(0.10) // active / raised glass
+    /// Dark glass tint for CARDS floating over video (OB 01c): a white tint on a
+    /// large glassEffect surface reads washed-grey on device — cards tint toward
+    /// the ink instead, matching the near-black card of the frames.
+    static let surfaceGlassInk = Color.black.opacity(0.45)
     static let borderGlass = Color.white.opacity(0.22)        // 0.5px glass hairline
     static let specularHighlight = Color.white.opacity(0.18)  // top-edge light catch
 }

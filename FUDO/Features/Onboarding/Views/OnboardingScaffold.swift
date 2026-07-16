@@ -19,6 +19,10 @@ struct OnboardingScaffold<Content: View>: View {
     var subtitle: String?
     var ctaTitle: String = "Continue"
     var canAdvance: Bool
+    /// Drama screens (OB 06): the block CENTERS between the chrome line and the
+    /// CTA — symmetric spacers, breathing above AND below — instead of stacking
+    /// from the top.
+    var centersVertically: Bool = false
     let onAdvance: () -> Void
     @ViewBuilder let content: () -> Content
 
@@ -33,12 +37,16 @@ struct OnboardingScaffold<Content: View>: View {
                 .frame(height: 24)
                 .padding(.top, Self.headerTopPadding)
 
+            if centersVertically {
+                Spacer(minLength: 0)
+            }
+
             if let title {
                 Text(title)
                     .fudoFont(.title(28, weight: .bold))
                     .foregroundStyle(FudoColor.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, Self.titleTopPadding)
+                    .padding(.top, centersVertically ? 0 : Self.titleTopPadding)
             }
 
             if let subtitle {
@@ -49,7 +57,7 @@ struct OnboardingScaffold<Content: View>: View {
             }
 
             content()
-                .padding(.top, title == nil ? Self.titleTopPadding : 32)
+                .padding(.top, centersVertically ? 0 : (title == nil ? Self.titleTopPadding : 32))
 
             Spacer(minLength: 0)
         }

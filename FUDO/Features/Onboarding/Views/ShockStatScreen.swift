@@ -22,24 +22,27 @@ struct ShockStatScreen: View {
     private static let pivotDelay: TimeInterval = OnboardingMetrics.countUpDuration + 0.55
 
     var body: some View {
-        OnboardingScaffold(step: .shockStat, canAdvance: true, onAdvance: onAdvance) {
+        // The block CENTERS between the chrome and the CTA (layout fix
+        // 2026-07-16): a drama screen doesn't stack from the top-left corner.
+        OnboardingScaffold(step: .shockStat, canAdvance: true,
+                           centersVertically: true, onAdvance: onAdvance) {
             VStack(alignment: .leading, spacing: 0) {
                 // 1 — the setup, secondary at 45 %: it points, it doesn't punch.
                 Text(OnboardingCopy.shockLead(shock: shock))
-                    .fudoFont(.body(17, weight: .medium))
+                    .fudoFont(.body(18, weight: .medium))
                     .foregroundStyle(FudoColor.textPrimary)
                     .opacity(0.45)
 
                 // 2 — the blow.
                 number
-                    .padding(.top, 10)
+                    .padding(.top, 12)
 
                 // 3 — one line, his wound fused in. No separate recut paragraph.
                 Text(OnboardingCopy.shockOfYourLife(pain: pain))
-                    .fudoFont(.title(20, weight: .semibold))
+                    .fudoFont(.title(22, weight: .semibold))
                     .foregroundStyle(FudoColor.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 14)
+                    .padding(.top, 16)
                     .opacity(revealed ? 1 : 0)
                     .animation(AppAnimation.standard.delay(Self.fusedDelay), value: revealed)
 
@@ -47,7 +50,7 @@ struct ShockStatScreen: View {
                 Text(OnboardingCopy.shockPivot)
                     .fudoFont(.body(15))
                     .foregroundStyle(FudoColor.textSecondary)
-                    .padding(.top, 28)
+                    .padding(.top, 32)
                     .opacity(revealed ? 1 : 0)
                     .animation(AppAnimation.standard.delay(Self.pivotDelay), value: revealed)
             }
@@ -57,14 +60,15 @@ struct ShockStatScreen: View {
     }
 
     /// The count-up re-formats through ShockMath's own rule — "1.9 YEARS" or
-    /// "205 DAYS", never two spellings of one number. Bebas display, vermillon:
-    /// the one strong element of the screen.
+    /// "205 DAYS", never two spellings of one number. Bebas display, vermillon,
+    /// sized to FILL the width like a welcome hook (88 pt base, internal scale
+    /// down to fit): the one strong element of the screen.
     private var number: some View {
         CountUpText(value: counted) { ShockMath.headline(for: max(0, $0)).uppercased() }
-            .fudoFont(.onboardingDisplay(72))
+            .fudoFont(.onboardingDisplay(88))
             .foregroundStyle(FudoColor.accent)
             .lineLimit(1)
-            .minimumScaleFactor(0.6)
+            .minimumScaleFactor(0.5)
     }
 
     /// Sober: it climbs, it stops, it hits. No bounce, no scale — the number

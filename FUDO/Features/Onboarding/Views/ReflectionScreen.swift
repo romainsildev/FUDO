@@ -29,30 +29,33 @@ struct ReflectionScreen: View {
                 .frame(height: 24)
                 .padding(.top, 8)
 
+            // The block CENTERS between the chrome and the CTA (layout fix
+            // 2026-07-16): symmetric spacers — the wall breathes above AND below.
+            Spacer(minLength: 0)
+
             // Beat 1 — his goals, calm. Derived, no \n: the sentence is built
-            // from his answers and wraps naturally. No kicker above it (copy
-            // pass 2026-07-16): the sentence opens the screen.
+            // from his answers and wraps naturally.
             Text(OnboardingCopy.reflectionGoals(goals, fallback: pain))
                 .fudoFont(.title(26, weight: .bold))
                 .foregroundStyle(FudoColor.textPrimary)
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 56)
                 .opacity(goalsShown ? 1 : 0)
                 .offset(y: goalsShown ? 0 : 10)
 
-            // Beat 2 — the stamp. Giant Bebas, vermillon, lands as one block.
-            VStack(alignment: .leading, spacing: 0) {
+            // Beat 2 — the stamp. Hook-sized Bebas (internal scale fills the
+            // width), vermillon, lands as one block.
+            VStack(alignment: .leading, spacing: 2) {
                 Text(OnboardingCopy.enemyLabel)
-                    .fudoFont(.onboardingDisplay(30))
+                    .fudoFont(.onboardingDisplay(38))
                     .foregroundStyle(FudoColor.textPrimary)
                 Text(OnboardingCopy.enemyStamp(struggle))
-                    .fudoFont(.onboardingDisplay(44))
+                    .fudoFont(.onboardingDisplay(56))
                     .foregroundStyle(FudoColor.accent)
                     .lineLimit(1)
-                    .minimumScaleFactor(OnboardingMetrics.Hook.minimumScale)
+                    .minimumScaleFactor(0.5)
             }
-            .padding(.top, 36)
+            .padding(.top, 40)
             .opacity(enemyStamped ? 1 : 0)
             .scaleEffect(enemyStamped ? 1 : Self.stampFromScale, anchor: .leading)
 
@@ -60,7 +63,7 @@ struct ReflectionScreen: View {
             Text(OnboardingCopy.reflectionClose)
                 .fudoFont(.body(15))
                 .foregroundStyle(FudoColor.textSecondary)
-                .padding(.top, 26)
+                .padding(.top, 32)
                 .opacity(closeShown ? 1 : 0)
 
             Spacer(minLength: 0)

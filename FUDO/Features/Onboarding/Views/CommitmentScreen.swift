@@ -21,7 +21,7 @@ struct CommitmentScreen: View {
     private static let order: [OnboardingAnswers.Commitment] = [.extremely, .very, .somewhat]
 
     var body: some View {
-        OnboardingScaffold(step: .commitment, eyebrow: "LAST QUESTION",
+        OnboardingScaffold(step: .commitment, 
                            title: "How committed\nare you, really?",
                            canAdvance: selection != nil, onAdvance: onAdvance) {
             VStack(alignment: .leading, spacing: 10) {

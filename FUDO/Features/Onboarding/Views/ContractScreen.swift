@@ -35,14 +35,8 @@ struct ContractScreen: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("THE CONTRACT")
-                        .fudoFont(.label(13, weight: .bold))
-                        .kerning(2)
-                        .foregroundStyle(FudoColor.accent)
-                        .padding(.top, 32)
-
                     recapCards
-                        .padding(.top, 16)
+                        .padding(.top, 32)
 
                     signatureCard
                         .padding(.top, 14)

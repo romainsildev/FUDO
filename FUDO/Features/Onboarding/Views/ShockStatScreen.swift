@@ -21,7 +21,7 @@ struct ShockStatScreen: View {
     private static let afterNumberDelay: TimeInterval = OnboardingMetrics.countUpDuration
 
     var body: some View {
-        OnboardingScaffold(step: .shockStat, eyebrow: "THE MATH",
+        OnboardingScaffold(step: .shockStat, 
                            title: OnboardingCopy.shockLead(shock: shock),
                            canAdvance: true, onAdvance: onAdvance) {
             VStack(alignment: .leading, spacing: 0) {

@@ -69,26 +69,26 @@ struct OnboardingFlowView: View {
         // anonymous descriptors would hide what the user is actually asked.
 
         case .painPoint:
-            SingleChoiceScreen(step: .painPoint, eyebrow: "START HERE",
+            SingleChoiceScreen(step: .painPoint, 
                                title: "What's the ONE thing\nyou can't control alone?",
                                options: Pain.allCases, titleFor: \.optionTitle,
                                selection: $viewModel.draft.pain,
                                onAdvance: viewModel.advance)
         case .scrollHours:
-            SingleChoiceScreen(step: .scrollHours, eyebrow: "BE HONEST",
+            SingleChoiceScreen(step: .scrollHours, 
                                title: "How many hours a day\ndo you scroll?",
                                options: OnboardingAnswers.ScrollTime.allCases,
                                titleFor: \.optionTitle,
                                selection: $viewModel.draft.scrollTime,
                                onAdvance: viewModel.advance)
         case .age:
-            SingleChoiceScreen(step: .age, eyebrow: "QUICK ONE",
+            SingleChoiceScreen(step: .age, 
                                title: "How old are you?",
                                options: AgeBracket.allCases, titleFor: \.optionTitle,
                                selection: $viewModel.draft.age,
                                onAdvance: viewModel.advance)
         case .procrastination:
-            SingleChoiceScreen(step: .procrastination, eyebrow: "NO JUDGMENT",
+            SingleChoiceScreen(step: .procrastination, 
                                title: "How often do you say\n\"I'll start Monday\"?",
                                // Frame order (worst first) — NOT allCases, which
                                // is ordered by the OVR scale.
@@ -102,14 +102,14 @@ struct OnboardingFlowView: View {
                                 onAdvance: viewModel.advance)
             }
         case .goals:
-            MultiChoiceScreen(step: .goals, eyebrow: "YOUR TARGETS",
+            MultiChoiceScreen(step: .goals, 
                               title: "What do you actually\nwant?",
                               subtitle: "Pick all that apply",
                               options: Goal.allCases,
                               selection: $viewModel.draft.goals,
                               onAdvance: viewModel.advance)
         case .struggle:
-            SingleChoiceScreen(step: .struggle, eyebrow: "THE REAL TALK",
+            SingleChoiceScreen(step: .struggle, 
                                title: "What's your real problem?",
                                options: OnboardingAnswers.Struggle.allCases,
                                titleFor: \.optionTitle,

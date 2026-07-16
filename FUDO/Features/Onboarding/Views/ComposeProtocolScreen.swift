@@ -40,16 +40,10 @@ struct ComposeProtocolScreen: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("YOUR PROTOCOL")
-                        .fudoFont(.label(13, weight: .bold))
-                        .kerning(2)
-                        .foregroundStyle(FudoColor.accent)
-                        .padding(.top, 48)
-
                     Text("Your Monk Mode.\nYour rules.")
                         .fudoFont(.title(28, weight: .bold))
                         .foregroundStyle(FudoColor.textPrimary)
-                        .padding(.top, 10)
+                        .padding(.top, 48)
 
                     chipsRow
                         .padding(.top, 24)

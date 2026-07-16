@@ -28,16 +28,10 @@ struct FirstCheckScreen: View {
                 .frame(height: 24)
                 .padding(.top, 8)
 
-            Text("FIRST ACTION")
-                .fudoFont(.label(13, weight: .bold))
-                .kerning(2)
-                .foregroundStyle(FudoColor.accent)
-                .padding(.top, 56)
-
             Text("Validate your first action.")
                 .fudoFont(.title(28, weight: .bold))
                 .foregroundStyle(FudoColor.textPrimary)
-                .padding(.top, 10)
+                .padding(.top, 56)
 
             quoteCard
                 .padding(.top, 28)

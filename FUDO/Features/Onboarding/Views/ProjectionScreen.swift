@@ -22,7 +22,7 @@ struct ProjectionScreen: View {
     private var displayedProjection: Int { OVREngine.displayedOVR(projectedOVR) }
 
     var body: some View {
-        OnboardingScaffold(step: .projection, eyebrow: "YOUR TRAJECTORY",
+        OnboardingScaffold(step: .projection, 
                            title: "On \(OnboardingCopy.longDate(date)), you will be\nat ~\(displayedProjection).",
                            canAdvance: true, onAdvance: onAdvance) {
             EmptyView()

@@ -20,7 +20,7 @@ struct SocialProofScreen: View {
     private static let cardStagger: TimeInterval = 0.08
 
     var body: some View {
-        OnboardingScaffold(step: .socialProof, eyebrow: "YOU ARE NOT ALONE",
+        OnboardingScaffold(step: .socialProof, 
                            title: SocialProofCopy.proofTitle,
                            canAdvance: true, onAdvance: onAdvance) {
             VStack(spacing: 12) {

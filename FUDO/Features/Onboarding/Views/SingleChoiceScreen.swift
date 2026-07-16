@@ -9,7 +9,6 @@ import SwiftUI
 /// it for points).
 struct SingleChoiceScreen<Option: Hashable>: View {
     let step: OnboardingStep
-    let eyebrow: String
     let title: String
     var subtitle: String?
     let options: [Option]
@@ -23,7 +22,7 @@ struct SingleChoiceScreen<Option: Hashable>: View {
     // ONE choreography per screen (UX pass 2026-07-16): the slide-in IS the
     // entrance. No per-row stagger stacked on top of it.
     var body: some View {
-        OnboardingScaffold(step: step, eyebrow: eyebrow, title: title, subtitle: subtitle,
+        OnboardingScaffold(step: step, title: title, subtitle: subtitle,
                            ctaTitle: ctaTitle, canAdvance: selection != nil,
                            onAdvance: onAdvance) {
             VStack(alignment: .leading, spacing: 10) {
@@ -50,7 +49,6 @@ struct SingleChoiceScreen<Option: Hashable>: View {
 /// worth judging: the CTA must read dead, not absent.
 private struct SingleChoicePreviewHost<Option: Hashable>: View {
     let step: OnboardingStep
-    let eyebrow: String
     let title: String
     let options: [Option]
     let titleFor: (Option) -> String
@@ -59,7 +57,7 @@ private struct SingleChoicePreviewHost<Option: Hashable>: View {
 
     var body: some View {
         OnboardingPreviewChrome {
-            SingleChoiceScreen(step: step, eyebrow: eyebrow, title: title,
+            SingleChoiceScreen(step: step, title: title,
                                options: options, titleFor: titleFor,
                                selection: $selection, hint: hint,
                                onAdvance: {})
@@ -68,21 +66,21 @@ private struct SingleChoicePreviewHost<Option: Hashable>: View {
 }
 
 #Preview("OB 02 — pain point (untouched)") {
-    SingleChoicePreviewHost(step: .painPoint, eyebrow: "START HERE",
+    SingleChoicePreviewHost(step: .painPoint, 
                             title: "What's the ONE thing\nyou can't control alone?",
                             options: Pain.allCases, titleFor: \.optionTitle,
                             selection: nil)
 }
 
 #Preview("OB 02 — pain point (answered)") {
-    SingleChoicePreviewHost(step: .painPoint, eyebrow: "START HERE",
+    SingleChoicePreviewHost(step: .painPoint, 
                             title: "What's the ONE thing\nyou can't control alone?",
                             options: Pain.allCases, titleFor: \.optionTitle,
                             selection: .doomscrolling)
 }
 
 #Preview("OB 03 — scroll hours") {
-    SingleChoicePreviewHost(step: .scrollHours, eyebrow: "BE HONEST",
+    SingleChoicePreviewHost(step: .scrollHours, 
                             title: "How many hours a day\ndo you scroll?",
                             options: OnboardingAnswers.ScrollTime.allCases,
                             titleFor: \.optionTitle,
@@ -90,14 +88,14 @@ private struct SingleChoicePreviewHost<Option: Hashable>: View {
 }
 
 #Preview("OB 04 — age") {
-    SingleChoicePreviewHost(step: .age, eyebrow: "QUICK ONE",
+    SingleChoicePreviewHost(step: .age, 
                             title: "How old are you?",
                             options: AgeBracket.allCases, titleFor: \.optionTitle,
                             selection: .young1824)
 }
 
 #Preview("OB 05 — procrastination") {
-    SingleChoicePreviewHost(step: .procrastination, eyebrow: "NO JUDGMENT",
+    SingleChoicePreviewHost(step: .procrastination, 
                             title: "How often do you say\n\"I'll start Monday\"?",
                             options: OnboardingAnswers.Procrastination.displayOrder,
                             titleFor: \.optionTitle,
@@ -105,7 +103,7 @@ private struct SingleChoicePreviewHost<Option: Hashable>: View {
 }
 
 #Preview("OB 08 — struggle") {
-    SingleChoicePreviewHost(step: .struggle, eyebrow: "THE REAL TALK",
+    SingleChoicePreviewHost(step: .struggle, 
                             title: "What's your real problem?",
                             options: OnboardingAnswers.Struggle.allCases,
                             titleFor: \.optionTitle,

@@ -1,20 +1,20 @@
 import SwiftUI
 
-/// The skeleton of every question and value screen: chrome slot, vermillon
-/// eyebrow, title, content, one CTA. Ten screens share it, so the rhythm can't
-/// drift between two of them. The bar and the chevron are NOT rendered here —
-/// they live in `OnboardingChromeHeader` (flow container), outside the slide;
-/// the scaffold only reserves their line so the vertical rhythm holds.
+/// The skeleton of every question and value screen: chrome slot, title, content,
+/// one CTA. Ten screens share it, so the rhythm can't drift between two of them.
+/// NO kicker/eyebrow line — copy pass 2026-07-16: one idea per screen, the title
+/// carries it. The bar and the chevron are NOT rendered here — they live in
+/// `OnboardingChromeHeader` (flow container), outside the slide; the scaffold
+/// only reserves their line so the vertical rhythm holds.
 ///
-/// A nil eyebrow AND title hands the whole hierarchy to the content (OB 10's
-/// Bebas display headline).
+/// A nil title hands the whole hierarchy to the content (OB 10's Bebas display
+/// headline).
 ///
 /// The CTA is grisé — not hidden — while the answer is missing: he sees where
 /// he's going, he just can't get there yet. A live button that does nothing is
 /// the pitfall we're avoiding, not a disabled one.
 struct OnboardingScaffold<Content: View>: View {
     let step: OnboardingStep
-    var eyebrow: String?
     var title: String?
     var subtitle: String?
     var ctaTitle: String = "Continue"
@@ -22,9 +22,9 @@ struct OnboardingScaffold<Content: View>: View {
     let onAdvance: () -> Void
     @ViewBuilder let content: () -> Content
 
-    /// The chrome line clears the notch; the eyebrow starts well below it (frames).
+    /// The chrome line clears the notch; the title starts well below it (frames).
     private static var headerTopPadding: CGFloat { 8 }
-    private static var eyebrowTopPadding: CGFloat { 56 }
+    private static var titleTopPadding: CGFloat { 56 }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -33,20 +33,12 @@ struct OnboardingScaffold<Content: View>: View {
                 .frame(height: 24)
                 .padding(.top, Self.headerTopPadding)
 
-            if let eyebrow {
-                Text(eyebrow)
-                    .fudoFont(.label(13, weight: .bold))
-                    .kerning(2)
-                    .foregroundStyle(FudoColor.accent)
-                    .padding(.top, Self.eyebrowTopPadding)
-            }
-
             if let title {
                 Text(title)
                     .fudoFont(.title(28, weight: .bold))
                     .foregroundStyle(FudoColor.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 10)
+                    .padding(.top, Self.titleTopPadding)
             }
 
             if let subtitle {
@@ -57,7 +49,7 @@ struct OnboardingScaffold<Content: View>: View {
             }
 
             content()
-                .padding(.top, eyebrow == nil && title == nil ? Self.eyebrowTopPadding : 32)
+                .padding(.top, title == nil ? Self.titleTopPadding : 32)
 
             Spacer(minLength: 0)
         }

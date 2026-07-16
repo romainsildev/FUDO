@@ -27,7 +27,7 @@ struct WidgetPromoScreen: View {
                                 "Add the widget"]
 
     var body: some View {
-        OnboardingScaffold(step: .widgetPromo, eyebrow: "ONE LAST WEAPON",
+        OnboardingScaffold(step: .widgetPromo, 
                            title: "Put your streak\non your home screen.",
                            subtitle: SocialProofCopy.widgetStake,
                            ctaTitle: "I've added it",

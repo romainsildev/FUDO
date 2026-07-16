@@ -29,20 +29,15 @@ struct ReflectionScreen: View {
                 .frame(height: 24)
                 .padding(.top, 8)
 
-            Text("GOT IT")
-                .fudoFont(.label(13, weight: .bold))
-                .kerning(2)
-                .foregroundStyle(FudoColor.accent)
-                .padding(.top, 56)
-
             // Beat 1 — his goals, calm. Derived, no \n: the sentence is built
-            // from his answers and wraps naturally.
+            // from his answers and wraps naturally. No kicker above it (copy
+            // pass 2026-07-16): the sentence opens the screen.
             Text(OnboardingCopy.reflectionGoals(goals, fallback: pain))
                 .fudoFont(.title(26, weight: .bold))
                 .foregroundStyle(FudoColor.textPrimary)
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 10)
+                .padding(.top, 56)
                 .opacity(goalsShown ? 1 : 0)
                 .offset(y: goalsShown ? 0 : 10)
 

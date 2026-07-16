@@ -51,22 +51,13 @@ struct ComposeProtocolScreen: View {
                     presetLine
                         .padding(.top, 28)
 
-                    // Auto-persuasion: the fight he declared at OB 02, reflected
-                    // back. Data already in the draft — copy mapping only.
-                    if let pain = viewModel.draft.pain {
-                        Text(OnboardingCopy.composeFight(pain: pain))
-                            .fudoFont(.caption())
-                            .foregroundStyle(FudoColor.textPrimary)
-                            .opacity(0.45)
-                            .padding(.top, 8)
-                    }
-
-                    // Affordance BEFORE the list — he must know the rows are
-                    // editable before he reads them, not after a scroll.
-                    Text("Tap a rule to adjust it. This is YOUR protocol.")
+                    // Affordance BEFORE the list, ultra-short (allègement
+                    // 2026-07-16): two text lines max between chips and list.
+                    Text("Tap a rule to edit.")
                         .fudoFont(.caption())
-                        .foregroundStyle(FudoColor.textSecondary)
-                        .padding(.top, 12)
+                        .foregroundStyle(FudoColor.textPrimary)
+                        .opacity(0.45)
+                        .padding(.top, 10)
 
                     rulesList
                         .padding(.top, 16)

@@ -69,20 +69,6 @@ enum OnboardingCopy {
     /// Beat 3 — one line, the pivot out of the wound.
     static let reflectionClose = "The protocol is built to kill it."
 
-    // MARK: - OB 11 — the fight line
-
-    /// Auto-persuasion (principle 4 — reflect his answers back): the protocol
-    /// screen names the fight he declared at OB 02. Caption, 45 %, one line.
-    static func composeFight(pain: Pain) -> String {
-        switch pain {
-        case .doomscrolling: return "Built for your fight: doomscrolling."
-        case .wakingUpEarly: return "Built for your fight: waking up early."
-        case .trainingConsistently: return "Built for your fight: training consistency."
-        case .reading: return "Built for your fight: reading every day."
-        case .stayingFocused: return "Built for your fight: staying focused."
-        }
-    }
-
     // MARK: - OB 11 — the recommendation (Romain 2026-07-16: 60 supersedes D3's 30)
 
     /// Always the 60-day stake — the "Recommended" badge moved to Monk Mode 60

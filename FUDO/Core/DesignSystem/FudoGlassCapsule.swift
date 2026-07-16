@@ -70,6 +70,48 @@ extension View {
     }
 }
 
+/// The card-shaped sibling of ``FudoGlassCapsule`` — same two rendering paths,
+/// same tokens, ONE notch quieter: `.clear` glass instead of `.regular`, because
+/// a floating card over video must whisper where a system bar speaks
+/// (OB 01c poster card, device pass 2026-07-16). No shadow on either path —
+/// FUDO cards never cast one (CLAUDE.md).
+struct FudoGlassCard: View {
+    var cornerRadius: CGFloat = FudoSpacing.radiusCard
+
+    private var shape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+    }
+
+    var body: some View {
+        if #available(iOS 26.0, *) {
+            // NEVER add a `.shadow` to a glassEffect layer (rasterization bug,
+            // device 2026-07-12 — see FudoGlassCapsule).
+            Color.clear
+                .glassEffect(.clear.tint(FudoColor.surfaceGlass), in: shape)
+        } else {
+            legacyGlass
+        }
+    }
+
+    /// The FudoGlassCapsule legacy recipe, card-shaped: material + tint, glass
+    /// hairline, top specular catch.
+    private var legacyGlass: some View {
+        ZStack {
+            shape.fill(.ultraThinMaterial)
+            shape.fill(FudoColor.surfaceGlass)
+        }
+        .overlay { shape.strokeBorder(FudoColor.borderGlass, lineWidth: 0.5) }
+        .overlay(alignment: .top) {
+            LinearGradient(colors: [FudoColor.specularHighlight, .clear],
+                           startPoint: .top, endPoint: .center)
+                .frame(height: 14)
+                .mask { shape }
+                .allowsHitTesting(false)
+        }
+        .clipShape(shape)
+    }
+}
+
 #Preview {
     ZStack {
         FudoColor.bgPrimary.ignoresSafeArea()

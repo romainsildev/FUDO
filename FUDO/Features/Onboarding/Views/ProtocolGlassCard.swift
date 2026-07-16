@@ -77,26 +77,10 @@ struct ProtocolGlassCard: View {
         }
     }
 
-    private var shape: RoundedRectangle {
-        RoundedRectangle(cornerRadius: FudoSpacing.radiusCard, style: .continuous)
-    }
-
-    /// The FudoGlassCapsule recipe, card-shaped: material + tint, glass hairline,
-    /// top specular catch. No drop shadow — FUDO cards never cast one.
+    /// Real Liquid Glass on iOS 26 (quiet `.clear` variant), the material recipe
+    /// before — both paths live in `FudoGlassCard` (design system), never here.
     private var glass: some View {
-        ZStack {
-            shape.fill(.ultraThinMaterial)
-            shape.fill(FudoColor.surfaceGlass)
-        }
-        .overlay { shape.strokeBorder(FudoColor.borderGlass, lineWidth: 0.5) }
-        .overlay(alignment: .top) {
-            LinearGradient(colors: [FudoColor.specularHighlight, .clear],
-                           startPoint: .top, endPoint: .center)
-                .frame(height: 14)
-                .mask { shape }
-                .allowsHitTesting(false)
-        }
-        .clipShape(shape)
+        FudoGlassCard()
     }
 }
 

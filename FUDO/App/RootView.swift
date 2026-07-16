@@ -7,13 +7,30 @@ struct RootView: View {
     @Environment(GameStore.self) private var gameStore
     @Environment(\.scenePhase) private var scenePhase
     @State private var appState = AppState()
-    @State private var flags = OnboardingFlags()
+    @State private var flags: OnboardingFlags
     @State private var cover: FudoCover?
+
+    init() {
+        // Route BEFORE the first frame: the flags read is synchronous, so the
+        // onboarding-vs-Home decision never waits for onAppear.
+        let flags = OnboardingFlags()
+        _flags = State(initialValue: flags)
+        _cover = State(initialValue: flags.isFullyDone ? nil : .onboarding)
+    }
 
     var body: some View {
         MainTabView()
             .environment(appState)
             .preferredColorScheme(.dark)
+            // fullScreenCover PRESENTS asynchronously (an animated transaction):
+            // even a route decided at init leaves Home exposed under the slide-up.
+            // The shield is the opaque floor for that gap — gone the instant the
+            // cover binding drops, so the dismissal still reveals Home normally.
+            .overlay {
+                if cover != nil {
+                    RouteShieldView()
+                }
+            }
             .fudoCover(item: $cover) { cover in
                 switch cover {
                 case .onboarding:
@@ -50,6 +67,21 @@ struct RootView: View {
             cover = .paywall
         } else {
             cover = nil
+        }
+    }
+}
+
+/// Opaque floor under a pending cover — background + ensō, nothing else. It
+/// lives well under a second (the cover's presentation), so it stays static:
+/// any animation here would just flash.
+private struct RouteShieldView: View {
+    var body: some View {
+        ZStack {
+            FudoColor.bgPrimary.ignoresSafeArea()
+            Image("enso-100")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 200)
         }
     }
 }

@@ -10,6 +10,26 @@
 
 ---
 
+## ⚠️ AMENDEMENT 2026-07-16 — restructuration du flow (actée, LIVRÉE)
+
+> Cet amendement SUPERSÈDE l'ordre des étapes décrit dans le corps du plan
+> ci-dessous (pattern RiteOff : le loader analyse AVANT le reveal). Le code et
+> `OnboardingStepTests` sont la vérité ; le corps du plan reste la référence
+> pour le contenu de chaque écran.
+
+**Nouvel ordre** (`OnboardingStep`) :
+`splash → transformation → pain → mechanism` (acte 0, inchangé) →
+`painPoint → scrollHours → age → procrastination → shockStat → goals → struggle → reflection` (quiz) →
+**`loaderAnalysis`** (ex-`loaderBuilding`, déplacé : loader narratif "ANALYZING YOUR ANSWERS", stats orbitales `analysisLoaderStats` — SANS OVR ni durée —, sortie = pilule "Access your report") →
+**`report`** (NOUVEL écran `ReportScreen` : le SEUL écran dense du funnel — synthèse fight / screen time + shock / weak spot / targets / potential via `OnboardingCopy.reportRows`, l'OVR délibérément absent) →
+`diagnostic` (le reveal : count-up 0,8 s, rouge éteint `accentMuted`, tampon rang) →
+`compose` → `projection` (reste APRÈS compose — la date exacte a besoin de la durée choisie ; son loader d'avant a disparu, remplacé par un beat "Locking your protocol…" de 0,9 s dans `ProjectionScreen`) →
+`firstCheck → socialProof → commitment → contract → paywall → notifications → loaderSetup → welcomeDojo → widgetPromo` (inchangé).
+
+**Invariants tenus** : D1 intact (diagnostic/projection = plancher, bonus à OB 16) · enum exhaustive, ordre verrouillé par `theLoaderAnalyzesBeforeTheReportRevealAndProjectionFollowsCompose` · barre de progression : quiz + report + reveal (16 steps), masquée sur `loaderAnalysis` · `OnboardingLoaderScreen` ne sert plus qu'à OB 19 (auto-advance + création du défi).
+
+---
+
 ## Global Constraints
 
 Ces contraintes s'appliquent à CHAQUE tâche, implicitement. Valeurs copiées verbatim de `CLAUDE.md` / du brief.

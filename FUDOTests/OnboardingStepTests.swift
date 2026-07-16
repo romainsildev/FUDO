@@ -6,7 +6,7 @@ struct OnboardingStepTests {
     @Test func progressTotalIsDerivedFromTheEnum() {
         // The bar's total is never hand-numbered: it IS the count of bar-carrying steps.
         #expect(OnboardingStep.progressTotal == OnboardingStep.allCases.filter(\.showsProgress).count)
-        #expect(OnboardingStep.progressTotal == 15)
+        #expect(OnboardingStep.progressTotal == 16)   // +1: the report (2026-07-16)
     }
 
     @Test func welcomeLoadersAndPostPaywallHideTheBar() {
@@ -49,11 +49,12 @@ struct OnboardingStepTests {
         }
     }
 
-    /// The restructure (2026-07-16): quiz → analysis loader → reveal → compose
-    /// → projection. Locked so a re-shuffle can't silently undo the order.
-    @Test func theLoaderAnalyzesBeforeTheRevealAndProjectionFollowsCompose() {
+    /// The restructure (2026-07-16): quiz → analysis loader → report → reveal
+    /// → compose → projection. Locked so a re-shuffle can't silently undo it.
+    @Test func theLoaderAnalyzesBeforeTheReportRevealAndProjectionFollowsCompose() {
         #expect(OnboardingStep.reflection.next == .loaderAnalysis)
-        #expect(OnboardingStep.loaderAnalysis.next == .diagnostic)
+        #expect(OnboardingStep.loaderAnalysis.next == .report)
+        #expect(OnboardingStep.report.next == .diagnostic)
         #expect(OnboardingStep.compose.next == .projection)
     }
 

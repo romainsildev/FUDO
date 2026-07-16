@@ -135,6 +135,9 @@ struct OnboardingFlowView: View {
                         "Measuring the damage",
                         "Compiling your report"],
                 onAdvance: viewModel.advance)
+        case .report:
+            ReportScreen(rows: OnboardingCopy.reportRows(draft: viewModel.draft),
+                         onAdvance: viewModel.advance)
         case .diagnostic:
             DiagnosticScreen(ovr: viewModel.diagnosticOVR, rank: viewModel.diagnosticRank,
                              onAdvance: viewModel.advance)

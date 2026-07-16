@@ -12,8 +12,8 @@ enum OnboardingStep: Int, CaseIterable {
     case splash, transformation, pain, mechanism
     // Act 1 — the quiz
     case painPoint, scrollHours, age, procrastination, shockStat, goals, struggle, reflection
-    // Act 1bis — analysis & reveal
-    case loaderAnalysis, diagnostic
+    // Act 1bis — analysis, report & reveal
+    case loaderAnalysis, report, diagnostic
     // Act 2 — climax
     case compose, projection, firstCheck, socialProof
     // Act 3 — engagement & contract

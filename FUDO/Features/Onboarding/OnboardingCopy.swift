@@ -109,6 +109,57 @@ enum OnboardingCopy {
         }
     }
 
+    // MARK: - The report
+
+    /// One row of the report card. `detail` is the optional second line.
+    struct ReportRow: Equatable {
+        let label: String
+        let value: String
+        var detail: String?
+    }
+
+    /// The ONE dense screen of the funnel — its job is the synthesis. Every
+    /// line is his own answer or his own multiplication (ShockMath); nothing
+    /// invented (D4). The OVR is deliberately absent: the reveal comes next.
+    static func reportRows(draft: OnboardingDraft) -> [ReportRow] {
+        var rows: [ReportRow] = []
+        if let pain = draft.pain {
+            rows.append(ReportRow(label: "THE FIGHT", value: pain.optionTitle))
+        }
+        if let scroll = draft.scrollTime {
+            var detail: String?
+            if let age = draft.age {
+                let shock = ShockMath.result(age: age, scroll: scroll)
+                detail = "≈ \(shock.headline) gone by \(shock.horizonAge)"
+            }
+            rows.append(ReportRow(label: "SCREEN TIME", value: "\(scroll.optionTitle) a day",
+                                  detail: detail))
+        }
+        if let struggle = draft.struggle {
+            rows.append(ReportRow(label: "WEAK SPOT", value: reportWall(struggle)))
+        }
+        if !draft.goals.isEmpty {
+            let list = Goal.allCases.filter { draft.goals.contains($0) }
+                .map(\.optionTitle).joined(separator: " · ")
+            rows.append(ReportRow(label: "TARGETS", value: "\(draft.goals.count) locked",
+                                  detail: list))
+        }
+        if let scroll = draft.scrollTime {
+            rows.append(ReportRow(label: "POTENTIAL",
+                                  value: "\(scroll.optionTitle) a day to take back",
+                                  detail: "recoverable from day 1"))
+        }
+        return rows
+    }
+
+    private static func reportWall(_ struggle: OnboardingAnswers.Struggle) -> String {
+        switch struggle {
+        case .startStrongThenQuit: return "You quit at week 2"
+        case .threeDaysMax: return "You quit at day 3"
+        case .cantEvenStart: return "You never start"
+        }
+    }
+
     // MARK: - OB 11 — the recommendation (Romain 2026-07-16: 60 supersedes D3's 30)
 
     /// Always the 60-day stake — the "Recommended" badge moved to Monk Mode 60

@@ -197,21 +197,20 @@ private enum ProtocolGlassCardChecks {
 }
 #endif
 
-/// OB 01a's strip (frame ob-01a): the past on the left — a true SILHOUETTE,
-/// crushed toward the background (desaturated, darkened, blurred, faded) — and
-/// the future on the right, sharp, haloed, grounded. Between them the vermillon
-/// dots RISE toward the man he becomes: size, presence and height all climb.
-/// The focal point is the sensei; the peasant is a memory.
+/// OB 01a's strip, final form (arbitrage 2026-07-16): the past is a PURE BLACK
+/// SILHOUETTE — the exact rank-path treatment (`saturation 0 + brightness −0.55`,
+/// RankPathNodeView's future nodes), so "your past" speaks the same visual
+/// language as "your future ranks". Then three vermillon dots rising, then the
+/// sharp, haloed sensei. No blur anywhere.
 private struct TransformationStrip: View {
     let haloBreathing: Bool
 
     private static let stripHeight: CGFloat = 200
     private static let pastHeight: CGFloat = 132
     private static let futureHeight: CGFloat = 180
-    /// One step per dot: diameter, opacity and lift climb together — a clean
-    /// ramp toward the future, not three equal crumbs.
+    /// Three dots: diameter, presence and lift climb together toward the future.
     private static let dotSteps: [(size: CGFloat, opacity: Double, lift: CGFloat)] = [
-        (4, 0.45, 0), (6, 0.65, 10), (8, 0.85, 21), (10, 1.0, 32)
+        (4, 0.45, 0), (7, 0.7, 13), (10, 1.0, 27)
     ]
     /// Where the dot path takes off — around the silhouette's torso.
     private static let dotBaseline: CGFloat = 72
@@ -231,18 +230,16 @@ private struct TransformationStrip: View {
         .clipped()
     }
 
-    /// The ghost of who he was: drained and soft, but VISIBLE — device pass 2
-    /// (2026-07-16): the first crush (blur 4 / −0.18 / 0.38) made him vanish
-    /// against the dark dojo. A silhouette the eye can't find says nothing.
+    /// The rank-path silhouette treatment, verbatim (RankPathNodeView, tuned on
+    /// device): B&W art crushed to a black shape. The alpha of the asset keeps
+    /// the outline crisp — no blur, no fade, a shadow of who he was.
     private var past: some View {
         SenseiAssetProvider.image(for: .novice)
             .resizable()
             .scaledToFit()
             .frame(height: Self.pastHeight)
-            .saturation(0.45)
-            .brightness(-0.06)
-            .blur(radius: 2)
-            .opacity(0.62)
+            .saturation(0)
+            .brightness(-0.55)
             .padding(.bottom, 4)
     }
 

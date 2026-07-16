@@ -17,7 +17,6 @@ struct WelcomeHook {
     let climaxSize: CGFloat
     let microLine: String?
     let ctaTitle: String
-    let showsWordmark: Bool
     let feature: Feature
 
     static let transformation = WelcomeHook(
@@ -25,21 +24,21 @@ struct WelcomeHook {
         leadLines: ["IN 30 DAYS,"], leadSize: OnboardingMetrics.Hook.transformationLead,
         climaxLines: ["YOU'RE NOT", "THE SAME GUY."],
         climaxSize: OnboardingMetrics.Hook.transformationClimax,
-        microLine: nil, ctaTitle: "Start", showsWordmark: true, feature: .senseiHero)
+        microLine: nil, ctaTitle: "Start", feature: .senseiHero)
 
     static let pain = WelcomeHook(
         clip: .phone,
         leadLines: ["YOU KNOW", "WHAT TO DO."], leadSize: OnboardingMetrics.Hook.painLead,
         climaxLines: ["YOU JUST DON'T."], climaxSize: OnboardingMetrics.Hook.painClimax,
         microLine: "Willpower isn't the fix.", ctaTitle: "Continue",
-        showsWordmark: false, feature: .none)
+        feature: .none)
 
     static let mechanism = WelcomeHook(
         clip: .doors,
         leadLines: ["YOUR PROTOCOL.", "YOUR SCORE."], leadSize: OnboardingMetrics.Hook.mechanismLead,
         climaxLines: ["30 DAYS."], climaxSize: OnboardingMetrics.Hook.mechanismClimax,
         microLine: "60 seconds to build yours.", ctaTitle: "Continue",
-        showsWordmark: false, feature: .protocolCard)
+        feature: .protocolCard)
 }
 
 /// OB 01a / 01b / 01c — one view, three hooks. The rule that makes them one screen
@@ -60,10 +59,11 @@ struct WelcomeHookScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if hook.showsWordmark {
-                wordmark
-                    .padding(.top, 8)
-            }
+            // The wordmark is drawn ONCE by OnboardingFlowView (WelcomeWordmark):
+            // it slides up from the splash and stays docked across all three
+            // hooks. The screen only RESERVES its slot so nothing collides.
+            wordmarkSlot
+                .padding(.top, OnboardingMetrics.Wordmark.dockedTopPadding)
             Spacer(minLength: 0)
             feature
             hookStack
@@ -89,11 +89,13 @@ struct WelcomeHookScreen: View {
 
     // MARK: - Pieces
 
-    private var wordmark: some View {
+    /// Same metrics as WelcomeWordmark's docked state, hidden: the slot IS the
+    /// wordmark's resting frame, guaranteed by sharing the constants.
+    private var wordmarkSlot: some View {
         Text("FUDO")
-            .fudoFont(.title(20, weight: .bold))
-            .kerning(6)
-            .foregroundStyle(FudoColor.textPrimary)
+            .fudoFont(.title(OnboardingMetrics.Wordmark.dockedSize, weight: .bold))
+            .kerning(OnboardingMetrics.Wordmark.dockedKerning)
+            .hidden()
     }
 
     @ViewBuilder private var feature: some View {
@@ -181,19 +183,19 @@ private enum ProtocolGlassCardChecks {
 
 #if DEBUG
 #Preview("OB 01a — the transformation") {
-    OnboardingPreviewChrome(clip: .dojo) {
+    OnboardingPreviewChrome(clip: .dojo, showsWordmark: true) {
         WelcomeHookScreen(hook: .transformation, onAdvance: {})
     }
 }
 
 #Preview("OB 01b — the pain") {
-    OnboardingPreviewChrome(clip: .phone) {
+    OnboardingPreviewChrome(clip: .phone, showsWordmark: true) {
         WelcomeHookScreen(hook: .pain, onAdvance: {})
     }
 }
 
 #Preview("OB 01c — the mechanism") {
-    OnboardingPreviewChrome(clip: .doors) {
+    OnboardingPreviewChrome(clip: .doors, showsWordmark: true) {
         WelcomeHookScreen(hook: .mechanism, onAdvance: {})
     }
 }

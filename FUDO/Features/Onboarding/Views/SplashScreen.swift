@@ -49,12 +49,9 @@ struct SplashScreen: View {
                 .scaledToFit()
                 .frame(width: Self.ensoSize)
 
-            // SF Pro, not Bebas: the wordmark is a logo, and the frame's letterforms
-            // are SF Pro Display. Bebas stays for the hooks.
-            Text("FUDO")
-                .fudoFont(.title(34, weight: .bold))
-                .kerning(8)
-                .foregroundStyle(FudoColor.textPrimary)
+            // The FUDO wordmark that sits on the ensō is NOT drawn here: it is
+            // WelcomeWordmark, rendered once by OnboardingFlowView above the act,
+            // so it can slide up and dock on the hooks (device batch 2026-07-16).
         }
         .scaleEffect(hasAppeared ? 1 : OnboardingMetrics.ensoScaleFrom)
         .opacity(hasAppeared ? 1 : 0)
@@ -70,7 +67,7 @@ struct SplashScreen: View {
 
 #if DEBUG
 #Preview("OB 00 — splash") {
-    OnboardingPreviewChrome(clip: .dojo, isSplash: true) {
+    OnboardingPreviewChrome(clip: .dojo, isSplash: true, showsWordmark: true) {
         SplashScreen(onTap: {})
     }
 }

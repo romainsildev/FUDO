@@ -15,6 +15,18 @@ enum OnboardingMetrics {
     /// Ensō scale-in on the splash.
     static let ensoScaleFrom: CGFloat = 0.96
 
+    /// The FUDO wordmark, shared across the whole welcome act (device batch
+    /// 2026-07-16): full size on the ensō, docked at the top of the hooks.
+    /// ONE view slides between the two states (WelcomeWordmark) — the screens
+    /// only reserve its slot, nobody else draws "FUDO".
+    enum Wordmark {
+        static let splashSize: CGFloat = 34
+        static let splashKerning: CGFloat = 8
+        static let dockedSize: CGFloat = 20
+        static let dockedKerning: CGFloat = 6
+        static let dockedTopPadding: CGFloat = 8
+    }
+
     /// OB 12 "Building your protocol…" — 4 narrative steps.
     /// OB 12's ring fill — long enough for five orbiting stats to live and die
     /// (narrative loader, 2026-07-16). The exit is the user's tap, not a timer.

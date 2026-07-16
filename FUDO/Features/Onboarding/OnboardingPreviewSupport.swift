@@ -103,6 +103,9 @@ extension OnboardingDraft {
 struct OnboardingPreviewChrome<Content: View>: View {
     var clip: WelcomeClip?
     var isSplash = false
+    /// The welcome screens don't draw "FUDO" themselves (WelcomeWordmark is flow
+    /// chrome) — opt in so the canvas shows what the device shows.
+    var showsWordmark = false
     @ViewBuilder let content: () -> Content
 
     var body: some View {
@@ -113,6 +116,9 @@ struct OnboardingPreviewChrome<Content: View>: View {
                 WelcomeScrim(isSplash: isSplash).ignoresSafeArea()
             }
             content()
+            if showsWordmark {
+                WelcomeWordmark(docked: !isSplash)
+            }
         }
         .preferredColorScheme(.dark)
     }

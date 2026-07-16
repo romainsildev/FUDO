@@ -35,6 +35,15 @@ struct OnboardingFlowView: View {
             content
                 .transition(viewModel.transition)
 
+            // ONE wordmark for the whole welcome act (device batch 2026-07-16):
+            // it lives ABOVE the cross-fading screens, slides from the ensō to
+            // the top on 00 → 01a and stays docked across 01b/01c. The screens
+            // reserve its slot; nobody else draws "FUDO".
+            if viewModel.step.isWelcome {
+                WelcomeWordmark(docked: viewModel.step != .splash)
+                    .transition(.opacity)
+            }
+
             // Stable chrome (UX pass 2026-07-16): the bar and the chevron sit
             // ABOVE the sliding screens, so the bar only fills — it never slides
             // in with a screen. Screens keep an empty slot where it renders.

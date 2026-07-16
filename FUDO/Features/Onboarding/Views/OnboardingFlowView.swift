@@ -129,15 +129,17 @@ struct OnboardingFlowView: View {
         case .compose:
             ComposeProtocolScreen(viewModel: viewModel)
         case .loaderBuilding:
-            OnboardingLoaderScreen(
-                title: "Building your protocol…",
+            // Narrative loader (RiteOff model, 2026-07-16): HIS stats orbit the
+            // ring, then HE taps "Access your report" — no auto-advance.
+            BuildLoaderScreen(
+                stats: OnboardingCopy.buildLoaderStats(draft: viewModel.draft,
+                                                       ovr: viewModel.diagnosticOVR,
+                                                       days: viewModel.setup.durationDays),
                 steps: ["Reading your weak spot",
                         "Calibrating your daily rules",
                         "Setting your start — OVR \(viewModel.diagnosticOVR)",
                         "Projecting your \(viewModel.setup.durationDays)-day climb"],
-                footer: "Locking in your numbers. A few seconds.",
-                duration: OnboardingMetrics.buildLoaderDuration,
-                onFinished: viewModel.advance)
+                onAdvance: viewModel.advance)
         case .projection:
             ProjectionScreen(base: OVREngine.startingOVR(from: viewModel.draft.answers),
                              days: viewModel.setup.durationDays,

@@ -16,7 +16,9 @@ enum OnboardingMetrics {
     static let ensoScaleFrom: CGFloat = 0.96
 
     /// OB 12 "Building your protocol…" — 4 narrative steps.
-    static let buildLoaderDuration: TimeInterval = 4.4
+    /// OB 12's ring fill — long enough for five orbiting stats to live and die
+    /// (narrative loader, 2026-07-16). The exit is the user's tap, not a timer.
+    static let buildLoaderDuration: TimeInterval = 8.0
     /// OB 19 "Setting up your protocol…" — the brief's ~7 s beat.
     static let setupLoaderDuration: TimeInterval = 7.0
 

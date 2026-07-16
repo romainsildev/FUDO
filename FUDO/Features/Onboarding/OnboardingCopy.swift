@@ -69,6 +69,43 @@ enum OnboardingCopy {
     /// Beat 3 — one line, the pivot out of the wound.
     static let reflectionClose = "The protocol is built to kill it."
 
+    // MARK: - OB 12 — the orbiting stats
+
+    /// One stat orbiting the build loader — his own numbers thrown back at him
+    /// while the protocol "computes".
+    struct LoaderStat: Equatable {
+        var number: String?
+        var label: String
+        var emphasis: Bool = false
+    }
+
+    /// Personalized from the draft — every value is an answer he gave, never an
+    /// invented measurement (D4).
+    static func buildLoaderStats(draft: OnboardingDraft, ovr: Int, days: Int) -> [LoaderStat] {
+        var stats: [LoaderStat] = []
+        if let scroll = draft.scrollTime {
+            stats.append(LoaderStat(number: scroll.optionTitle, label: "scrolled daily"))
+        }
+        stats.append(LoaderStat(number: "OVR \(ovr)", label: "your start", emphasis: true))
+        stats.append(LoaderStat(number: "\(days)", label: "days planned"))
+        if let struggle = draft.struggle {
+            stats.append(LoaderStat(number: nil, label: wallLabel(struggle), emphasis: true))
+        }
+        if !draft.goals.isEmpty {
+            stats.append(LoaderStat(number: "\(draft.goals.count)",
+                                    label: draft.goals.count == 1 ? "target locked" : "targets locked"))
+        }
+        return stats
+    }
+
+    private static func wallLabel(_ struggle: OnboardingAnswers.Struggle) -> String {
+        switch struggle {
+        case .startStrongThenQuit: return "Breaking your week-2 wall"
+        case .threeDaysMax: return "Breaking your day-3 wall"
+        case .cantEvenStart: return "Forcing the first step"
+        }
+    }
+
     // MARK: - OB 11 — the recommendation (Romain 2026-07-16: 60 supersedes D3's 30)
 
     /// Always the 60-day stake — the "Recommended" badge moved to Monk Mode 60

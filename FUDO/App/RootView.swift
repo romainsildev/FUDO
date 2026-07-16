@@ -1,12 +1,16 @@
 import SwiftUI
 
-/// Root routing: onboarding → paywall → tabs. Onboarding/paywall are covers (per conventions).
-/// With current defaults (onboarding done, entitled) it lands on MainTabView.
-/// Every scene activation runs the rollover (grace-period closures, decay) before routing.
+/// Root routing: onboarding → paywall → tabs.
+///
+/// The onboarding is the RENDERED ROOT while it is pending — never a presented
+/// cover (device pass 2026-07-16: a fullScreenCover animates in even at launch,
+/// so the funnel visibly rose from the bottom; the first frame must BE the
+/// splash). The paywall stays a cover per conventions. Every scene activation
+/// runs the rollover (grace-period closures, decay) before routing.
 struct RootView: View {
     @Environment(GameStore.self) private var gameStore
     @Environment(\.scenePhase) private var scenePhase
-    @State private var appState = AppState()
+    @State private var appState: AppState
     @State private var flags: OnboardingFlags
     @State private var cover: FudoCover?
 
@@ -15,16 +19,38 @@ struct RootView: View {
         // onboarding-vs-Home decision never waits for onAppear.
         let flags = OnboardingFlags()
         _flags = State(initialValue: flags)
-        _cover = State(initialValue: flags.isFullyDone ? nil : .onboarding)
+        let state = AppState()
+        state.hasCompletedOnboarding = flags.isFullyDone
+        _appState = State(initialValue: state)
     }
 
     var body: some View {
+        ZStack {
+            if appState.hasCompletedOnboarding {
+                mainRoot
+            } else {
+                OnboardingFlowView(store: gameStore, flags: flags, onFinished: refresh)
+            }
+        }
+        .preferredColorScheme(.dark)
+        // No animation at launch (first render is already the right root); the
+        // mid-session swaps — funnel finished, DEBUG replay — cross-fade instead
+        // of sliding, matching the funnel's own grammar.
+        .animation(AppAnimation.standard, value: appState.hasCompletedOnboarding)
+        .onAppear(perform: refresh)
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { refresh() }
+        }
+        // The DEBUG "Replay onboarding" flips this from inside the app: re-route
+        // now rather than wait for the next scene activation.
+        .onChange(of: appState.hasCompletedOnboarding) { _, _ in evaluateRoute() }
+    }
+
+    private var mainRoot: some View {
         MainTabView()
             .environment(appState)
-            .preferredColorScheme(.dark)
             // fullScreenCover PRESENTS asynchronously (an animated transaction):
-            // even a route decided at init leaves Home exposed under the slide-up.
-            // The shield is the opaque floor for that gap — gone the instant the
+            // the shield is the opaque floor for that gap — gone the instant the
             // cover binding drops, so the dismissal still reveals Home normally.
             .overlay {
                 if cover != nil {
@@ -33,21 +59,12 @@ struct RootView: View {
             }
             .fudoCover(item: $cover) { cover in
                 switch cover {
-                case .onboarding:
-                    OnboardingFlowView(store: gameStore, flags: flags, onFinished: refresh)
                 case .paywall:
                     PaywallPlaceholderView()   // trial-expired path — Session 6
                 default:
                     EmptyView()
                 }
             }
-            .onAppear(perform: refresh)
-            .onChange(of: scenePhase) { _, phase in
-                if phase == .active { refresh() }
-            }
-            // The DEBUG "Replay onboarding" flips this from inside the app: re-route
-            // now rather than wait for the next scene activation.
-            .onChange(of: appState.hasCompletedOnboarding) { _, _ in evaluateRoute() }
     }
 
     private func refresh() {
@@ -60,10 +77,10 @@ struct RootView: View {
         evaluateRoute()
     }
 
+    /// The paywall is the only remaining cover — the onboarding routes at the
+    /// root level, off `hasCompletedOnboarding` alone.
     private func evaluateRoute() {
-        if !appState.hasCompletedOnboarding {
-            cover = .onboarding
-        } else if !appState.entitlementActive {
+        if appState.hasCompletedOnboarding && !appState.entitlementActive {
             cover = .paywall
         } else {
             cover = nil

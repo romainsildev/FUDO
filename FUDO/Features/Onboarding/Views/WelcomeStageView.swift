@@ -115,7 +115,13 @@ final class CrossfadePlayerView: UIView {
     private let lanes = [Lane(), Lane()]
     private var front = 0
     private var currentClip: WelcomeClip?
-    private var seamObserver: Any?
+    /// A boundary-observer token can only be removed from the player that created
+    /// it — removing it from the other lane's player is an AVFoundation exception.
+    private var seamObservation: (player: AVPlayer, token: Any)?
+    /// Bumped on every watchSeam/tearDown: a stale async duration load must never
+    /// register an observer for a seam that has already been replaced.
+    private var seamGeneration = 0
+    private var endObservers: [Int: NSObjectProtocol] = [:]
     private var isPaused = false
     var onFailure: (() -> Void)?
 
@@ -155,14 +161,26 @@ final class CrossfadePlayerView: UIView {
             return
         }
         let next = (front + 1) % lanes.count
-        load(url, into: lanes[next])
+        load(url, intoLane: next)
         lanes[next].player.play()
         crossfade(to: next, animated: crossfading)
         watchSeam(of: lanes[next], url: url)
     }
 
-    private func load(_ url: URL, into lane: Lane) {
+    private func load(_ url: URL, intoLane index: Int) {
+        let lane = lanes[index]
+        if let previous = endObservers[index] {
+            NotificationCenter.default.removeObserver(previous)
+        }
         let item = AVPlayerItem(url: url)
+        // Safety net, observed on THIS item only (object: nil would fire for every
+        // item in the process): the front item reaching its natural end means the
+        // seam never dissolved — degrade to the still, never freeze or crash.
+        endObservers[index] = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime, object: item, queue: .main
+        ) { [weak self] _ in
+            self?.frontItemReachedEnd(item)
+        }
         lane.player.replaceCurrentItem(with: item)
         lane.player.seek(to: .zero)
         // A failed item means no ambience at all — fall back to the still rather
@@ -170,6 +188,13 @@ final class CrossfadePlayerView: UIView {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             if item.status == .failed { self?.onFailure?() }
         }
+    }
+
+    private func frontItemReachedEnd(_ item: AVPlayerItem) {
+        // The retiring lane legitimately plays out its tail mid-dissolve; only the
+        // FRONT item ending means the loop failed.
+        guard item === lanes[front].player.currentItem, !isPaused else { return }
+        onFailure?()
     }
 
     private func crossfade(to lane: Int, animated: Bool) {
@@ -189,30 +214,44 @@ final class CrossfadePlayerView: UIView {
     /// Restart the SAME clip on the idle lane one cross-fade before the end, and
     /// dissolve into it: the cut where start ≠ end becomes a fade.
     private func watchSeam(of lane: Lane, url: URL) {
-        if let seamObserver {
-            lanes.forEach { $0.player.removeTimeObserver(seamObserver) }
-            self.seamObserver = nil
-        }
+        removeSeamObservation()
+        seamGeneration += 1
+        let generation = seamGeneration
         let asset = AVURLAsset(url: url)
         Task { @MainActor [weak self] in
-            guard let self,
-                  let duration = try? await asset.load(.duration),
-                  duration.isNumeric else { return }
+            guard let self else { return }
+            guard let duration = try? await asset.load(.duration), duration.isNumeric else {
+                // No readable duration = no seam will ever fire: still, not a freeze.
+                if generation == self.seamGeneration { self.onFailure?() }
+                return
+            }
+            // A newer show()/seam replaced this watch while the duration loaded.
+            guard generation == self.seamGeneration else { return }
             let seam = duration.seconds - OnboardingMetrics.videoCrossfade
-            guard seam > 0 else { return }
+            guard seam > 0 else {
+                self.onFailure?()
+                return
+            }
             let time = CMTime(seconds: seam, preferredTimescale: 600)
-            self.seamObserver = lane.player.addBoundaryTimeObserver(
+            let token = lane.player.addBoundaryTimeObserver(
                 forTimes: [NSValue(time: time)], queue: .main
             ) { [weak self] in
                 self?.dissolveSeam(url: url)
             }
+            self.seamObservation = (lane.player, token)
         }
+    }
+
+    private func removeSeamObservation() {
+        guard let seamObservation else { return }
+        seamObservation.player.removeTimeObserver(seamObservation.token)
+        self.seamObservation = nil
     }
 
     private func dissolveSeam(url: URL) {
         guard !isPaused else { return }
         let next = (front + 1) % lanes.count
-        load(url, into: lanes[next])
+        load(url, intoLane: next)
         lanes[next].player.play()
         crossfade(to: next, animated: true)
         watchSeam(of: lanes[next], url: url)
@@ -232,10 +271,12 @@ final class CrossfadePlayerView: UIView {
     }
 
     func tearDown() {
-        if let seamObserver {
-            lanes.forEach { $0.player.removeTimeObserver(seamObserver) }
-            self.seamObserver = nil
+        removeSeamObservation()
+        seamGeneration += 1     // orphan any in-flight duration load
+        for token in endObservers.values {
+            NotificationCenter.default.removeObserver(token)
         }
+        endObservers.removeAll()
         lanes.forEach {
             $0.player.pause()
             $0.player.replaceCurrentItem(with: nil)

@@ -51,8 +51,25 @@ struct ComposeProtocolScreen: View {
                     presetLine
                         .padding(.top, 28)
 
-                    rulesList
+                    // Auto-persuasion: the fight he declared at OB 02, reflected
+                    // back. Data already in the draft — copy mapping only.
+                    if let pain = viewModel.draft.pain {
+                        Text(OnboardingCopy.composeFight(pain: pain))
+                            .fudoFont(.caption())
+                            .foregroundStyle(FudoColor.textPrimary)
+                            .opacity(0.45)
+                            .padding(.top, 8)
+                    }
+
+                    // Affordance BEFORE the list — he must know the rows are
+                    // editable before he reads them, not after a scroll.
+                    Text("Tap a rule to adjust it. This is YOUR protocol.")
+                        .fudoFont(.caption())
+                        .foregroundStyle(FudoColor.textSecondary)
                         .padding(.top, 12)
+
+                    rulesList
+                        .padding(.top, 16)
 
                     if setup.showRuleCountWarning {
                         Text("More rules = more failure.")
@@ -61,12 +78,9 @@ struct ComposeProtocolScreen: View {
                             .padding(.top, 12)
                     }
 
-                    Text("Tap a rule to adjust it. This is YOUR protocol.")
-                        .fudoFont(.caption())
-                        .foregroundStyle(FudoColor.textSecondary)
-                        .padding(.top, 16)
-
-                    Spacer(minLength: 120)
+                    // The CTA scrim dissolves the list's tail — the safeAreaInset
+                    // already keeps the last row reachable, so just a breath here.
+                    Spacer(minLength: 24)
                 }
             }
         }
@@ -96,9 +110,9 @@ struct ComposeProtocolScreen: View {
         .opacity(revealed ? 1 : 0)
     }
 
-    /// "MONK MODE 30 · RECOMMENDED FOR YOU" — the name comes from PresetCatalog,
-    /// the ONE source (the frame's "CLASSIC" on a 30 d chip is a mock).
-    /// Green here is the acted exception to the no-green-accent rule.
+    /// "MONK MODE 60 · RECOMMENDED FOR YOU" — the name comes from PresetCatalog,
+    /// the ONE source (the frame's "CLASSIC" on a 30 d chip is a mock; reco = 60
+    /// since 2026-07-16). Green here is the acted exception to the no-green rule.
     private var presetLine: some View {
         let definition = setup.definition
         let isRecommended = definition.preset == setup.recommendedPreset
@@ -146,13 +160,21 @@ struct ComposeProtocolScreen: View {
         .buttonStyle(.plain)
         .disabled(!viewModel.canAdvance)
         .padding(.horizontal, FudoSpacing.screenMargin)
+        .padding(.top, 10)
         .padding(.bottom, 12)
-        .background { FudoColor.bgPrimary.opacity(0.94).ignoresSafeArea(edges: .bottom) }
+        // Scrim, not a slab: the rows DISSOLVE under the button over ~40 pt
+        // instead of being cut by a flat 0.94 edge.
+        .background {
+            LinearGradient(stops: [.init(color: FudoColor.bgPrimary.opacity(0), location: 0),
+                                   .init(color: FudoColor.bgPrimary, location: 0.5)],
+                           startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea(edges: .bottom)
+        }
     }
 }
 
 #if DEBUG
-#Preview("OB 11 — compose (recommended 30)") {
+#Preview("OB 11 — compose (recommended 60)") {
     OnboardingPreviewChrome {
         ComposeProtocolScreen(viewModel: OnboardingPreviewFactory.viewModel(step: .compose))
     }

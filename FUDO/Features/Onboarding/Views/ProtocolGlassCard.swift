@@ -21,13 +21,16 @@ struct ProtocolGlassCard: View {
     ]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
             header
             ForEach(Array(Self.rows.enumerated()), id: \.offset) { index, row in
                 ruleRow(icon: row.icon, title: row.title, isChecked: index < checksRevealed)
             }
         }
-        .padding(FudoSpacing.cardPadding)
+        // Tighter vertically than a standard card (arbitrage 2026-07-16): the
+        // poster breathes through the glass, not through padding.
+        .padding(.horizontal, FudoSpacing.cardPadding)
+        .padding(.vertical, 11)
         .background { glass }
         .rotationEffect(.degrees(-2.5))
     }

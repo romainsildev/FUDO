@@ -193,57 +193,71 @@ private enum ProtocolGlassCardChecks {
 }
 #endif
 
-/// OB 01a's strip: the past on the left (small, blurred, faded), the future on the
-/// right (large, haloed, grounded). Vermillon dots grow between them — progression,
-/// not an arrow. The focal point is the man he becomes.
+/// OB 01a's strip (frame ob-01a): the past on the left — a true SILHOUETTE,
+/// crushed toward the background (desaturated, darkened, blurred, faded) — and
+/// the future on the right, sharp, haloed, grounded. Between them the vermillon
+/// dots RISE toward the man he becomes: size, presence and height all climb.
+/// The focal point is the sensei; the peasant is a memory.
 private struct TransformationStrip: View {
     let haloBreathing: Bool
 
     private static let stripHeight: CGFloat = 200
-    private static let pastHeight: CGFloat = 130
-    private static let futureHeight: CGFloat = 175
-    private static let dotSizes: [CGFloat] = [3, 5, 7]
+    private static let pastHeight: CGFloat = 120
+    private static let futureHeight: CGFloat = 180
+    /// One step per dot: diameter, opacity and lift climb together — a clean
+    /// ramp toward the future, not three equal crumbs.
+    private static let dotSteps: [(size: CGFloat, opacity: Double, lift: CGFloat)] = [
+        (3, 0.35, 0), (4.5, 0.55, 8), (6, 0.75, 17), (8, 1.0, 27)
+    ]
+    /// Where the dot path takes off — around the silhouette's torso.
+    private static let dotBaseline: CGFloat = 72
 
     var body: some View {
-        GeometryReader { geometry in
-            HStack(spacing: 0) {
-                past
-                Spacer(minLength: 12)
-                dots
-                Spacer(minLength: 12)
-                future
-            }
-            .frame(width: geometry.size.width, height: geometry.size.height)
+        // Bottom-aligned: both figures stand on the same implied ground.
+        HStack(alignment: .bottom, spacing: 0) {
+            past
+            Spacer(minLength: 10)
+            dots
+                .padding(.bottom, Self.dotBaseline)
+            Spacer(minLength: 10)
+            future
         }
+        .frame(maxWidth: .infinity)
         .frame(height: Self.stripHeight)
         .clipped()
     }
 
+    /// The silhouette of who he was: color drained, pushed into the dark, out of
+    /// focus. The blur comes LAST in the chain so it softens the whole treatment.
     private var past: some View {
         SenseiAssetProvider.image(for: .novice)
             .resizable()
             .scaledToFit()
             .frame(height: Self.pastHeight)
-            .blur(radius: 2.5)
-            .saturation(0.5)
-            .opacity(0.45)
+            .saturation(0.25)
+            .brightness(-0.18)
+            .blur(radius: 4)
+            .opacity(0.38)
+            .padding(.bottom, 4)
     }
 
     private var dots: some View {
-        HStack(spacing: 10) {
-            ForEach(Array(Self.dotSizes.enumerated()), id: \.offset) { _, size in
+        HStack(alignment: .bottom, spacing: 10) {
+            ForEach(Array(Self.dotSteps.enumerated()), id: \.offset) { _, step in
                 Circle()
-                    .fill(FudoColor.accent)
-                    .frame(width: size, height: size)
+                    .fill(FudoColor.accent.opacity(step.opacity))
+                    .frame(width: step.size, height: step.size)
+                    .offset(y: -step.lift)
             }
         }
     }
 
     private var future: some View {
-        ZStack {
+        ZStack(alignment: .bottom) {
             RadialGradient(colors: [FudoColor.accent.opacity(haloBreathing ? 0.34 : 0.22), .clear],
                            center: .center, startRadius: 10, endRadius: Self.futureHeight * 0.7)
                 .frame(width: Self.futureHeight * 1.4, height: Self.futureHeight * 1.4)
+                .offset(y: Self.futureHeight * 0.18)
 
             VStack(spacing: 0) {
                 SenseiAssetProvider.image(for: .sensei)

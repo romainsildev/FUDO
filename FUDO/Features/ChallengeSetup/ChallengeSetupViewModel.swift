@@ -95,7 +95,13 @@ final class ChallengeSetupViewModel {
 
     // MARK: - Commit
 
-    var canCommit: Bool { !enabledRules.isEmpty && store.activeChallenge == nil }
+    /// OB 11 gate — composing only. That CTA walks to the loader (the challenge
+    /// is born at OB 19), so "no active challenge" is NOT part of this gate: it
+    /// belongs to `canCommit`, which LAUNCHES. Gating compose on it left the
+    /// onboarding CTA dead whenever a challenge lingered in the store.
+    var canCompose: Bool { !enabledRules.isEmpty }
+
+    var canCommit: Bool { canCompose && store.activeChallenge == nil }
 
     /// Maps ENABLED rules to drafts and starts the challenge. False = store
     /// refused (already active, empty rules) — the UI keeps its guard anyway.

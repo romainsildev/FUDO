@@ -51,7 +51,7 @@ final class OnboardingViewModel {
         case .goals: return !draft.goals.isEmpty
         case .struggle: return draft.struggle != nil
         case .commitment: return draft.commitment != nil
-        case .compose: return setup.canCommit
+        case .compose: return setup.canCompose
         case .contract: return hasSignature
         default: return true
         }

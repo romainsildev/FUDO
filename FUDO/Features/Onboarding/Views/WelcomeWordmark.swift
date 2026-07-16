@@ -27,7 +27,12 @@ struct WelcomeWordmark: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Spacer(minLength: 0)
+            // Color.clear fillers, NOT Spacers: a stack hands Spacers only what
+            // its normal views leave behind, so a greedy framed view above a bare
+            // Spacer takes everything — the wordmark sank to the BOTTOM of the
+            // splash (device fix 2026-07-16). Two identical greedy views split
+            // the leftover equally, which is the whole centering equation here.
+            Color.clear
                 .frame(maxHeight: docked ? 0 : .infinity)
 
             // The sizer: docked metrics, so the docked resting frame IS the slot.
@@ -48,7 +53,8 @@ struct WelcomeWordmark: View {
                 }
                 .padding(.top, docked ? OnboardingMetrics.Wordmark.dockedTopPadding : 0)
 
-            Spacer(minLength: 0)
+            Color.clear
+                .frame(maxHeight: .infinity)
 
             // SplashScreen's hint block, hidden: same fonts, same padding, so the
             // wordmark centers exactly where the splash centers its ensō.

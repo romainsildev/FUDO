@@ -27,13 +27,13 @@ enum OnboardingStep: Int, CaseIterable {
         }
     }
 
-    /// Back is offered on the questions only. The walls (reflection, first check,
-    /// social proof, commitment, contract), the loaders and the post-paywall trio
-    /// have no way back — matching the frames.
+    /// Back is offered on the QUESTIONS only. The walls (reflection, first
+    /// check, social proof, commitment, contract), the loaders, the post-paywall
+    /// trio AND the reveals (shock stat, diagnostic, projection — one-way by
+    /// design, 2026-07-16: going back weakens the funnel) have no way back.
     var showsBack: Bool {
         switch self {
-        case .painPoint, .scrollHours, .age, .procrastination, .shockStat,
-             .goals, .struggle, .diagnostic, .compose, .projection:
+        case .painPoint, .scrollHours, .age, .procrastination, .struggle, .compose:
             return true
         default:
             return false

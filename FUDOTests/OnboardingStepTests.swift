@@ -34,12 +34,15 @@ struct OnboardingStepTests {
         #expect(indices == indices.sorted())
     }
 
-    @Test func backIsOfferedOnQuestionsAndBlockedOnWalls() {
+    @Test func backIsOfferedOnQuestionsAndBlockedOnWallsAndReveals() {
         for step in [OnboardingStep.painPoint, .scrollHours, .age, .procrastination,
-                     .shockStat, .goals, .struggle, .diagnostic, .compose, .projection] {
+                     .struggle, .compose] {
             #expect(step.showsBack, "\(step) must offer back")
         }
-        for step in [OnboardingStep.splash, .reflection, .loaderBuilding, .firstCheck,
+        // Walls, loaders, the trio — and the REVEALS (2026-07-16): shock stat,
+        // goals, diagnostic and projection are one-way by design.
+        for step in [OnboardingStep.splash, .shockStat, .goals, .reflection,
+                     .diagnostic, .projection, .loaderBuilding, .firstCheck,
                      .socialProof, .commitment, .contract, .paywall,
                      .notifications, .loaderSetup, .welcomeDojo, .widgetPromo] {
             #expect(step.showsBack == false, "\(step) must block back")

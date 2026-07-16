@@ -7,6 +7,9 @@ import Foundation
 enum OnboardingMetrics {
     /// Cross-fade between two welcome clips (01a → 01b → 01c) and on the loop seam.
     static let videoCrossfade: TimeInterval = 0.5
+    /// Welcome ambience playback rate (device pass 2026-07-16): half speed —
+    /// calmer scene, longer runway before the loop seam. Tune within 0.4–0.6.
+    static let videoRate: Float = 0.5
     /// Splash hint "Tap anywhere" — slow breath, never a blink.
     static let hintPulse: TimeInterval = 1.8
     /// Ensō scale-in on the splash.

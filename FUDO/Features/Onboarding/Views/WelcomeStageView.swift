@@ -131,6 +131,10 @@ final class CrossfadePlayerView: UIView {
         for lane in lanes {
             lane.player.isMuted = true          // ambience, never audio
             lane.player.actionAtItemEnd = .none
+            // Half speed (OnboardingMetrics.videoRate): calmer ambience. The seam
+            // observer lives in ITEM time, so the dissolve point follows the rate
+            // for free — and the retiring lane gains margin under the fade.
+            lane.player.defaultRate = OnboardingMetrics.videoRate
             lane.layer.player = lane.player
             lane.layer.videoGravity = .resizeAspectFill
             lane.layer.opacity = 0

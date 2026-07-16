@@ -21,25 +21,25 @@ struct OnboardingCopyTests {
 
     // MARK: - OB 06
 
-    @Test func theShockLineIsRecutByThePain() {
-        #expect(OnboardingCopy.shockRecut(pain: .trainingConsistently, shock: shock)
-                == "That's 1.9 years not spent training.")
-        #expect(OnboardingCopy.shockRecut(pain: .reading, shock: shock)
-                == "That's 1.9 years of books you'll never read.")
-        #expect(OnboardingCopy.shockRecut(pain: .doomscrolling, shock: shock)
-                == "That's 1.9 years you will never scroll back.")
+    @Test func theFusedLineIsRecutByThePain() {
+        // Copy pass 2026-07-16: 'of your life' fused with the wound, ONE line,
+        // no number repeated (the giant number sits right above it).
+        #expect(OnboardingCopy.shockOfYourLife(pain: .reading)
+                == "of your life — that's the books you'll never read.")
+        #expect(OnboardingCopy.shockOfYourLife(pain: .trainingConsistently)
+                == "of your life — that's the training you never did.")
     }
 
-    @Test func everyPainHasItsOwnRecutAndNoneIsEmpty() {
-        let lines = Pain.allCases.map { OnboardingCopy.shockRecut(pain: $0, shock: shock) }
+    @Test func everyPainHasItsOwnFusedLineAndNoneIsEmpty() {
+        let lines = Pain.allCases.map { OnboardingCopy.shockOfYourLife(pain: $0) }
         #expect(Set(lines).count == Pain.allCases.count, "each pain must get its own line")
-        #expect(lines.allSatisfy { $0.contains("1.9 years") })
+        #expect(lines.allSatisfy { $0.hasPrefix("of your life — ") })
     }
 
-    @Test func theShockHeadlineNamesTheHorizonAge() {
+    @Test func theShockLeadIsShortAndNamesTheHorizonAge() {
         let older = ShockMath.result(age: .adult2534, scroll: .twoToFourHours)
         #expect(OnboardingCopy.shockLead(shock: older)
-                == "At this pace, by age 40\nyou will have scrolled away")
+                == "By 40, you'll have scrolled away")
     }
 
     @Test func thePivotStaysCommitmentFramedNeverPseudoScience() {

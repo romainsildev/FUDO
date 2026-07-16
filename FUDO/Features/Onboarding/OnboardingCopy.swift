@@ -7,19 +7,21 @@ enum OnboardingCopy {
 
     // MARK: - OB 06 — the math
 
+    /// SHORT and secondary (copy pass 2026-07-16, 45 %): the setup, not the blow.
+    /// The giant number is the only strong element on OB 06.
     static func shockLead(shock: ShockMath.Result) -> String {
-        "At this pace, by age \(shock.horizonAge)\nyou will have scrolled away"
+        "By \(shock.horizonAge), you'll have scrolled away"
     }
 
-    /// The line that proves the app heard OB 02. Same number, his own wound.
-    static func shockRecut(pain: Pain, shock: ShockMath.Result) -> String {
-        let amount = shock.headline
+    /// The ONE line under the giant number: "of your life" fused with his wound
+    /// (OB 02) — one sentence instead of two, no number repeated.
+    static func shockOfYourLife(pain: Pain) -> String {
         switch pain {
-        case .doomscrolling: return "That's \(amount) you will never scroll back."
-        case .wakingUpEarly: return "That's \(amount) of mornings you slept through."
-        case .trainingConsistently: return "That's \(amount) not spent training."
-        case .reading: return "That's \(amount) of books you'll never read."
-        case .stayingFocused: return "That's \(amount) your focus belonged to someone else."
+        case .doomscrolling: return "of your life — that's time you'll never scroll back."
+        case .wakingUpEarly: return "of your life — that's the mornings you slept through."
+        case .trainingConsistently: return "of your life — that's the training you never did."
+        case .reading: return "of your life — that's the books you'll never read."
+        case .stayingFocused: return "of your life — that's focus that belonged to someone else."
         }
     }
 

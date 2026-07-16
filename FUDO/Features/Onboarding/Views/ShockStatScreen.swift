@@ -1,9 +1,10 @@
 import SwiftUI
 
 /// OB 06 — the AHA, under a minute from opening. He isn't reading a statistic:
-/// he's reading HIS OWN multiplication. Then the pivot — we don't leave him in
-/// the pain, we tell him monk mode exists exactly for this. Strict minimum on
-/// screen (UX pass 2026-07-16): the giant number, one context line, the pivot.
+/// he's reading HIS OWN multiplication. Redesigned hierarchy (copy pass
+/// 2026-07-16): FOUR elements, no more — a short 45 % setup line, the giant
+/// Bebas vermillon number (the only strong element), one fused line under it,
+/// and the pivot a beat later.
 ///
 /// Nothing on this screen claims a study. The number is his two answers, times
 /// each other (ShockMath). That's the whole point, and it's why it survives a
@@ -16,61 +17,54 @@ struct ShockStatScreen: View {
     @State private var counted: Double = 0
     @State private var revealed = false
 
-    /// ONE beat after the number (UX pass 2026-07-16): everything below it fades
-    /// in together. He takes the hit, then we name it — once.
-    private static let afterNumberDelay: TimeInterval = OnboardingMetrics.countUpDuration
+    /// The fused line lands with the number's end; the pivot one beat later.
+    private static let fusedDelay: TimeInterval = OnboardingMetrics.countUpDuration
+    private static let pivotDelay: TimeInterval = OnboardingMetrics.countUpDuration + 0.55
 
     var body: some View {
-        OnboardingScaffold(step: .shockStat, 
-                           title: OnboardingCopy.shockLead(shock: shock),
-                           canAdvance: true, onAdvance: onAdvance) {
+        OnboardingScaffold(step: .shockStat, canAdvance: true, onAdvance: onAdvance) {
             VStack(alignment: .leading, spacing: 0) {
-                number
-                Text("of your life.")
-                    .fudoFont(.title(24, weight: .bold))
+                // 1 — the setup, secondary at 45 %: it points, it doesn't punch.
+                Text(OnboardingCopy.shockLead(shock: shock))
+                    .fudoFont(.body(17, weight: .medium))
                     .foregroundStyle(FudoColor.textPrimary)
+                    .opacity(0.45)
 
-                // The strict minimum below the number: his wound at 45 % —
-                // present, never shouting — then the pivot. The 30-day stake
-                // paragraph is gone (UX pass 2026-07-16: too much to read).
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(OnboardingCopy.shockRecut(pain: pain, shock: shock))
-                        .fudoFont(.body(15, weight: .medium))
-                        .foregroundStyle(FudoColor.textPrimary)
-                        .opacity(0.45)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.top, 16)
+                // 2 — the blow.
+                number
+                    .padding(.top, 10)
 
-                    separator
-                        .padding(.top, 28)
+                // 3 — one line, his wound fused in. No separate recut paragraph.
+                Text(OnboardingCopy.shockOfYourLife(pain: pain))
+                    .fudoFont(.title(20, weight: .semibold))
+                    .foregroundStyle(FudoColor.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 14)
+                    .opacity(revealed ? 1 : 0)
+                    .animation(AppAnimation.standard.delay(Self.fusedDelay), value: revealed)
 
-                    Text(OnboardingCopy.shockPivot)
-                        .fudoFont(.body(15))
-                        .foregroundStyle(FudoColor.textSecondary)
-                        .padding(.top, 22)
-                }
-                .opacity(revealed ? 1 : 0)
-                .animation(AppAnimation.standard.delay(Self.afterNumberDelay), value: revealed)
+                // 4 — the pivot, small, one beat after the hit.
+                Text(OnboardingCopy.shockPivot)
+                    .fudoFont(.body(15))
+                    .foregroundStyle(FudoColor.textSecondary)
+                    .padding(.top, 28)
+                    .opacity(revealed ? 1 : 0)
+                    .animation(AppAnimation.standard.delay(Self.pivotDelay), value: revealed)
             }
         }
         .onboardingWarmWash()
         .task { await runCountUp() }
     }
 
-    /// The count-up re-formats through ShockMath's own rule — "1.9 years" or
-    /// "205 days", never two spellings of one number.
+    /// The count-up re-formats through ShockMath's own rule — "1.9 YEARS" or
+    /// "205 DAYS", never two spellings of one number. Bebas display, vermillon:
+    /// the one strong element of the screen.
     private var number: some View {
-        CountUpText(value: counted) { ShockMath.headline(for: max(0, $0)) }
-            .fudoFont(.ovr(56))
+        CountUpText(value: counted) { ShockMath.headline(for: max(0, $0)).uppercased() }
+            .fudoFont(.onboardingDisplay(72))
             .foregroundStyle(FudoColor.accent)
             .lineLimit(1)
             .minimumScaleFactor(0.6)
-    }
-
-    private var separator: some View {
-        Rectangle()
-            .fill(FudoColor.accent)
-            .frame(width: 32, height: 2)
     }
 
     /// Sober: it climbs, it stops, it hits. No bounce, no scale — the number

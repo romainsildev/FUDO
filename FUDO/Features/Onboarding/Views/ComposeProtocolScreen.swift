@@ -91,9 +91,12 @@ struct ComposeProtocolScreen: View {
     }
 
     private var chipsRow: some View {
-        HStack(spacing: 10) {
+        let recommendedDays = PresetCatalog.definition(for: setup.recommendedPreset).durationDays
+        return HStack(spacing: 10) {
             ForEach(PresetCatalog.chipDays, id: \.self) { days in
-                DurationChip(days: days, isSelected: setup.durationDays == days) {
+                DurationChip(days: days,
+                             isSelected: setup.durationDays == days,
+                             isRecommended: days == recommendedDays) {
                     setup.selectDuration(days: days)
                 }
             }

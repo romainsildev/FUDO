@@ -113,9 +113,8 @@ struct OnboardingFlowView: View {
                                selection: $viewModel.draft.procrastination,
                                onAdvance: viewModel.advance)
         case .shockStat:
-            if let shock = viewModel.shock, let pain = viewModel.draft.pain {
-                ShockStatScreen(shock: shock, pain: pain,
-                                onAdvance: viewModel.advance)
+            if let shock = viewModel.shock {
+                ShockStatScreen(shock: shock, onAdvance: viewModel.advance)
             }
 
         // The habit block (batch #2) — four fast, factual questions after the

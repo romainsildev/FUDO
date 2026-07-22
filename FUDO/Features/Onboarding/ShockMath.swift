@@ -7,6 +7,10 @@ enum ShockMath {
     struct Result: Equatable {
         let years: Double
         let horizonAge: Int
+        /// The whole span his answers cover (pivot age → horizon), in years.
+        /// The OB 06 life grid draws this as dots and lights `years / spanYears`
+        /// of them — same two answers, zero new claim.
+        let spanYears: Double
         /// "2.4 years" — or "205 days" under a year, because "0.6 years" lands on nobody.
         let headline: String
     }
@@ -48,7 +52,8 @@ enum ShockMath {
         let horizon = horizonAge(age)
         let span = Double(horizon - pivotAge(age))
         let years = hoursPerDay(scroll) * span / 24
-        return Result(years: years, horizonAge: horizon, headline: headline(for: years))
+        return Result(years: years, horizonAge: horizon, spanYears: span,
+                      headline: headline(for: years))
     }
 
     /// Internal, not private: the OB 06 count-up re-formats the animating value

@@ -1,8 +1,11 @@
 import SwiftUI
 
-/// OB 20 — the reward. No more questions, no more numbers: the sensei is there,
-/// full height, and he gives one thing to do tonight. The funnel ends on a simple,
-/// holdable order — not a list.
+/// OB 20 — the reward, legibility cut (design pass 2026-07-22, BitePal/Duolingo
+/// grammar: the character carries the emotion, the copy stays out of his way).
+/// "WELCOME TO THE DOJO" in Bebas lives in the TOP THIRD, ABOVE the sensei —
+/// never on him. The sensei is full-bleed at the bottom; a dark scrim floors
+/// the lower screen so the subline never fights the art. Three elements total:
+/// title → one subline → one CTA. Everything else is gone.
 ///
 /// The sensei shown is HIS rank, the Novice peasant — not the frame's white-gi
 /// master. He hasn't earned that one, and the very next screen (Home) would
@@ -18,21 +21,26 @@ struct WelcomeDojoScreen: View {
     @State private var revealed = false
     @State private var auraBreathing = false
 
-    private static let titleTopFraction: CGFloat = 0.48
+    /// The title band: top third, clear of the sensei's head.
+    private static let titleTopFraction: CGFloat = 0.10
+    private static let titleSize: CGFloat = 44
+    /// The sensei owns the lower two thirds — capped so he never climbs under
+    /// the title band.
+    private static let senseiHeightFraction: CGFloat = 0.68
     private static let auraOpacity: Double = 0.28
 
     var body: some View {
         GeometryReader { geometry in
-            ZStack {
+            ZStack(alignment: .top) {
                 sensei(in: geometry)
                 scrim
-                copy(in: geometry)
+                title(in: geometry)
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
             .clipped()
         }
         .background(FudoColor.bgPrimary.ignoresSafeArea())
-        .safeAreaInset(edge: .bottom) { cta }
+        .safeAreaInset(edge: .bottom) { footer }
         .onAppear {
             withAnimation(AppAnimation.slow) { revealed = true }
             withAnimation(.easeInOut(duration: OnboardingMetrics.hintPulse)
@@ -51,56 +59,56 @@ struct WelcomeDojoScreen: View {
             SenseiAssetProvider.image(for: rank)
                 .resizable()
                 .scaledToFit()
-                .frame(maxHeight: geometry.size.height * 0.9)
+                .frame(maxHeight: geometry.size.height * Self.senseiHeightFraction)
         }
-        .frame(maxHeight: .infinity, alignment: .bottom)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         .scaleEffect(revealed ? 1 : 0.96)
         .opacity(revealed ? 1 : 0)
     }
 
-    /// The copy sits over his chest — it needs its own floor to stay legible.
+    /// The floor under the subline and CTA — the text never fights the art.
     private var scrim: some View {
         LinearGradient(colors: [.clear, FudoColor.bgPrimary.opacity(0.95)],
-                       startPoint: .center, endPoint: .bottom)
+                       startPoint: UnitPoint(x: 0.5, y: 0.55), endPoint: .bottom)
             .allowsHitTesting(false)
     }
 
-    private func copy(in geometry: GeometryProxy) -> some View {
-        VStack(spacing: 0) {
-            Spacer(minLength: geometry.size.height * Self.titleTopFraction)
+    /// Bebas, top third, above the sensei — the one display moment of the act.
+    private func title(in geometry: GeometryProxy) -> some View {
+        Text("WELCOME\nTO THE DOJO")
+            .fudoFont(.onboardingDisplay(Self.titleSize))
+            .foregroundStyle(FudoColor.textPrimary)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity)
+            .padding(.top, geometry.size.height * Self.titleTopFraction)
+            .padding(.horizontal, FudoSpacing.screenMargin)
+            .opacity(revealed ? 1 : 0)
+            .animation(AppAnimation.standard.delay(0.3), value: revealed)
+    }
 
-            Text("Welcome to the dojo.")
-                .fudoFont(.title(30, weight: .bold))
-                .foregroundStyle(FudoColor.textPrimary)
-                .opacity(revealed ? 1 : 0)
-                .animation(AppAnimation.standard.delay(0.3), value: revealed)
-
-            Text("Day 1 is today. Your reminder rings tomorrow at \(OnboardingCopy.clockTime(minutes: reminderMinutes)).\nTonight: sleep. That's the first order.")
+    /// One subline, one CTA — the whole bottom of the screen. No confetti:
+    /// celebrations are for milestones; arriving at the dojo is the start.
+    private var footer: some View {
+        VStack(spacing: 20) {
+            Text("Day 1 is today. Your reminder rings tomorrow at \(OnboardingCopy.clockTime(minutes: reminderMinutes)).")
                 .fudoFont(.body(15))
                 .foregroundStyle(FudoColor.textSecondary)
-                .lineSpacing(3)
                 .multilineTextAlignment(.center)
-                .padding(.top, 12)
+                .fixedSize(horizontal: false, vertical: true)
                 .opacity(revealed ? 1 : 0)
                 .animation(AppAnimation.standard.delay(0.5), value: revealed)
 
-            Spacer()
+            Button(action: onAdvance) {
+                Text("Let's go")
+                    .fudoFont(.headline())
+                    .foregroundStyle(FudoColor.textPrimary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: FudoSpacing.ctaHeight)
+                    .background { Capsule().fill(FudoColor.accent) }
+            }
+            .buttonStyle(.plain)
         }
-        .padding(.horizontal, FudoSpacing.screenMargin)
-    }
-
-    /// No confetti: celebrations are for milestones (100 % day, rank-up, challenge
-    /// complete). Arriving at the dojo isn't one — it's the start.
-    private var cta: some View {
-        Button(action: onAdvance) {
-            Text("Let's go")
-                .fudoFont(.headline())
-                .foregroundStyle(FudoColor.textPrimary)
-                .frame(maxWidth: .infinity)
-                .frame(height: FudoSpacing.ctaHeight)
-                .background { Capsule().fill(FudoColor.accent) }
-        }
-        .buttonStyle(.plain)
         .padding(.horizontal, FudoSpacing.screenMargin)
         .padding(.bottom, 12)
     }

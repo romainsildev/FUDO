@@ -359,8 +359,9 @@ private struct OrbitStatView: View {
 
 /// One staged row of the build timeline — marker + thin connectors, hard snap
 /// active → done with a spring pop on the done marker (RiteOff LoaderBullet
-/// transposed).
-private struct BuildBullet: View {
+/// transposed). Internal, not private: OB 19's loader renders the SAME rows
+/// (batch #10 leftover — one loader language, never two marker grammars).
+struct BuildBullet: View {
     enum State { case idle, active, done }
 
     let text: String

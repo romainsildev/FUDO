@@ -1,22 +1,25 @@
 import SwiftUI
 
-/// OB 17 (batch #6 recut) — the sunk cost, made physical and SEQUENCED right.
+/// OB 17 (design pass 2026-07-22 — Romain: the SIGNED stamp supersedes the
+/// sober payoff; the one INTACT rule: nothing ever covers the signature).
 ///
 /// STATE 1 — before the seal: the recap compacted into one card (GOING keeps
 /// the vermilion), then the DOMINANT element: the signature card — tracked
 /// commit label, a real baseline, "Sign with your finger". NO price anywhere
-/// on screen: the price before the signature was the exact inversion of the
-/// sunk-cost spec.
+/// on screen: the price lives at the PAYWALL only.
 ///
-/// STATE 2 — the hold completes (2.5 s, progressive haptics, `.heavy` seal):
-/// a SOBER payoff (device pass, Romain — the ensō stamp dirtied the stroke and
-/// is gone): the signature freezes, the card's border pulses vermilion ONCE
-/// (~0.5 s) and comes back, nothing lands ON the mark. Then Continue slides up
-/// where HOLD TO SIGN used to live.
+/// THE HOLD — the white spinning ring is GONE. The capsule FILLS with
+/// vermilion left to right (determinate, mirrors the hold clock) while a glow
+/// intensifies around it, and the haptic is one continuous 2.5 s ramp
+/// (CHHapticEngine, intensity 0.2 → 1.0 — growing transients as fallback).
 ///
-/// NO price on this screen at all (Romain's override of the old sunk-cost spec):
-/// the price lives at the PAYWALL only — the kebab line waits in `PricingCopy`
-/// for Session 6.
+/// THE PAYOFF — 80 ms settle → the contract dims 10 % → the "SIGNED" stamp
+/// (Bebas, vermilion, −8°, stamp frame) SLAMS in, scale 4 → 1 in 250 ms on an
+/// ACCELERATING curve (a stamp speeds INTO impact, never eases out) → at
+/// impact: `.rigid` + the card shakes ~6 px on a decaying spring + a 1-frame
+/// 10 % vermilion flash → `.success` at +200 ms → "Signed · [date]" lands →
+/// Continue slides up at +600 ms. The stamp sits at the BOTTOM of the card,
+/// under the baseline — never on the stroke.
 ///
 /// `onSign` (checkpoint 1: player + ContractSnapshot + advance) fires on the
 /// Continue tap — the payoff beat lives entirely in this screen.
@@ -31,21 +34,37 @@ struct ContractScreen: View {
     let onSign: () -> Void
     let onSignatureStroke: () -> Void
     let onSignatureCleared: () -> Void
-    /// DEBUG previews only — renders state 2 (stamp, price, Continue).
+    /// DEBUG previews only — renders state 2 (stamped, Continue up).
     var startsSealed = false
 
     @State private var strokes: [[CGPoint]] = []
     @State private var isDrawing = false
     @State private var revealed = false
     @State private var sealed = false
-    @State private var borderPulse = false
+    /// The hold's fill fraction — mirrors the clock via `onHoldChange`.
+    @State private var holdFill: CGFloat = 0
+    // Payoff sequence.
+    @State private var contractDimmed = false
+    @State private var stampShown = false
+    @State private var shakePhase: CGFloat = 0
+    @State private var flashOn = false
+    @State private var signedLineShown = false
     @State private var ctaVisible = false
 
     private static let signatureDelay: TimeInterval = 0.2
     private static let canvasHeight: CGFloat = 96
-    /// One border pulse out and back, then the CTA — whole payoff ≈ 0.9 s.
-    private static let pulseDuration: TimeInterval = 0.25
-    private static let ctaDelay: TimeInterval = 0.35
+    // The stamp sequence, spec beats (2026-07-22).
+    private static let settleBeat: TimeInterval = 0.08
+    private static let stampSlam: TimeInterval = 0.25
+    private static let stampScaleFrom: CGFloat = 4
+    private static let stampAngle: Double = -8
+    private static let shakeTravel: CGFloat = 6
+    private static let shakeDuration: TimeInterval = 0.35
+    private static let flashOpacity: Double = 0.1
+    private static let flashBeat: TimeInterval = 0.05
+    private static let successBeat: TimeInterval = 0.2
+    private static let ctaBeat: TimeInterval = 0.6
+    private static let dimOpacity: Double = 0.1
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -172,27 +191,66 @@ struct ContractScreen: View {
                     }
                 }
 
-            // The baseline — a contract signs ON a line.
+            // The baseline — a contract signs ON a line. Everything below it is
+            // stamp territory: the mark above is never touched.
             Rectangle()
                 .fill(FudoColor.border)
                 .frame(height: 1)
 
-            Text("Signed · today")
-                .fudoFont(.caption(12))
-                .foregroundStyle(FudoColor.textSecondary)
-                .padding(.top, 8)
-                .opacity(hasSignature ? 1 : 0)
-                .animation(AppAnimation.standard, value: hasSignature)
+            // The footer: date on the left, the SIGNED stamp slamming in on the
+            // right — BELOW the baseline, clear of the stroke by construction.
+            HStack(alignment: .center) {
+                Text("Signed · \(OnboardingCopy.longDate(.now))")
+                    .fudoFont(.caption(12))
+                    .foregroundStyle(FudoColor.textSecondary)
+                    .opacity(signedLineShown ? 1 : 0)
+                    .animation(AppAnimation.standard, value: signedLineShown)
+
+                Spacer(minLength: 8)
+
+                if stampShown {
+                    stamp
+                }
+            }
+            .frame(minHeight: 44)
+            .padding(.top, 6)
         }
         .padding(FudoSpacing.cardPaddingMajor)
         .background { card.fill(FudoColor.bgCard) }
-        // The whole payoff: the border flashes vermilion once and comes back.
+        // The payoff dim: the paper darkens 10 % so the stamp reads as INK.
         .overlay {
-            card.strokeBorder(borderPulse ? FudoColor.accent : FudoColor.border,
-                              lineWidth: 1)
+            card.fill(Color.black.opacity(contractDimmed ? Self.dimOpacity : 0))
+                .allowsHitTesting(false)
         }
+        // 1-frame vermilion flash at stamp impact.
+        .overlay {
+            card.fill(FudoColor.accent.opacity(flashOn ? Self.flashOpacity : 0))
+                .allowsHitTesting(false)
+        }
+        .overlay { card.strokeBorder(FudoColor.border, lineWidth: 1) }
+        .modifier(StampShakeEffect(travel: Self.shakeTravel, phase: shakePhase))
         .opacity(revealed ? 1 : 0)
         .animation(AppAnimation.standard.delay(Self.signatureDelay), value: revealed)
+    }
+
+    /// The rubber stamp: Bebas, vermilion, tilted, double-framed. Slams in
+    /// scale 4 → 1 on an easeIn — accelerating INTO the impact.
+    private var stamp: some View {
+        Text("SIGNED")
+            .fudoFont(.onboardingDisplay(24))
+            .foregroundStyle(FudoColor.accent)
+            .kerning(2)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 3)
+            .overlay {
+                RoundedRectangle(cornerRadius: 4)
+                    .strokeBorder(FudoColor.accent, lineWidth: 2)
+            }
+            .rotationEffect(.degrees(Self.stampAngle))
+            .transition(.scale(scale: Self.stampScaleFrom)
+                .combined(with: .opacity)
+                .animation(.easeIn(duration: Self.stampSlam)))
+            .allowsHitTesting(false)
     }
 
     private var card: RoundedRectangle {
@@ -201,9 +259,10 @@ struct ContractScreen: View {
 
     // MARK: - CTA
 
-    /// State 1: the 2.5 s hold, `.heavy` seal — this is not a checklist tick,
-    /// it binds. Cream ring: vermillon on vermillon is an invisible ring.
-    /// State 2: HOLD TO SIGN is gone; Continue slides up once the price landed.
+    /// State 1: the 2.5 s hold — no ring: the capsule itself fills vermilion
+    /// left to right while the glow builds (determinate, mirrors the clock),
+    /// haptics ramp continuously underneath. State 2: HOLD TO SIGN is gone;
+    /// Continue slides up once the stamp landed.
     @ViewBuilder private var cta: some View {
         Group {
             if sealed {
@@ -226,13 +285,21 @@ struct ContractScreen: View {
                     .foregroundStyle(hasSignature ? FudoColor.textPrimary : FudoColor.textSecondary)
                     .frame(maxWidth: .infinity)
                     .frame(height: FudoSpacing.ctaHeight)
-                    .background { Capsule().fill(hasSignature ? FudoColor.accent : FudoColor.bgCard) }
-                    .overlay {
-                        Capsule().strokeBorder(hasSignature ? Color.clear : FudoColor.border,
-                                               lineWidth: 1)
-                    }
+                    .background { holdCapsule }
                     .holdToConfirm(in: Capsule(), duration: OnboardingMetrics.signHoldDuration,
-                                   completionHaptic: .heavy, ringColor: FudoColor.textPrimary) {
+                                   completionHaptic: .heavy,
+                                   showsRing: false, hapticStyle: .ramp,
+                                   onHoldChange: { holding in
+                                       if holding {
+                                           withAnimation(.linear(duration: OnboardingMetrics.signHoldDuration)) {
+                                               holdFill = 1
+                                           }
+                                       } else {
+                                           withAnimation(.easeOut(duration: HoldToConfirmMetrics.rewindDuration)) {
+                                               holdFill = 0
+                                           }
+                                       }
+                                   }) {
                         seal()
                     }
                     .disabled(!hasSignature)
@@ -244,30 +311,92 @@ struct ContractScreen: View {
         .background { FudoColor.bgPrimary.opacity(0.94).ignoresSafeArea(edges: .bottom) }
     }
 
+    /// The dark capsule with the determinate vermilion fill sweeping through it.
+    /// The glow rides the fill — brighter as the seal gets closer. Deliberate
+    /// exception to the no-shadow card rule: this is a hold payoff, not a card.
+    private var holdCapsule: some View {
+        ZStack(alignment: .leading) {
+            Capsule().fill(FudoColor.bgCard)
+
+            GeometryReader { geometry in
+                Rectangle()
+                    .fill(FudoColor.accent)
+                    .frame(width: geometry.size.width * holdFill)
+            }
+        }
+        .clipShape(Capsule())
+        .overlay {
+            Capsule().strokeBorder(hasSignature ? FudoColor.accent.opacity(0.5)
+                                                : FudoColor.border,
+                                   lineWidth: 1)
+        }
+        .shadow(color: FudoColor.accent.opacity(0.55 * holdFill),
+                radius: 18 * holdFill)
+    }
+
     // MARK: - Sequence
 
     private func runIntro() {
         if startsSealed {
             revealed = true
             sealed = true
+            contractDimmed = true
+            stampShown = true
+            signedLineShown = true
             ctaVisible = true
             return
         }
         revealed = true
     }
 
-    /// The hold's `.heavy` already fired — the payoff stays sober: freeze, one
-    /// border pulse, Continue. One-way: the HOLD CTA is gone, nothing replays.
+    /// The stamp sequence — spec beats, one-way. `sealed` flips first (stroke
+    /// frozen, Clear gone, HOLD CTA retired), then the theater plays.
     private func seal() {
         guard !sealed else { return }
         withAnimation(AppAnimation.standard) { sealed = true }
-        withAnimation(.easeInOut(duration: Self.pulseDuration)) { borderPulse = true }
+
         Task { @MainActor in
-            try? await Task.sleep(for: .seconds(Self.pulseDuration))
-            withAnimation(.easeInOut(duration: Self.pulseDuration)) { borderPulse = false }
-            try? await Task.sleep(for: .seconds(Self.ctaDelay))
+            // Settle, then the paper darkens under the incoming stamp.
+            try? await Task.sleep(for: .seconds(Self.settleBeat))
+            withAnimation(.easeOut(duration: Self.stampSlam)) { contractDimmed = true }
+
+            // The slam — its easeIn transition accelerates INTO the impact.
+            withAnimation { stampShown = true }
+            try? await Task.sleep(for: .seconds(Self.stampSlam))
+
+            // Impact: rigid hit, 1-frame flash, decaying shake.
+            Haptics.rigid()
+            flashOn = true
+            withAnimation(.linear(duration: Self.shakeDuration)) { shakePhase = 1 }
+            try? await Task.sleep(for: .seconds(Self.flashBeat))
+            flashOn = false
+
+            try? await Task.sleep(for: .seconds(Self.successBeat - Self.flashBeat))
+            Haptics.success()
+            withAnimation(AppAnimation.standard) { signedLineShown = true }
+
+            try? await Task.sleep(for: .seconds(Self.ctaBeat - Self.successBeat))
             withAnimation(.easeOut(duration: 0.5)) { ctaVisible = true }
         }
+    }
+}
+
+/// The impact shake: a decaying horizontal oscillation (~3 swings), driven by
+/// `phase` 0 → 1. Amplitude dies linearly — a slammed stamp, not a buzz.
+private struct StampShakeEffect: GeometryEffect {
+    var travel: CGFloat
+    var phase: CGFloat
+
+    var animatableData: CGFloat {
+        get { phase }
+        set { phase = newValue }
+    }
+
+    func effectValue(size: CGSize) -> ProjectionTransform {
+        guard phase > 0, phase < 1 else { return ProjectionTransform(.identity) }
+        let decay = 1 - phase
+        let x = travel * sin(phase * .pi * 6) * decay
+        return ProjectionTransform(CGAffineTransform(translationX: x, y: 0))
     }
 }
 
@@ -284,8 +413,8 @@ struct ContractScreen: View {
     }
 }
 
-/// Signed, hold not done: "Signed · today" up, CTA live, STILL no price. The
-/// hold's ring only exists under a finger — the feel is a device check.
+/// Signed, hold not done: CTA live, STILL no price. The fill + ramp only exist
+/// under a finger — the feel is a device check.
 #Preview("OB 17 — state 1 (signed, pre-hold)") {
     OnboardingPreviewChrome {
         ContractScreen(startingOVR: 45, rank: .novice, projectedOVR: 79,
@@ -296,10 +425,9 @@ struct ContractScreen: View {
     }
 }
 
-/// State 2 — sealed, SOBER: frozen mark, no stamp, NO price anywhere (the price
-/// lives at the paywall only), Continue up. Monk Mode 90 from the ceiling —
-/// the longest terms line the card must hold.
-#Preview("OB 17 — state 2 (sealed, 90 days)") {
+/// State 2 — sealed: dimmed paper, SIGNED stamp under the baseline, Continue
+/// up. Monk Mode 90 from the ceiling — the longest terms line the card holds.
+#Preview("OB 17 — state 2 (stamped, 90 days)") {
     OnboardingPreviewChrome {
         ContractScreen(startingOVR: 50, rank: .disciple, projectedOVR: 96,
                        projectedRank: .sensei,

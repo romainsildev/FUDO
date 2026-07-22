@@ -1,3 +1,4 @@
+import CoreHaptics
 import SwiftUI
 
 /// Metrics of the signature hold-to-confirm gesture — single source, no magic
@@ -17,6 +18,63 @@ enum HoldToConfirmMetrics {
     static let sealResetDelay: TimeInterval = 0.6
     /// Short recognition for secondary long-press actions (uncheck → dialog).
     static let quickLongPress: TimeInterval = 0.35
+}
+
+/// How the hold FEELS while the finger is down.
+///  - `.steps` (default): three discrete impacts, light → medium → heavy.
+///  - `.ramp`: one continuous vibration climbing the whole hold (intensity
+///    0.2 → 1.0, sharpness → 0.7) via CHHapticEngine — the OB 17 signature
+///    hold. Falls back to the step impacts when the engine isn't available.
+enum HoldHapticStyle {
+    case steps
+    case ramp
+}
+
+/// The `.ramp` player. One engine per hold: created on press, stopped on
+/// release or completion. `start` returns false when the hardware or the
+/// engine can't do it — the caller then falls back to the step impacts.
+@MainActor final class HoldHapticRamp {
+    private var engine: CHHapticEngine?
+
+    static let startIntensity: Float = 0.2
+    static let endIntensity: Float = 1.0
+    static let startSharpness: Float = 0.3
+    static let endSharpness: Float = 0.7
+
+    func start(duration: TimeInterval) -> Bool {
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return false }
+        do {
+            let engine = try CHHapticEngine()
+            try engine.start()
+            let event = CHHapticEvent(
+                eventType: .hapticContinuous,
+                parameters: [CHHapticEventParameter(parameterID: .hapticIntensity, value: 1),
+                             CHHapticEventParameter(parameterID: .hapticSharpness, value: 1)],
+                relativeTime: 0, duration: duration)
+            let intensity = CHHapticParameterCurve(
+                parameterID: .hapticIntensityControl,
+                controlPoints: [.init(relativeTime: 0, value: Self.startIntensity),
+                                .init(relativeTime: duration, value: Self.endIntensity)],
+                relativeTime: 0)
+            let sharpness = CHHapticParameterCurve(
+                parameterID: .hapticSharpnessControl,
+                controlPoints: [.init(relativeTime: 0, value: Self.startSharpness),
+                                .init(relativeTime: duration, value: Self.endSharpness)],
+                relativeTime: 0)
+            let pattern = try CHHapticPattern(events: [event],
+                                              parameterCurves: [intensity, sharpness])
+            try engine.makePlayer(with: pattern).start(atTime: 0)
+            self.engine = engine
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    func stop() {
+        engine?.stop()
+        engine = nil
+    }
 }
 
 /// Haptic fired the instant the hold completes.
@@ -56,18 +114,28 @@ struct HoldToConfirm<Ring: InsettableShape>: ViewModifier {
     /// ring anchored on a sub-element (OB 14's check circle) drifts off-centre
     /// under the squeeze — those call sites pass 1.
     var pressedScale: CGFloat = HoldToConfirmMetrics.pressedScale
+    /// OB 17's capsule-fill hold draws its own progress: it hides the ring and
+    /// mirrors the clock through `onHoldChange` instead.
+    var showsRing: Bool = true
+    /// `.steps` (default) or `.ramp` — see `HoldHapticStyle`.
+    var hapticStyle: HoldHapticStyle = .steps
+    /// Mirrors the press: `true` when the hold clock starts, `false` when the
+    /// finger releases early. NOT called on completion — `onConfirm` owns that
+    /// (the caller's visual is at 100 % by construction).
+    var onHoldChange: ((Bool) -> Void)?
     let onConfirm: () -> Void
 
     @State private var progress: CGFloat = 0
     @State private var ringOpacity: Double = 1
     @State private var sealed = false
     @State private var holdTask: Task<Void, Never>?
+    @State private var ramp = HoldHapticRamp()
 
     func body(content: Content) -> some View {
         Button(action: {}) { content }
             .buttonStyle(PressDetectorButtonStyle(pressedScale: pressedScale,
                                                   onPressedChange: handlePress))
-            .overlay { ring }
+            .overlay { if showsRing { ring } }
     }
 
     private var ring: some View {
@@ -94,12 +162,16 @@ struct HoldToConfirm<Ring: InsettableShape>: ViewModifier {
             ringOpacity = 1
         }
         withAnimation(.linear(duration: duration)) { progress = 1 }
+        onHoldChange?(true)
+        // The ramp replaces the step impacts when it starts; when the engine
+        // can't (no hardware, DEBUG sim), the steps below are the fallback.
+        let rampActive = hapticStyle == .ramp && ramp.start(duration: duration)
         holdTask = Task { @MainActor in
             let stepInterval = duration / Double(HoldToConfirmMetrics.hapticStepCount + 1)
             do {
                 for step in 1...HoldToConfirmMetrics.hapticStepCount {
                     try await Task.sleep(for: .seconds(stepInterval))
-                    fireStepHaptic(step)
+                    if !rampActive { fireStepHaptic(step) }
                 }
                 try await Task.sleep(for: .seconds(stepInterval))
             } catch { return }   // released — cancel() owns the rewind, zero extra haptics
@@ -109,14 +181,18 @@ struct HoldToConfirm<Ring: InsettableShape>: ViewModifier {
 
     private func cancel() {
         guard !sealed else { return }   // post-confirm release: the seal fade owns cleanup
+        ramp.stop()
+        guard holdTask != nil else { return }
         holdTask?.cancel()
         holdTask = nil
         withAnimation(.easeOut(duration: HoldToConfirmMetrics.rewindDuration)) { progress = 0 }
+        onHoldChange?(false)
     }
 
     private func confirm() {
         holdTask = nil
         sealed = true
+        ramp.stop()   // the pattern's duration just elapsed — release the engine
         completionHaptic.fire()
         onConfirm()
         withAnimation(AppAnimation.standard) { ringOpacity = 0 }
@@ -168,11 +244,15 @@ extension View {
         ringColor: Color = FudoColor.accent,
         ringWidth: CGFloat = HoldToConfirmMetrics.ringWidth,
         pressedScale: CGFloat = HoldToConfirmMetrics.pressedScale,
+        showsRing: Bool = true,
+        hapticStyle: HoldHapticStyle = .steps,
+        onHoldChange: ((Bool) -> Void)? = nil,
         onConfirm: @escaping () -> Void
     ) -> some View {
         modifier(HoldToConfirm(shape: shape, duration: duration,
                                completionHaptic: completionHaptic, ringColor: ringColor,
                                ringWidth: ringWidth, pressedScale: pressedScale,
-                               onConfirm: onConfirm))
+                               showsRing: showsRing, hapticStyle: hapticStyle,
+                               onHoldChange: onHoldChange, onConfirm: onConfirm))
     }
 }

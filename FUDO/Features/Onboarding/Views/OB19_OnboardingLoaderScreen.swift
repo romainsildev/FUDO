@@ -19,7 +19,6 @@ struct OnboardingLoaderScreen: View {
 
     @State private var completed = 0
 
-    private static let dotSize: CGFloat = 14
     /// The title sits high — the steps are the screen, not the heading.
     private static let titleTopFraction: CGFloat = 0.38
 
@@ -32,9 +31,12 @@ struct OnboardingLoaderScreen: View {
                     .fudoFont(.title(26, weight: .bold))
                     .foregroundStyle(FudoColor.textPrimary)
 
-                VStack(alignment: .leading, spacing: 16) {
+                // OB 12's bullets, verbatim (batch #10 leftover): hollow →
+                // accent ring + dots cascade → filled pop. One loader language.
+                VStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
-                        stepRow(step, isDone: index < completed)
+                        BuildBullet(text: step, state: bulletState(index),
+                                    isFirst: index == 0, isLast: index == steps.count - 1)
                     }
                 }
                 .padding(.top, 32)
@@ -54,20 +56,9 @@ struct OnboardingLoaderScreen: View {
         .task { await run() }
     }
 
-    private func stepRow(_ label: String, isDone: Bool) -> some View {
-        HStack(spacing: 14) {
-            ZStack {
-                Circle().fill(isDone ? FudoColor.accent : Color.clear)
-                Circle().strokeBorder(isDone ? Color.clear : FudoColor.border, lineWidth: 1.5)
-            }
-            .frame(width: Self.dotSize, height: Self.dotSize)
-
-            Text(label)
-                .fudoFont(.body(15, weight: .medium))
-                .foregroundStyle(isDone ? FudoColor.textPrimary
-                                        : FudoColor.textSecondary.opacity(0.6))
-        }
-        .animation(AppAnimation.standard, value: isDone)
+    private func bulletState(_ index: Int) -> BuildBullet.State {
+        if index < completed { return .done }
+        return index == completed ? .active : .idle
     }
 
     /// No haptic per step: haptics are for transitions and validations, nowhere

@@ -278,7 +278,10 @@ enum SocialProofCopy {
     static let heroLead = "MOST MEN\nARE DONE\nBY "
     static let heroAccent = "DAY 4."
     /// "…signed for 60." — the duration is HIS, injected by the screen.
-    static let counterLead = "You just signed for "
+    static let counterLead = "You signed for "
+    /// Duel-track labels (batch #8): grey = the others, vermilion = him.
+    static let trackAverageLabel = "MOST MEN"
+    static func trackYouLabel(days: Int) -> String { "YOU — DAY \(days)" }
     static let frameLine = "No community. No excuses. You against you."
 
     /// OB 18 — was "you are statistically dead by day 4" (no such statistic exists).

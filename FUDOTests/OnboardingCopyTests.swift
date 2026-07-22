@@ -181,6 +181,7 @@ struct OnboardingCopyTests {
     @Test func theProofCopyClaimsNoMeasurementWeNeverMade() {
         let shipped = [SocialProofCopy.heroLead + SocialProofCopy.heroAccent,
                        SocialProofCopy.counterLead, SocialProofCopy.frameLine,
+                       SocialProofCopy.trackAverageLabel, SocialProofCopy.trackYouLabel(days: 60),
                        SocialProofCopy.reminderStake, SocialProofCopy.widgetStake]
         for line in shipped {
             for banned in ["statistically", "2×", "4.8", "% of"] {

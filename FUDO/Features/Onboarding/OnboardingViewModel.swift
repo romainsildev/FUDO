@@ -38,6 +38,10 @@ final class OnboardingViewModel {
     /// projection poses the revealed state cold, never the loader again.
     private(set) var projectionPlayed = false
 
+    /// OB 15's duel track draws ONCE (same one-shot pattern): a back re-entry
+    /// poses the finished track cold, never replays the draw-in.
+    private(set) var socialProofPlayed = false
+
     init(store: GameStore, flags: OnboardingFlags = OnboardingFlags(),
          onFinished: @escaping () -> Void = {}) {
         self.store = store
@@ -167,6 +171,10 @@ final class OnboardingViewModel {
     // MARK: - OB 13 — the locking beat
 
     func markProjectionPlayed() { projectionPlayed = true }
+
+    // MARK: - OB 15 — the duel track
+
+    func markSocialProofPlayed() { socialProofPlayed = true }
 
     // MARK: - OB 11a
 

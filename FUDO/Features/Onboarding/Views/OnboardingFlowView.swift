@@ -209,6 +209,8 @@ struct OnboardingFlowView: View {
             FirstCheckScreen(onAdvance: viewModel.advance)
         case .socialProof:
             SocialProofScreen(flags: flags, durationDays: viewModel.setup.durationDays,
+                              hasPlayed: viewModel.socialProofPlayed,
+                              onPlayed: viewModel.markSocialProofPlayed,
                               onAdvance: viewModel.advance)
 
         // MARK: Act 3 — engagement, contract, paywall

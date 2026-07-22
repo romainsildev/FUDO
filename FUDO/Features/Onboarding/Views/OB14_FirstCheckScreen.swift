@@ -85,8 +85,12 @@ struct FirstCheckScreen: View {
         if hasSealed {
             row   // one-way demo: no uncheck path, the sealed row is inert
         } else {
+            // pressedScale 1: the ring overlay never scales with the button
+            // content, so the default squeeze slid the coche ~2 pt off the
+            // ring's centre mid-hold (device, batch #8). No squeeze → ring and
+            // coche share one immobile centre for the whole hold.
             row
-                .holdToConfirm(in: FirstCheckRow.checkRingShape) { seal() }
+                .holdToConfirm(in: FirstCheckRow.checkRingShape, pressedScale: 1) { seal() }
                 .accessibilityAction(named: "Check") { seal() }
         }
     }
@@ -200,10 +204,16 @@ struct FirstCheckScreen: View {
 private struct FirstCheckRow: View {
     let isChecked: Bool
 
-    /// Trailing distance to the check-circle center (circle is 26 pt wide,
-    /// generous major padding for the demo's large tap target).
-    static var checkCenterInset: CGFloat { FudoSpacing.cardPaddingMajor + 13 }
-    /// The hold ring, anchored on the coche — 4 pt of air around the circle.
+    /// The ring slot: coche AND hold ring share this square — one frame, one
+    /// centre, zero asymmetric padding (batch #8 device fix). The ring's
+    /// geometry derives from these two constants ONLY.
+    static let slotSize: CGFloat = 44
+    /// Trailing padding sized so the 26 pt coche sits exactly where the major
+    /// card padding used to put it: cardPaddingMajor − (slot − circle) / 2.
+    static var slotTrailingPadding: CGFloat { FudoSpacing.cardPaddingMajor - (slotSize - 26) / 2 }
+    /// Trailing distance to the slot (= coche = ring) centre.
+    static var checkCenterInset: CGFloat { slotTrailingPadding + slotSize / 2 }
+    /// The hold ring, concentric with the coche — radius 20 fits the slot.
     static var checkRingShape: CheckCircleRing {
         CheckCircleRing(centerTrailingInset: checkCenterInset, radius: 20)
     }
@@ -228,9 +238,14 @@ private struct FirstCheckRow: View {
 
             Spacer(minLength: 8)
 
-            checkCircle
+            ZStack {
+                checkCircle
+            }
+            .frame(width: Self.slotSize, height: Self.slotSize)
         }
-        .padding(FudoSpacing.cardPaddingMajor)
+        .padding(.leading, FudoSpacing.cardPaddingMajor)
+        .padding(.trailing, Self.slotTrailingPadding)
+        .padding(.vertical, FudoSpacing.cardPaddingMajor)
         .background {
             RoundedRectangle(cornerRadius: FudoSpacing.radiusCard, style: .continuous)
                 .fill(FudoColor.bgCard)

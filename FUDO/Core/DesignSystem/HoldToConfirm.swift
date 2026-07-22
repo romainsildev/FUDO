@@ -51,6 +51,11 @@ struct HoldToConfirm<Ring: InsettableShape>: ViewModifier {
     /// Stroke width — the card rings keep the 3 pt default; the onboarding's
     /// 148 pt HOLD circle passes a thicker one (3 pt vanishes at that diameter).
     var ringWidth: CGFloat = HoldToConfirmMetrics.ringWidth
+    /// Press squeeze. The ring is drawn OUTSIDE the button style, so it never
+    /// scales with the content: fine when the ring hugs the whole card, but a
+    /// ring anchored on a sub-element (OB 14's check circle) drifts off-centre
+    /// under the squeeze — those call sites pass 1.
+    var pressedScale: CGFloat = HoldToConfirmMetrics.pressedScale
     let onConfirm: () -> Void
 
     @State private var progress: CGFloat = 0
@@ -60,7 +65,8 @@ struct HoldToConfirm<Ring: InsettableShape>: ViewModifier {
 
     func body(content: Content) -> some View {
         Button(action: {}) { content }
-            .buttonStyle(PressDetectorButtonStyle(onPressedChange: handlePress))
+            .buttonStyle(PressDetectorButtonStyle(pressedScale: pressedScale,
+                                                  onPressedChange: handlePress))
             .overlay { ring }
     }
 
@@ -136,11 +142,12 @@ struct HoldToConfirm<Ring: InsettableShape>: ViewModifier {
 /// Exposes the press state to the hold logic; scroll-friendliness comes free from
 /// the Button (a drag un-presses it). Subtle sink while held — the ring is the story.
 private struct PressDetectorButtonStyle: ButtonStyle {
+    let pressedScale: CGFloat
     let onPressedChange: (Bool) -> Void
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? HoldToConfirmMetrics.pressedScale : 1)
+            .scaleEffect(configuration.isPressed ? pressedScale : 1)
             .animation(AppAnimation.standard, value: configuration.isPressed)
             .onChange(of: configuration.isPressed) { _, pressed in
                 onPressedChange(pressed)
@@ -160,10 +167,12 @@ extension View {
         completionHaptic: HoldCompletionHaptic = .success,
         ringColor: Color = FudoColor.accent,
         ringWidth: CGFloat = HoldToConfirmMetrics.ringWidth,
+        pressedScale: CGFloat = HoldToConfirmMetrics.pressedScale,
         onConfirm: @escaping () -> Void
     ) -> some View {
         modifier(HoldToConfirm(shape: shape, duration: duration,
                                completionHaptic: completionHaptic, ringColor: ringColor,
-                               ringWidth: ringWidth, onConfirm: onConfirm))
+                               ringWidth: ringWidth, pressedScale: pressedScale,
+                               onConfirm: onConfirm))
     }
 }

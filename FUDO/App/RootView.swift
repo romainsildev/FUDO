@@ -65,6 +65,28 @@ struct RootView: View {
                     EmptyView()
                 }
             }
+            // Rank-up celebration — presented above the tabs from the store's
+            // high-water mark (D6), so it fires whether the rank was crossed by a
+            // live check or a rollover closure, on any tab. Bound to the store
+            // directly: the item re-evaluates every render, so a mark set at launch
+            // (before this appeared) still presents — an onChange would miss it.
+            .fullScreenCover(item: rankUpBinding) { presentation in
+                RankUpCoverView(newRank: presentation.rank, store: gameStore) {
+                    _ = gameStore.consumeRankUp()
+                }
+                .preferredColorScheme(.dark)
+            }
+    }
+
+    /// Drains `pendingRankUp` into a presentation; dismissing consumes the mark so
+    /// the same rank never re-celebrates.
+    private var rankUpBinding: Binding<RankUpPresentation?> {
+        Binding(
+            get: { gameStore.pendingRankUp.map { RankUpPresentation(rank: $0) } },
+            set: { newValue in
+                if newValue == nil { _ = gameStore.consumeRankUp() }
+            }
+        )
     }
 
     private func refresh() {

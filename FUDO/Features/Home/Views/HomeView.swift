@@ -32,6 +32,7 @@ struct HomeView: View {
     @Environment(AppState.self) private var appState
     @State private var viewModel: HomeViewModel
     @State private var scrollOffset: CGFloat = 0
+    @State private var shareRequest: ShareCardRequest?
     private let store: GameStore
 
     init(store: GameStore) {
@@ -78,6 +79,7 @@ struct HomeView: View {
                 }
             }
         }
+        .shareCardPreview($shareRequest)
         .task { await viewModel.watchRolloverWhileForeground() }
     }
 
@@ -366,12 +368,15 @@ struct HomeView: View {
             Text(viewModel.completionMessage)
                 .fudoFont(.headline(17))
                 .foregroundStyle(FudoColor.textPrimary)
-            // Stub — wired to the share card in the share session.
-            Button {} label: {
+            Button {
+                guard let data = ShareCardData.daily(from: store) else { return }
+                Haptics.light()
+                shareRequest = ShareCardRequest(variant: .daily, data: data)
+            } label: {
                 HStack(spacing: 4) {
                     Text("Share my day")
                         .fudoFont(.headline(15))
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "square.and.arrow.up")
                         .fudoFont(.headline(11))
                 }
                 .foregroundStyle(FudoColor.accent)

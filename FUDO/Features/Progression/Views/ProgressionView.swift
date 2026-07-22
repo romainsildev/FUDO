@@ -6,8 +6,11 @@ import SwiftUI
 /// filmed (9:16) — no nav-bar title, nothing critical in the top corners.
 struct ProgressionView: View {
     @State private var viewModel: ProgressionViewModel
+    @State private var shareRequest: ShareCardRequest?
+    private let store: GameStore
 
     init(store: GameStore) {
+        self.store = store
         _viewModel = State(initialValue: ProgressionViewModel(store: store))
     }
 
@@ -24,6 +27,8 @@ struct ProgressionView: View {
                                rankName: viewModel.heroRankName,
                                ordinal: viewModel.rankOrdinalLabel)
 
+                shareButton
+
                 OVRCurveView(points: viewModel.curvePoints,
                              windowLabel: viewModel.curveWindowLabel,
                              weekNet: viewModel.weekNet)
@@ -37,5 +42,33 @@ struct ProgressionView: View {
         }
         .scrollIndicators(.hidden)
         .background(FudoColor.bgPrimary.ignoresSafeArea())
+        .shareCardPreview($shareRequest)
+    }
+
+    /// Permanent share affordance — inline (not a top-corner toolbar: this screen
+    /// is composed to be filmed, so nothing critical sits in the corners).
+    private var shareButton: some View {
+        Button {
+            guard let data = ShareCardData.daily(from: store) else { return }
+            Haptics.light()
+            shareRequest = ShareCardRequest(variant: .daily, data: data)
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "square.and.arrow.up")
+                    .fudoFont(.headline(15, weight: .semibold))
+                Text("Share your card")
+                    .fudoFont(.headline(16))
+            }
+            .foregroundStyle(FudoColor.accent)
+            .frame(maxWidth: .infinity)
+            .frame(height: 50)
+            .background(
+                Capsule()
+                    .fill(FudoColor.bgCard)
+                    .overlay(Capsule().strokeBorder(FudoColor.border, lineWidth: 1))
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Share your rank card")
     }
 }

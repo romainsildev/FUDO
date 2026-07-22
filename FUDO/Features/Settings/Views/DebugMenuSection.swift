@@ -44,12 +44,9 @@ struct DebugMenuSection: View {
     }
 
     var body: some View {
+        // No own header: the real Settings screen (S10) wraps this in a Section
+        // that already carries the "DEBUG" header — two were showing.
         VStack(alignment: .leading, spacing: 10) {
-            Text("DEBUG")
-                .fudoFont(.label(11, weight: .bold))
-                .kerning(1.2)
-                .foregroundStyle(FudoColor.textSecondary)
-
             ForEach(DebugAction.allCases) { action in
                 Button {
                     pendingAction = action

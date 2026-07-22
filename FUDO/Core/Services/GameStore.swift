@@ -9,6 +9,17 @@ struct RuleDraft {
     var domain: String? = nil
 }
 
+/// One edited rule of the ACTIVE challenge (Settings → Edit rules). `id` is the
+/// existing TaskRule.id when the rule survives, a fresh UUID when it is added.
+/// `isEnabled == false` keeps the rule but drops it from the day (isActive).
+struct RuleEdit {
+    var id: UUID
+    var title: String
+    var iconName: String
+    var domain: String? = nil
+    var isEnabled: Bool = true
+}
+
 /// The SINGLE mutation path between UI and OVREngine. Owns the invariants:
 /// singleton PlayerState (fetch-or-create), one `.active` challenge max,
 /// (challenge, date) DayLog uniqueness, and the D6 rank-up high-water mark.
@@ -245,6 +256,104 @@ final class GameStore {
         save()
     }
 
+    // MARK: - Rule editing (Settings §DÉFI — allowed until day rulesLockDay)
+
+    /// True only while the active challenge's rules are still editable (≤ day 3).
+    /// Read on the store's own clock — Settings never touches `Date.now`.
+    var canEditActiveRules: Bool {
+        activeChallenge?.canEditRules(now: now, calendar: calendar) ?? false
+    }
+
+    /// Reconcile the active challenge's rules against an edited set. Removing or
+    /// disabling a rule that was already checked TODAY refunds that check exactly
+    /// (mirrors `uncheckTask`) — nothing pays twice, nothing keeps phantom OVR.
+    /// Fails (false) if editing is locked, the enabled set is empty, or the count
+    /// exceeds the cap. The UI keeps its own guard anyway.
+    @discardableResult
+    func editActiveChallengeRules(_ edits: [RuleEdit]) -> Bool {
+        guard let player, let challenge = activeChallenge,
+              challenge.canEditRules(now: now, calendar: calendar) else { return false }
+        guard edits.contains(where: \.isEnabled), edits.count <= GameConfig.maxRules else { return false }
+
+        let editIDs = Set(edits.map(\.id))
+        let log = currentLog()   // today's OPEN log, may be nil
+        // Snapshot both partitions BEFORE any delete — a deleted @Model can linger
+        // in the relationship array until the context processes it (iOS 17).
+        let survivors = challenge.rules.filter { editIDs.contains($0.id) }
+        let removed = challenge.rules.filter { !editIDs.contains($0.id) }
+
+        for rule in removed {
+            refundOpenCheck(for: rule, in: log, player: player)
+            modelContext.delete(rule)
+        }
+
+        let existing = Dictionary(survivors.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        for (index, edit) in edits.enumerated() {
+            if let rule = existing[edit.id] {
+                // A rule disabled mid-day drops out of the day — refund its check first.
+                if rule.isActive && !edit.isEnabled { refundOpenCheck(for: rule, in: log, player: player) }
+                rule.title = edit.title
+                rule.iconName = edit.iconName
+                rule.domain = edit.domain
+                rule.isActive = edit.isEnabled
+                rule.sortOrder = index
+            } else {
+                let rule = TaskRule(id: edit.id, title: edit.title, iconName: edit.iconName,
+                                    domain: edit.domain, isActive: edit.isEnabled,
+                                    sortOrder: index, createdAt: now)
+                rule.challenge = challenge
+                modelContext.insert(rule)
+            }
+        }
+        save()
+        return true
+    }
+
+    /// Exact reversal of today's live check for a rule leaving the day.
+    private func refundOpenCheck(for rule: TaskRule, in log: DayLog?, player: PlayerState) {
+        guard let log, let check = log.checks.first(where: { $0.ruleID == rule.id }) else { return }
+        log.checks.removeAll { $0.ruleID == rule.id }
+        applyOVRChange(OVREngine.refund(for: check), to: player)
+    }
+
+    /// Move the active challenge's daily reminder to a new minute-of-day. The
+    /// notification itself is (re)scheduled by the caller (Settings VM) — the
+    /// store owns the stored value, the service owns the pending request.
+    func setReminderMinutes(_ minutes: Int) {
+        guard let challenge = activeChallenge else { return }
+        challenge.reminderMinutes = minutes
+        save()
+    }
+
+    // MARK: - Data reset (Settings §DATA — production erase)
+
+    /// Erase EVERYTHING and leave a virgin store: no player, no challenge, so the
+    /// app routes back into onboarding (the caller flips `hasCompletedOnboarding`).
+    /// "No account" — all data is local, this is the user's only delete path.
+    /// Mirrors the DEBUG replay minus the seed plumbing (DebugSeed is DEBUG-only;
+    /// Release never auto-seeds, so there is nothing to disarm).
+    func eraseAllData(flags: OnboardingFlags = OnboardingFlags()) {
+        wipeAll(DayLog.self)
+        wipeAll(TaskRule.self)
+        wipeAll(Challenge.self)
+        wipeAll(PlayerState.self)
+        player = nil
+        activeChallenge = nil
+        pendingRankUp = nil
+        save()
+        flags.reset()
+        // A funnel restart must not leave yesterday's reminder firing for a
+        // challenge that no longer exists.
+        NotificationService.cancelDailyReminder()
+    }
+
+    /// fetch+delete — `ModelContext.delete(model:)` batch is unreliable on iOS 17.
+    private func wipeAll<T: PersistentModel>(_ type: T.Type) {
+        for model in (try? modelContext.fetch(FetchDescriptor<T>())) ?? [] {
+            modelContext.delete(model)
+        }
+    }
+
     // MARK: - Rank-up (D6)
 
     /// The store is the ONLY writer of the high-water mark: celebrate once per rank,
@@ -384,12 +493,6 @@ extension GameStore {
         player.lastDayClosedAt = now   // idle clock for decay starts now
         save()
     }
-
-    private func wipeAll<T: PersistentModel>(_ type: T.Type) {
-        // fetch+delete — ModelContext.delete(model:) batch is unreliable on iOS 17.
-        for model in (try? modelContext.fetch(FetchDescriptor<T>())) ?? [] {
-            modelContext.delete(model)
-        }
-    }
+    // `wipeAll` now lives on the main class (shared with the production erase).
 }
 #endif

@@ -17,7 +17,7 @@ struct MainTabView: View {
             tab(.today) { HomePlaceholderView() }
             tab(.progress) { ProgressionPlaceholderView() }
             tab(.stats) { StatsPlaceholderView() }
-            tab(.settings) { SettingsPlaceholderView() }
+            tab(.settings) { SettingsView() }
         }
         .tint(FudoColor.textPrimary)
         .onChange(of: appState.selectedTab) { _, _ in Haptics.light() }

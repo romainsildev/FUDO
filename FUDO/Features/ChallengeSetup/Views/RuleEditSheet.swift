@@ -1,5 +1,30 @@
 import SwiftUI
 
+/// What the rule sheet is opening FOR — driven through `.sheet(item:)` so the
+/// content is always built from the tapped value. The old two-@State +
+/// `sheet(isPresented:)` routing could evaluate its content against a stale
+/// nil `editedRule` on first presentation (classic SwiftUI pitfall, tester
+/// batch #1: "Add rule" / edit opening on the wrong mode).
+enum RuleSheetMode: Identifiable {
+    case add
+    case edit(EditableRule)
+
+    var id: String {
+        switch self {
+        case .add: return "add"
+        case .edit(let rule): return rule.id.uuidString
+        }
+    }
+
+    /// What RuleEditSheet eats — nil means "create a new custom rule".
+    var rule: EditableRule? {
+        switch self {
+        case .add: return nil
+        case .edit(let rule): return rule
+        }
+    }
+}
+
 /// Medium sheet for editing an existing rule or composing a custom one.
 /// Time rules (`.time`) get a wheel picker that rewrites the title through the
 /// view model — value baked into the string, no schema change.

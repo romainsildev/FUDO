@@ -1,15 +1,19 @@
 import StoreKit
 import SwiftUI
 
-/// OB 15 — the peak. He just made his first gesture and the flame is lit; we show
-/// him he isn't alone and we ask for the rating. The Apple prompt lands on the
-/// highest emotion of the funnel — the only moment a 5-star is sincere.
+/// OB 15 — the peak. He just made his first gesture and the flame is lit; the
+/// Apple prompt lands on the highest emotion of the funnel — the only moment a
+/// 5-star is sincere.
 ///
-/// D4 (Romain, 2026-07-15): no rating line and no stars. Both ARE a claim, and
-/// we haven't earned one yet. The testimonials carry the screen — and they are
-/// placeholders until real, consented tester quotes replace them (SocialProofCopy).
+/// Batch #6: the named testimonials are GONE (invented people + invented OVRs
+/// = App Review 2.3.1 exposure). What replaced them is HONEST hardness: a blunt
+/// non-nominative stat ("most men are done by day 4" — the D4-acted phrasing),
+/// his own chosen duration turned back at him, and the frame line. No ratings,
+/// no stars, no first names, no "our users" numbers.
 struct SocialProofScreen: View {
     let flags: OnboardingFlags
+    /// The duration HE picked at 11a — the counterpoint prints the real number.
+    let durationDays: Int
     let onAdvance: () -> Void
 
     /// The NATIVE prompt only — never a custom rate-us modal (known-pitfalls list).
@@ -17,46 +21,55 @@ struct SocialProofScreen: View {
 
     @State private var revealed = false
 
-    private static let cardStagger: TimeInterval = 0.08
+    private static let counterDelay: TimeInterval = 0.35
+    private static let frameDelay: TimeInterval = 0.6
 
     var body: some View {
-        OnboardingScaffold(step: .socialProof, 
-                           title: SocialProofCopy.proofTitle,
-                           canAdvance: true, onAdvance: onAdvance) {
-            VStack(spacing: 12) {
-                ForEach(Array(SocialProofCopy.testimonials.enumerated()), id: \.offset) { index, item in
-                    testimonial(quote: item.quote, author: item.author)
-                        .opacity(revealed ? 1 : 0)
-                        .offset(y: revealed ? 0 : 10)
-                        .animation(AppAnimation.standard.delay(Double(index) * Self.cardStagger),
-                                   value: revealed)
-                }
+        OnboardingScaffold(step: .socialProof, canAdvance: true,
+                           centersVertically: true, onAdvance: onAdvance) {
+            VStack(alignment: .leading, spacing: 0) {
+                heroStat
+                    .opacity(revealed ? 1 : 0)
+                    .offset(y: revealed ? 0 : 10)
+                    .animation(AppAnimation.standard, value: revealed)
+
+                counterpoint
+                    .padding(.top, 28)
+                    .opacity(revealed ? 1 : 0)
+                    .offset(y: revealed ? 0 : 10)
+                    .animation(AppAnimation.standard.delay(Self.counterDelay), value: revealed)
+
+                Text(SocialProofCopy.frameLine)
+                    .fudoFont(.caption(13))
+                    .foregroundStyle(FudoColor.textSecondary)
+                    .padding(.top, 14)
+                    .opacity(revealed ? 1 : 0)
+                    .animation(AppAnimation.standard.delay(Self.frameDelay), value: revealed)
             }
         }
         .task { await askForReview() }
     }
 
-    private func testimonial(quote: String, author: String) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("\"\(quote)\"")
-                .fudoFont(.body(15))
-                .foregroundStyle(FudoColor.textPrimary)
-                .fixedSize(horizontal: false, vertical: true)
-            Text(author)
-                .fudoFont(.caption(12))
-                .foregroundStyle(FudoColor.textSecondary)
-                .padding(.top, 8)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(FudoSpacing.cardPadding)
-        .background {
-            RoundedRectangle(cornerRadius: FudoSpacing.radiusCard, style: .continuous)
-                .fill(FudoColor.bgCard)
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: FudoSpacing.radiusCard, style: .continuous)
-                .strokeBorder(FudoColor.border, lineWidth: 1)
-        }
+    /// Bebas display, hook register (the ONLY place Bebas lives). Bicolour by
+    /// segment + ONE fudoFont on the combined Text — a Font per segment kills
+    /// Dynamic Type (batch #4 trap).
+    private var heroStat: some View {
+        (Text(SocialProofCopy.heroLead)
+            .foregroundStyle(FudoColor.textPrimary)
+         + Text(SocialProofCopy.heroAccent)
+            .foregroundStyle(FudoColor.accent))
+            .fudoFont(.onboardingDisplay(56))
+            .lineSpacing(2)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var counterpoint: some View {
+        (Text(SocialProofCopy.counterLead)
+            .foregroundStyle(FudoColor.textPrimary)
+         + Text("\(durationDays).")
+            .foregroundStyle(FudoColor.accent))
+            .fudoFont(.title(22, weight: .bold))
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     /// iOS rate-limits its own sheet; the flag keeps US from asking twice in one
@@ -71,17 +84,22 @@ struct SocialProofScreen: View {
 }
 
 #if DEBUG
-/// No stars, no "4.8" — D4. The canvas is also where the placeholder testimonials
-/// stay visible: they must be replaced by real, consented tester quotes before
-/// submit (docs/ONBOARDING-PLAN.md §"Le point resté ouvert").
-///
-/// The preview passes flags with reviewPrompted already true: the canvas must not
-/// fire the system review sheet.
-#Preview("OB 15 — social proof") {
+/// No stars, no "4.8", no names — the hard-stat cut (batch #6). The preview
+/// passes flags with reviewPrompted already true: the canvas must not fire the
+/// system review sheet.
+#Preview("OB 15 — the odds (60 days)") {
     let flags = OnboardingPreviewFactory.flags("preview.socialProof")
     flags.reviewPrompted = true
     return OnboardingPreviewChrome {
-        SocialProofScreen(flags: flags, onAdvance: {})
+        SocialProofScreen(flags: flags, durationDays: 60, onAdvance: {})
+    }
+}
+
+#Preview("OB 15 — the odds (120 days)") {
+    let flags = OnboardingPreviewFactory.flags("preview.socialProof120")
+    flags.reviewPrompted = true
+    return OnboardingPreviewChrome {
+        SocialProofScreen(flags: flags, durationDays: 120, onAdvance: {})
     }
 }
 #endif

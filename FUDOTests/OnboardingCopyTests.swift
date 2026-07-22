@@ -10,6 +10,10 @@ struct OnboardingCopyTests {
         draft.scrollTime = .fourToSixHours
         draft.age = .young1824
         draft.procrastination = .everyWeek
+        draft.wakeTime = .sevenToNine
+        draft.trainingLoad = .oneToTwo
+        draft.focusSpan = .tenToThirty
+        draft.quitHistory = .twoToThree
         draft.goals = [.leanerBody, .killScrolling, .harderMindset]
         draft.struggle = .threeDaysMax
         return draft
@@ -76,6 +80,91 @@ struct OnboardingCopyTests {
         #expect(OnboardingCopy.enemyStamp(.cantEvenStart) == "YOU NEVER START.")
     }
 
+    // MARK: - OB 05 — the display order bends, the enum never does
+
+    @Test func procrastinationDisplayOrderIsWorstFirstAndExhaustive() {
+        // "Every day" opens the list (tester batch #1); every case must appear
+        // exactly once — a forgotten new case would silently drop an answer.
+        #expect(OnboardingAnswers.Procrastination.displayOrder.first == .everyDay)
+        #expect(Set(OnboardingAnswers.Procrastination.displayOrder)
+                == Set(OnboardingAnswers.Procrastination.allCases))
+        #expect(OnboardingAnswers.Procrastination.displayOrder.count
+                == OnboardingAnswers.Procrastination.allCases.count)
+    }
+
+    // MARK: - The report (v2, batch #2)
+
+    @Test func everyReportRowCarriesADetailForTheAccordion() {
+        // Collapsed rows show label + hero value; the tap unfolds gauge +
+        // detail. A row without a detail is a dead tap — never ship it.
+        let rows = OnboardingCopy.reportRows(draft: draft)
+        #expect(rows.count == 7)
+        #expect(rows.allSatisfy { $0.detail != nil })
+        #expect(rows.map(\.label) == ["THE FIGHT", "SCREEN TIME", "MORNING", "TRAINING",
+                                      "FOCUS", "TRACK RECORD", "POTENTIAL"])
+    }
+
+    @Test func onlyTheMeasurableSectionsCarryAGauge() {
+        // A gauge on a qualitative answer would be an invented comparison
+        // (honesty guard): exactly screen time / morning / training / focus.
+        let rows = OnboardingCopy.reportRows(draft: draft)
+        let gauged = rows.filter { $0.gauge != nil }.map(\.label)
+        #expect(gauged == ["SCREEN TIME", "MORNING", "TRAINING", "FOCUS"])
+    }
+
+    @Test func theGaugesStayInsideTheBarAndTheUserBarIsHisOwnAnswer() {
+        // Every fraction must render (0…1); the screen-time bar reuses the
+        // ShockMath hours — ONE mapping, never two.
+        let rows = OnboardingCopy.reportRows(draft: draft)
+        for gauge in rows.compactMap(\.gauge) {
+            for mark in [gauge.you, gauge.average, gauge.target] {
+                #expect(mark.fraction >= 0 && mark.fraction <= 1)
+                #expect(!mark.valueLabel.isEmpty)
+            }
+        }
+    }
+
+    @Test func theVerdictArrowFollowsEachMetricsOwnDirection() {
+        // Less screen time is better, earlier is better, more training/focus is
+        // better — the arrow must never flatter the wrong way (batch #3).
+        var heavy = draft
+        heavy.scrollTime = .sixHoursPlus
+        heavy.wakeTime = .afterNine
+        heavy.trainingLoad = .zero
+        heavy.focusSpan = .underTen
+        let heavyVerdicts = OnboardingCopy.reportRows(draft: heavy)
+            .compactMap(\.gauge).map(\.youBeatsAverage)
+        #expect(heavyVerdicts == [false, false, false, false])
+
+        var light = draft
+        light.scrollTime = .underTwoHours
+        light.wakeTime = .beforeSix
+        light.trainingLoad = .fivePlus
+        light.focusSpan = .hourPlus
+        let lightVerdicts = OnboardingCopy.reportRows(draft: light)
+            .compactMap(\.gauge).map(\.youBeatsAverage)
+        #expect(lightVerdicts == [true, true, true, true])
+    }
+
+    @Test func theReportClaimsNoPercentileAndNoStudy() {
+        // Honesty guard (batch #2, non-negotiable): rounded public averages
+        // only — never "top N%", never "studies show".
+        let rows = OnboardingCopy.reportRows(draft: draft)
+        let strings = rows.flatMap { row -> [String] in
+            var lines = [row.label, row.value, row.detail ?? ""]
+            if let gauge = row.gauge {
+                lines += [gauge.you.valueLabel, gauge.average.valueLabel, gauge.target.valueLabel]
+            }
+            return lines
+        }
+        for line in strings {
+            for banned in ["top ", "%", "studies", "study", "statistically", "science"] {
+                #expect(line.lowercased().contains(banned) == false,
+                        "\(line) claims a measurement nobody made")
+            }
+        }
+    }
+
     // MARK: - OB 11 (Romain 2026-07-16: 60 supersedes D3's 30)
 
     @Test func theRecommendedPresetIsAlwaysTheSixtyDayStake() {
@@ -90,8 +179,9 @@ struct OnboardingCopyTests {
     // MARK: - D4 — no invented measurement ships
 
     @Test func theProofCopyClaimsNoMeasurementWeNeverMade() {
-        let shipped = [SocialProofCopy.proofTitle, SocialProofCopy.reminderStake,
-                       SocialProofCopy.widgetStake]
+        let shipped = [SocialProofCopy.heroLead + SocialProofCopy.heroAccent,
+                       SocialProofCopy.counterLead, SocialProofCopy.frameLine,
+                       SocialProofCopy.reminderStake, SocialProofCopy.widgetStake]
         for line in shipped {
             for banned in ["statistically", "2×", "4.8", "% of"] {
                 #expect(line.contains(banned) == false, "\(line) claims a measurement")

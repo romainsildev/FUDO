@@ -60,6 +60,10 @@ extension OnboardingDraft {
         draft.scrollTime = .fourToSixHours
         draft.age = .young1824
         draft.procrastination = .everyWeek
+        draft.wakeTime = .sevenToNine
+        draft.trainingLoad = .oneToTwo
+        draft.focusSpan = .tenToThirty
+        draft.quitHistory = .twoToThree
         draft.goals = [.leanerBody, .killScrolling, .harderMindset]
         draft.struggle = .threeDaysMax
         return draft
@@ -71,7 +75,11 @@ extension OnboardingDraft {
         draft.pain = .doomscrolling
         draft.scrollTime = .sixHoursPlus
         draft.age = .teen1317
-        draft.procrastination = .everyWeek
+        draft.procrastination = .everyDay
+        draft.wakeTime = .afterNine
+        draft.trainingLoad = .zero
+        draft.focusSpan = .underTen
+        draft.quitHistory = .lostCount
         draft.goals = [.killScrolling]
         draft.struggle = .cantEvenStart
         return draft
@@ -85,6 +93,10 @@ extension OnboardingDraft {
         draft.scrollTime = .underTwoHours
         draft.age = .young1824
         draft.procrastination = .stoppedLyingToMyself
+        draft.wakeTime = .beforeSix
+        draft.trainingLoad = .fivePlus
+        draft.focusSpan = .hourPlus
+        draft.quitHistory = .firstTime
         draft.goals = [.readDaily, .harderMindset]
         draft.struggle = .startStrongThenQuit
         return draft

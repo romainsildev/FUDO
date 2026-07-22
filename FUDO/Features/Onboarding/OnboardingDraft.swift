@@ -17,15 +17,79 @@ enum Pain: CaseIterable, Equatable {
 }
 
 /// Age (OB 04) feeds the shock math only — never the OVR.
+/// Tester batch #1 (2026-07-16): a senior bracket joined — the shock math works
+/// at any age — so `mature35plus` stops being open-ended.
 enum AgeBracket: CaseIterable, Equatable {
-    case teen1317, young1824, adult2534, mature35plus
+    case teen1317, young1824, adult2534, mature35plus, senior55plus
 
     var optionTitle: String {
         switch self {
         case .teen1317: return "13 — 17"
         case .young1824: return "18 — 24"
         case .adult2534: return "25 — 34"
-        case .mature35plus: return "35+"
+        case .mature35plus: return "35 — 54"
+        case .senior55plus: return "55+"
+        }
+    }
+}
+
+// MARK: - Habit questions (batch #2, 2026-07-16) — report inputs, NEVER the OVR.
+// The scale stays in OnboardingAnswers' enums; these four feed the benchmarked
+// report sections only (morning / training / focus / track record).
+
+/// "When do you get up?" — the report's MORNING section.
+enum WakeBracket: CaseIterable, Equatable {
+    case beforeSix, sixToSeven, sevenToNine, afterNine
+
+    var optionTitle: String {
+        switch self {
+        case .beforeSix: return "Before 6"
+        case .sixToSeven: return "6 — 7"
+        case .sevenToNine: return "7 — 9"
+        case .afterNine: return "After 9"
+        }
+    }
+}
+
+/// "Training sessions per week?" — the report's TRAINING section.
+/// `zero`, never `none`: on an Optional<TrainingLoad> the compiler resolves
+/// `.none` to nil — the answer would silently vanish instead of being "0".
+enum TrainingLoad: CaseIterable, Equatable {
+    case zero, oneToTwo, threeToFour, fivePlus
+
+    var optionTitle: String {
+        switch self {
+        case .zero: return "0"
+        case .oneToTwo: return "1 — 2"
+        case .threeToFour: return "3 — 4"
+        case .fivePlus: return "5+"
+        }
+    }
+}
+
+/// "How long can you focus without your phone?" — the report's FOCUS section.
+enum FocusSpan: CaseIterable, Equatable {
+    case underTen, tenToThirty, thirtyToSixty, hourPlus
+
+    var optionTitle: String {
+        switch self {
+        case .underTen: return "Under 10 min"
+        case .tenToThirty: return "10 — 30 min"
+        case .thirtyToSixty: return "30 — 60 min"
+        case .hourPlus: return "1 h+"
+        }
+    }
+}
+
+/// "How many times have you tried and quit?" — the report's TRACK RECORD section.
+enum QuitHistory: CaseIterable, Equatable {
+    case firstTime, twoToThree, lostCount
+
+    var optionTitle: String {
+        switch self {
+        case .firstTime: return "First time"
+        case .twoToThree: return "2 — 3 times"
+        case .lostCount: return "I lost count"
         }
     }
 }
@@ -78,6 +142,7 @@ extension OnboardingAnswers.ScrollTime {
 extension OnboardingAnswers.Procrastination {
     var optionTitle: String {
         switch self {
+        case .everyDay: return "Every day"
         case .everyWeek: return "Every single week"
         case .everyMonth: return "Every month"
         case .stoppedLyingToMyself: return "I stopped lying to myself"
@@ -86,7 +151,7 @@ extension OnboardingAnswers.Procrastination {
 
     /// Frame order (worst first) — NOT `allCases`, whose order serves the scale.
     /// Never reorder the enum to fix this: OnboardingAnswers reads it for points.
-    static var displayOrder: [Self] { [.everyWeek, .everyMonth, .stoppedLyingToMyself] }
+    static var displayOrder: [Self] { [.everyDay, .everyWeek, .everyMonth, .stoppedLyingToMyself] }
 }
 
 extension OnboardingAnswers.Struggle {
@@ -116,6 +181,10 @@ struct OnboardingDraft: Equatable {
     var scrollTime: OnboardingAnswers.ScrollTime?
     var age: AgeBracket?
     var procrastination: OnboardingAnswers.Procrastination?
+    var wakeTime: WakeBracket?
+    var trainingLoad: TrainingLoad?
+    var focusSpan: FocusSpan?
+    var quitHistory: QuitHistory?
     var goals: Set<Goal> = []
     var struggle: OnboardingAnswers.Struggle?
     var commitment: OnboardingAnswers.Commitment?

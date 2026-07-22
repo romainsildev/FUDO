@@ -44,6 +44,37 @@ struct OnboardingViewModelTests {
         #expect(viewModel.step == .scrollHours)
     }
 
+    @Test func theSixtySecondsBeatIsMarkedPlayedForTheWholeRun() throws {
+        // Batch #4: backing out of the quiz re-enters the interstitial — the
+        // flag is what lands him on the finished state instead of a replay.
+        let (viewModel, _, _) = try makeViewModel()
+        #expect(viewModel.sixtySecondsPlayed == false)
+        viewModel.markSixtySecondsPlayed()
+        #expect(viewModel.sixtySecondsPlayed)
+    }
+
+    @Test func theProjectionLockingBeatHidesTheChrome() throws {
+        // Batch #5: the "Locking…" beat is a loader, and loaders never carry
+        // the bar — it returns with the reveal, and the beat never replays.
+        let (viewModel, _, _) = try makeViewModel()
+        viewModel.jump(to: .projection)
+        #expect(viewModel.showsChrome == false, "the locking beat is a loader — no bar")
+        viewModel.markProjectionPlayed()
+        #expect(viewModel.showsChrome, "the bar returns with the reveal")
+        #expect(viewModel.projectionPlayed, "a re-entry must pose the revealed state cold")
+    }
+
+    @Test func showsChromeFollowsTheStepEverywhereElse() throws {
+        // The dynamic exception is the projection's beat and NOTHING else:
+        // every other step keeps its static showsProgress verdict.
+        let (viewModel, _, _) = try makeViewModel()
+        for step in OnboardingStep.allCases where step != .projection {
+            viewModel.jump(to: step)
+            #expect(viewModel.showsChrome == step.showsProgress,
+                    "\(step) must follow its static showsProgress")
+        }
+    }
+
     @Test func theSpamGuardSwallowsTheSecondTap() throws {
         let (viewModel, _, _) = try makeViewModel()
         viewModel.jump(to: .painPoint)
@@ -59,6 +90,47 @@ struct OnboardingViewModelTests {
         #expect(viewModel.canAdvance == false)
         viewModel.draft.goals = [.leanerBody]
         #expect(viewModel.canAdvance)
+    }
+
+    @Test func theHabitQuestionsGateOnTheirOwnAnswer() throws {
+        // Batch #2: the four report-feeding questions behave like every other
+        // question — dead CTA until answered.
+        let (viewModel, _, _) = try makeViewModel()
+
+        viewModel.jump(to: .wakeUp)
+        #expect(viewModel.canAdvance == false)
+        viewModel.draft.wakeTime = .sevenToNine
+        #expect(viewModel.canAdvance)
+
+        viewModel.jump(to: .training)
+        #expect(viewModel.canAdvance == false)
+        viewModel.draft.trainingLoad = .oneToTwo
+        #expect(viewModel.canAdvance)
+
+        viewModel.jump(to: .focus)
+        #expect(viewModel.canAdvance == false)
+        viewModel.draft.focusSpan = .tenToThirty
+        #expect(viewModel.canAdvance)
+
+        viewModel.jump(to: .attempts)
+        #expect(viewModel.canAdvance == false)
+        viewModel.draft.quitHistory = .lostCount
+        #expect(viewModel.canAdvance)
+    }
+
+    // MARK: - The compose split (tester batch #1, 2026-07-16)
+
+    @Test func durationAlwaysAdvancesAndRulesGateOnComposing() throws {
+        let (viewModel, _, _) = try makeViewModel()
+        viewModel.jump(to: .composeDuration)
+        #expect(viewModel.canAdvance, "the chips default to the recommendation — a duration always exists")
+
+        viewModel.jump(to: .composeRules)
+        #expect(viewModel.canAdvance, "presets ship with enabled rules")
+        for index in viewModel.setup.rules.indices {
+            viewModel.setup.rules[index].isEnabled = false
+        }
+        #expect(viewModel.canAdvance == false, "no enabled rule — nothing to lock")
     }
 
     @Test func theWallsRefuseToGoBack() throws {
@@ -155,6 +227,23 @@ struct OnboardingViewModelTests {
 
         #expect(store.player?.displayedOVR == 47)
         #expect(flags.contract?.startingOVR == 47)
+    }
+
+    @Test func clearingTheSignatureKillsTheCtaAndTheSigning() throws {
+        // Tester batch #1: "Clear" must revoke the signature FACT — a cleared
+        // canvas with a live CTA would sign a contract nobody signed.
+        let (viewModel, store, flags) = try makeViewModel()
+        answerTheQuiz(viewModel)
+        viewModel.jump(to: .contract)
+        viewModel.registerSignature()
+        #expect(viewModel.canAdvance)
+
+        viewModel.clearSignature()
+        #expect(viewModel.canAdvance == false)
+        viewModel.signContract()
+        #expect(store.player == nil, "cleared mark, no player")
+        #expect(flags.contract == nil)
+        #expect(viewModel.step == .contract)
     }
 
     @Test func theContractCannotBeSignedWithoutAStroke() throws {

@@ -6,18 +6,7 @@ struct RulesEditorScreen: View {
     let viewModel: ChallengeSetupViewModel
     let onNext: () -> Void
 
-    @State private var editedRule: EditableRule?
-    @State private var isAddingRule = false
-
-    private var sheetBinding: Binding<Bool> {
-        Binding(get: { editedRule != nil || isAddingRule },
-                set: { presented in
-                    if !presented {
-                        editedRule = nil
-                        isAddingRule = false
-                    }
-                })
-    }
+    @State private var ruleSheet: RuleSheetMode?
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -27,7 +16,7 @@ struct RulesEditorScreen: View {
                     .foregroundStyle(FudoColor.textPrimary)
                     .padding(.top, 16)
 
-                Text("Every rule is daily. Tap to edit, toggle to drop.")
+                Text("Every rule is daily. Tap to toggle, hold to edit.")
                     .fudoFont(.body(15))
                     .foregroundStyle(FudoColor.textSecondary)
                     .padding(.bottom, 10)
@@ -35,10 +24,11 @@ struct RulesEditorScreen: View {
                 ForEach(viewModel.rules) { rule in
                     RuleRowEditor(rule: rule,
                                   onToggle: { viewModel.toggleRule(id: rule.id) },
-                                  onEdit: { editedRule = rule })
+                                  onEdit: { ruleSheet = .edit(rule) },
+                                  onDelete: { viewModel.removeRule(id: rule.id) })
                 }
 
-                AddRuleRow(isEnabled: viewModel.canAddRule) { isAddingRule = true }
+                AddRuleRow(isEnabled: viewModel.canAddRule) { ruleSheet = .add }
 
                 if viewModel.showRuleCountWarning {
                     Text("More rules = more failure.")
@@ -74,8 +64,8 @@ struct RulesEditorScreen: View {
             .padding(.bottom, 12)
             .background { FudoColor.bgPrimary.opacity(0.94).ignoresSafeArea(edges: .bottom) }
         }
-        .sheet(isPresented: sheetBinding) {
-            RuleEditSheet(rule: editedRule, viewModel: viewModel)
+        .sheet(item: $ruleSheet) { mode in
+            RuleEditSheet(rule: mode.rule, viewModel: viewModel)
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
         }

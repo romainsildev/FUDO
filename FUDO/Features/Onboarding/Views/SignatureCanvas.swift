@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// A finger signature on a dark card. Not a drawing tool: no colours, no undo,
-/// no clear button (frame 17). A signature is whatever his hand does, once.
+/// A finger signature on a dark card. Not a drawing tool: no colours, no undo.
+/// The host screen owns a single "Clear" (tester batch #1, 2026-07-16) that
+/// empties `strokes` and revokes the signature fact — the canvas itself stays dumb.
 ///
 /// Nothing is persisted. The strokes live in the screen's `@State` and die with
 /// it — the mark has no legal weight and no product use, and storing a biometric

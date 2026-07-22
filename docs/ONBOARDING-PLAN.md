@@ -30,6 +30,54 @@
 
 ---
 
+## ⚠️ AMENDEMENT 2026-07-16 (bis) — batch testeur #1 (acté Romain, LIVRÉ)
+
+> Se superpose à l'amendement ci-dessus. Le code et les tests restent la vérité.
+
+**Split compose (structurant)** : OB 11 éclaté en **11a `composeDuration`** (durée SEULE — chips 30/60/90/120, reco 60 + liseré vert, copy « We've picked your actions from your answers. First — how long? » ; le message "presets" commence ici) → **11b `composeRules`** (règles — caption « Pre-built for you. Edit anything. », liste + « + Add rule » cap 8 / warning au 7e). Ordre : `report → diagnostic → composeDuration → composeRules → projection` (la projection garde sa durée). Barre = **17 steps** (total toujours CALCULÉ depuis l'enum, verrouillé par test). Nouveau fichier `ComposeDurationScreen.swift` ; `ComposeProtocolScreen` = 11b. Gate 11a = toujours vrai (une durée existe toujours) ; gate 11b = `canCompose`.
+
+**Bugs** : OB 02 single-select STRICT — l'état l'était déjà, le rendu non : la désélection suivait la courbe 0,5 s et DEUX rows semblaient sélectionnées → désélection snap `OnboardingMetrics.optionDeselect` (0,15 s, exception assumée). OB 07 goals reste multi (voulu). · Sheet règles : `sheet(isPresented:)` + `@State` optionnel = contenu évaluable contre un `editedRule` nil au 1er present (piège SwiftUI classique) → `RuleSheetMode` Identifiable + `.sheet(item:)` sur les 3 skins (11b, RulesEditorScreen, standalone). · OB 17 : bouton **Clear** sur la carte signature — vide les strokes ET révoque le fait signé (`clearSignature()`, CTA re-mort, verrouillé par test).
+
+**Options quiz** : OB 04 + tranche **55+** (`senior55plus`, pivot 60 → horizon 70 dans ShockMath ; « 35+ » devient « 35 — 54 »). · OB 05 + **« Every day »** en 1re option (`Procrastination.everyDay`, 0 pt = plancher inchangé, barème intact ; `displayOrder` verrouillé par test).
+
+**REPORT accordéon** : rows repliées (label + valeur), tap = détail déplié dessous (chevron, `AppAnimation.standard`). CHAQUE row porte un détail (verrouillé par test — un pli vide serait un tap mort) ; détails FIGHT/WEAK SPOT ajoutés dans `OnboardingCopy` (mécanique produit, jamais une mesure inventée — D4).
+
+**UX règles (11b + setup S3 + standalone)** : tap = **toggle row entière** (la coche 24 pt n'est plus un bouton) · **long-press = context menu natif** Edit rule / Delete rule (destructive). Affordances recoupées (« Tap to toggle, hold to edit. »).
+
+---
+
+## ⚠️ AMENDEMENT 2026-07-16 (ter) — batch #2 : report v2 + compose (acté Romain, LIVRÉ)
+
+> Se superpose aux deux amendements ci-dessus. Le code et les tests restent la vérité.
+
+**+4 questions quiz** (Option Row, acte 1) : `wakeUp` (« When do you get up? ») · `training` (« Training sessions per week? ») · `focus` (« How long can you focus without your phone? ») après le shock beat ; `attempts` (« How many times have you tried and quit? ») entre struggle et reflection. Enums UI-only dans `OnboardingDraft.swift` (`WakeBracket` / `TrainingLoad` / `FocusSpan` / `QuitHistory`) — **jamais l'OVR**, elles nourrissent le report. La 5e optionnelle (« Last thing before sleep? ») **skippée** : 12 questions + walls, le rythme était la contrainte. Barre = **22 steps** (calculée, test).
+
+**REPORT v2** : 7 sections ordonnées THE FIGHT · SCREEN TIME · MORNING · TRAINING · FOCUS · TRACK RECORD · POTENTIAL (WEAK SPOT/TARGETS sortis — liste Romain). Chaque section = chiffre héros + détail 1 ligne ; les 4 mesurables portent une **jauge YOU (rouge `negative`) / AVERAGE (gris) / TARGET (vert `positive`)** — `ReportGaugeView`. **GARDE-FOU HONNÊTETÉ (non négociable)** : tous les benchmarks vivent dans **`ReportBenchmarks.swift`** (moyennes publiques ARRONDIES : ~4h30 écran, ~7:00 réveil, ~2 séances, ~25 min focus ; cibles = la barre du protocole) — jamais un chiffre en dur dans une view, jamais de percentile inventé ni « studies show » (verrouillé par `theReportClaimsNoPercentileAndNoStudy` + `onlyTheMeasurableSectionsCarryAGauge`). La jauge écran réutilise `ShockMath.hoursPerDay` (passé internal — UN mapping). Accordéon conservé, **1re section ouverte par défaut**. Loader : step « Benchmarking your habits ».
+
+**EXPLAINER** : nouveau step `protocolIntro` (ProtocolIntroScreen) entre le reveal et 11a — une phrase « We've picked your actions from your answers. » + Continue, centré, pas de back.
+
+**11a refonte** : chips → **4 cards pleine largeur** (`DurationCard`, pattern paywall) ; taglines re-coupées DANS `PresetCatalog` (source unique, tous les skins alignés) : 30 « The reset » · 60 « The standard » · 90 « For the strong » · 120 « The ultimate ». La 60 : pré-sélectionnée, badge vert « RECOMMENDED FOR YOU », scale 1.03. Header = « How long? » seul (la caption est partie dans l'explainer).
+
+**11b header** : « Your rules — pre-built for you » sur une ligne (deux Texts en baseline, JAMAIS une concaténation Text+Text : Fonts figés = scaling Dynamic Type mort) + « Long press to edit anything. » dessous. Context menu renommé **Edit / Remove**.
+
+**PIÈGE logué** : un cas d'enum nommé `none` assigné à un champ Optional (`draft.trainingLoad = .none`) résout en `Optional.none` = nil — la réponse disparaît EN SILENCE. Cas renommé `zero` ; ne jamais nommer un cas `none` sur un type porté par un Optional.
+
+---
+
+## ⚠️ AMENDEMENT 2026-07-16 (quater) — batch #3 : interstitiel 60s + report v3 + cards (acté Romain, LIVRÉ)
+
+> Se superpose aux amendements ci-dessus. Le code et les tests restent la vérité.
+
+**Beat « ONLY 60 SECONDS »** : la micro-ligne « 60 seconds to build yours » quitte OB 01c (CTA → « Build mine ») ; nouveau step `sixtySeconds` (SixtySecondsScreen) entre `mechanism` et `painPoint` — « ONLY / 60 / SECONDS » en Bebas, 60 vermillon dans un anneau-chrono qui s'amorce. `isWelcome == false` (le slide-in EST le lancement, la vidéo fade derrière) ; barre masquée ; hors total (toujours 22).
+
+**RE-CUT batch #4 (supersède l'auto-advance)** : chorégraphie 3 temps — (1) scale-in + chrono (`intro` 1,7 s, ring 1,6 s) ; (2) fin d'anim : « **AND WE LOCK YOU IN** » tombe sous le bloc (Bebas 30, « AND WE » crème + « LOCK YOU IN » vermillon, haptic medium, concat `Text.foregroundStyle` par segment + UN `.fudoFont` sur l'ensemble — jamais de Font par segment) ; (3) +0,4 s (`ctaDelay`) : CTA « **Lock me in** » slide-up (variante « I'm in. » à trancher Romain). **Plus d'auto-advance** — le CTA lance OB 02. Rejouabilité : `OnboardingViewModel.sixtySecondsPlayed` (mémoire de session) — un back depuis le quiz pose l'état FINAL à froid (phrase + CTA posés, zéro replay, zéro haptic), verrouillé par test.
+
+**REPORT v3** : BUG expansion (contenu écrasé) — cause : le VStack vivait dans le scaffold SANS scroll, les folds ouverts compressaient tout ; fix : la card vit dans un **ScrollView** (titre Bebas ancré au-dessus), un fold ouvert POUSSE. Animation **`AppAnimation.spring`** (nouveau token : response 0.45, damping 0.85 — LA seule spring exposée, réservée au layout qui grandit sous le doigt). Fold ouvert = ligne courte ~60 % | **jauge ~40 %** côte à côte (`gaugeWidth` 112) ; row grossit (padding 12→16). Visuel-first : **flèche verdict** vert ▲ / rouge ▼ à côté du héros (la flèche porte la couleur, règle palette) — verdict calculé DANS `ReportBenchmarks` (`ReportGauge.youBeatsAverage`, sens par métrique : écran/réveil = moins-mieux, training/focus = plus-mieux, verrouillé par test) ; `ReportGaugeView` recoupée en pile compacte (label+valeur / barre). Micro-copy des sections à jauge raccourcie (≤ ~45 chars).
+
+**11a cards** : Hardcore 90 → **« Monk Mode 90 »** dans PresetCatalog (une famille, quatre longueurs — le case `hardcore90` reste l'identité DATA des anciens défis, renommage d'affichage rétroactif assumé). `DurationCard` : badge **paramétrique** (`DurationBadge`, texte+couleur décidés par 11a) + « X days » trailing petit secondaire. 60 : badge vert « RECOMMENDED FOR YOU », pré-sélection + prominence conservées. 120 : badge **vermillon** « RECOMMENDED IF YOU'RE A KILLER » (le vert reste unique à la 60) — variante courte « IF YOU'RE A KILLER » proposée si déborde, à trancher Romain.
+
+---
+
 ## Global Constraints
 
 Ces contraintes s'appliquent à CHAQUE tâche, implicitement. Valeurs copiées verbatim de `CLAUDE.md` / du brief.

@@ -41,6 +41,11 @@ struct OptionRow: View {
             }
         }
         .buttonStyle(.plain)
-        .animation(AppAnimation.standard, value: isSelected)
+        // Selection breathes at the house pace; DESELECTION snaps — otherwise
+        // two rows read as selected while the old one fades (tester batch #1:
+        // "the ONE thing" looked multi-select).
+        .animation(isSelected ? AppAnimation.standard
+                              : .easeOut(duration: OnboardingMetrics.optionDeselect),
+                   value: isSelected)
     }
 }

@@ -7,15 +7,27 @@ import Foundation
 /// quiz and lands BEFORE the OVR reveal — quiz → loader → diagnostic reveal →
 /// compose → projection (which needs the chosen duration, so it stays after
 /// compose, with a short "Locking…" beat instead of a second loader).
+///
+/// COMPOSE SPLIT (tester batch #1, 2026-07-16, Romain): OB 11 becomes two
+/// screens — duration alone (11a), then the rules (11b). One decision per
+/// screen; the projection still follows the rules, so the date has its duration.
+///
+/// BATCH #2 (2026-07-16, Romain): four habit questions join the quiz — they
+/// feed the report's benchmarked sections (morning / training / focus / track
+/// record). The shock beat keeps its inputs (scroll + age) right before it;
+/// the habit block lands after the blow. A one-sentence EXPLAINER sits between
+/// the reveal and 11a: "we've picked your actions" gets its own beat.
 enum OnboardingStep: Int, CaseIterable {
-    // Act 0 — welcome (no progress bar)
-    case splash, transformation, pain, mechanism
+    // Act 0 — welcome (no progress bar) + the launch beat (batch #3): "ONLY 60
+    // SECONDS", no CTA, auto-advance — it throws him into the quiz.
+    case splash, transformation, pain, mechanism, sixtySeconds
     // Act 1 — the quiz
-    case painPoint, scrollHours, age, procrastination, shockStat, goals, struggle, reflection
+    case painPoint, scrollHours, age, procrastination, shockStat,
+         wakeUp, training, focus, goals, struggle, attempts, reflection
     // Act 1bis — analysis, report & reveal
     case loaderAnalysis, report, diagnostic
     // Act 2 — climax
-    case compose, projection, firstCheck, socialProof
+    case protocolIntro, composeDuration, composeRules, projection, firstCheck, socialProof
     // Act 3 — engagement & contract
     case commitment, contract, paywall
     // Act 4 — post-paywall
@@ -26,7 +38,7 @@ enum OnboardingStep: Int, CaseIterable {
     /// The bar covers the quiz AND the reveal that follows the analysis loader.
     var showsProgress: Bool {
         switch self {
-        case .splash, .transformation, .pain, .mechanism,
+        case .splash, .transformation, .pain, .mechanism, .sixtySeconds,
              .loaderAnalysis, .loaderSetup, .paywall,
              .notifications, .welcomeDojo, .widgetPromo:
             return false
@@ -41,7 +53,9 @@ enum OnboardingStep: Int, CaseIterable {
     /// design, 2026-07-16: going back weakens the funnel) have no way back.
     var showsBack: Bool {
         switch self {
-        case .painPoint, .scrollHours, .age, .procrastination, .struggle, .compose:
+        case .painPoint, .scrollHours, .age, .procrastination,
+             .wakeUp, .training, .focus, .struggle, .attempts,
+             .composeDuration, .composeRules:
             return true
         default:
             return false

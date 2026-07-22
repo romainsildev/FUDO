@@ -6,11 +6,16 @@ struct OnboardingStepTests {
     @Test func progressTotalIsDerivedFromTheEnum() {
         // The bar's total is never hand-numbered: it IS the count of bar-carrying steps.
         #expect(OnboardingStep.progressTotal == OnboardingStep.allCases.filter(\.showsProgress).count)
-        #expect(OnboardingStep.progressTotal == 16)   // +1: the report (2026-07-16)
+        // Batch #2 (2026-07-16): +4 habit questions, +1 explainer, on top of
+        // the 17 the compose split left.
+        #expect(OnboardingStep.progressTotal == 22)
     }
 
     @Test func welcomeLoadersAndPostPaywallHideTheBar() {
+        // The 60-seconds launch beat (batch #3) hides the bar too: it is the
+        // starting gun, not a step of the quiz.
         let hidden: [OnboardingStep] = [.splash, .transformation, .pain, .mechanism,
+                                        .sixtySeconds,
                                         .loaderAnalysis, .loaderSetup, .paywall,
                                         .notifications, .welcomeDojo, .widgetPromo]
         for step in hidden {
@@ -36,32 +41,47 @@ struct OnboardingStepTests {
 
     @Test func backIsOfferedOnQuestionsAndBlockedOnWallsAndReveals() {
         for step in [OnboardingStep.painPoint, .scrollHours, .age, .procrastination,
-                     .struggle, .compose] {
+                     .wakeUp, .training, .focus, .struggle, .attempts,
+                     .composeDuration, .composeRules] {
             #expect(step.showsBack, "\(step) must offer back")
         }
         // Walls, loaders, the trio — and the REVEALS (2026-07-16): shock stat,
-        // goals, diagnostic and projection are one-way by design.
-        for step in [OnboardingStep.splash, .shockStat, .goals, .reflection,
-                     .diagnostic, .projection, .loaderAnalysis, .firstCheck,
-                     .socialProof, .commitment, .contract, .paywall,
-                     .notifications, .loaderSetup, .welcomeDojo, .widgetPromo] {
+        // goals, diagnostic, projection and the explainer are one-way by design.
+        for step in [OnboardingStep.splash, .sixtySeconds, .shockStat, .goals,
+                     .reflection, .diagnostic, .protocolIntro, .projection,
+                     .loaderAnalysis, .firstCheck, .socialProof, .commitment,
+                     .contract, .paywall, .notifications, .loaderSetup,
+                     .welcomeDojo, .widgetPromo] {
             #expect(step.showsBack == false, "\(step) must block back")
         }
     }
 
     /// The restructure (2026-07-16): quiz → analysis loader → report → reveal
-    /// → compose → projection. Locked so a re-shuffle can't silently undo it.
+    /// → explainer → duration (11a) → rules (11b) → projection. Locked so a
+    /// re-shuffle can't silently undo it — the projection NEEDS the duration
+    /// chosen first, and the shock beat keeps its inputs (scroll + age) close.
     @Test func theLoaderAnalyzesBeforeTheReportRevealAndProjectionFollowsCompose() {
+        #expect(OnboardingStep.mechanism.next == .sixtySeconds)
+        #expect(OnboardingStep.sixtySeconds.next == .painPoint)
+        #expect(OnboardingStep.shockStat.next == .wakeUp)
+        #expect(OnboardingStep.focus.next == .goals)
+        #expect(OnboardingStep.struggle.next == .attempts)
+        #expect(OnboardingStep.attempts.next == .reflection)
         #expect(OnboardingStep.reflection.next == .loaderAnalysis)
         #expect(OnboardingStep.loaderAnalysis.next == .report)
         #expect(OnboardingStep.report.next == .diagnostic)
-        #expect(OnboardingStep.compose.next == .projection)
+        #expect(OnboardingStep.diagnostic.next == .protocolIntro)
+        #expect(OnboardingStep.protocolIntro.next == .composeDuration)
+        #expect(OnboardingStep.composeDuration.next == .composeRules)
+        #expect(OnboardingStep.composeRules.next == .projection)
     }
 
     @Test func onlyTheVideoActCrossfades() {
         for step in [OnboardingStep.splash, .transformation, .pain, .mechanism] {
             #expect(step.isWelcome)
         }
+        // The launch beat slides in like the quiz — leaving the video IS the launch.
+        #expect(OnboardingStep.sixtySeconds.isWelcome == false)
         #expect(OnboardingStep.painPoint.isWelcome == false)
     }
 

@@ -75,17 +75,21 @@ enum PresetCatalog {
                EditableRule(title: "One-line journal", iconName: "square.and.pencil")]
     }
 
+    // Taglines re-cut for the 11a duration cards (Romain, batch #2 2026-07-16) —
+    // ONE source, so the full-flow cards and the standalone line say the same thing.
     static var all: [PresetDefinition] {
         [PresetDefinition(preset: .monk30, durationDays: 30, title: "Monk Mode 30",
-                          tagline: "The standard entry.", defaultRules: monkCore),
+                          tagline: "The reset", defaultRules: monkCore),
          PresetDefinition(preset: .monk60, durationDays: 60, title: "Monk Mode 60",
-                          tagline: "The real reset.",
+                          tagline: "The standard",
                           defaultRules: monkCore
                             + [EditableRule(title: "Meditate 10 min", iconName: "figure.mind.and.body")]),
-         PresetDefinition(preset: .hardcore90, durationDays: 90, title: "Hardcore 90",
-                          tagline: "Elite. Brutal by design.", defaultRules: hardcoreProtocol),
+         // "Monk Mode 90" since batch #3 (Romain): one family, four lengths —
+         // the `hardcore90` case stays as the DATA identity of old challenges.
+         PresetDefinition(preset: .hardcore90, durationDays: 90, title: "Monk Mode 90",
+                          tagline: "For the strong", defaultRules: hardcoreProtocol),
          PresetDefinition(preset: .monk120, durationDays: 120, title: "Monk Mode 120",
-                          tagline: "The long game.", defaultRules: hardcoreProtocol)]
+                          tagline: "The ultimate", defaultRules: hardcoreProtocol)]
     }
 
     /// Retired presets keep their display name for PAST challenges — they are no

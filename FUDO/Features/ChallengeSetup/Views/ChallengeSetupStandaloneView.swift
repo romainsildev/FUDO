@@ -6,20 +6,8 @@ import SwiftUI
 /// No gesture dismiss — back and a successful commit are the only exits.
 struct ChallengeSetupStandaloneView: View {
     @State private var viewModel: ChallengeSetupViewModel
-    @State private var editedRule: EditableRule?
-    @State private var isAddingRule = false
+    @State private var ruleSheet: RuleSheetMode?
     let onExit: () -> Void
-
-    /// Sheet routing: editing an existing rule vs composing a custom one.
-    private var sheetBinding: Binding<Bool> {
-        Binding(get: { editedRule != nil || isAddingRule },
-                set: { presented in
-                    if !presented {
-                        editedRule = nil
-                        isAddingRule = false
-                    }
-                })
-    }
 
     init(store: GameStore, recommendedPreset: ChallengePreset = .monk60,
          onExit: @escaping () -> Void) {
@@ -61,7 +49,7 @@ struct ChallengeSetupStandaloneView: View {
                             .padding(.top, 12)
                     }
 
-                    Text("Tap a rule to adjust it. This is YOUR protocol.")
+                    Text("Tap to toggle, hold to edit. This is YOUR protocol.")
                         .fudoFont(.caption())
                         .foregroundStyle(FudoColor.textSecondary)
                         .padding(.top, 16)
@@ -73,8 +61,8 @@ struct ChallengeSetupStandaloneView: View {
         }
         .background(FudoColor.bgPrimary.ignoresSafeArea())
         .safeAreaInset(edge: .bottom) { startCTA }
-        .sheet(isPresented: sheetBinding) {
-            RuleEditSheet(rule: editedRule, viewModel: viewModel)
+        .sheet(item: $ruleSheet) { mode in
+            RuleEditSheet(rule: mode.rule, viewModel: viewModel)
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
         }
@@ -140,9 +128,10 @@ struct ChallengeSetupStandaloneView: View {
             ForEach(viewModel.rules) { rule in
                 RuleRowEditor(rule: rule,
                               onToggle: { viewModel.toggleRule(id: rule.id) },
-                              onEdit: { editedRule = rule })
+                              onEdit: { ruleSheet = .edit(rule) },
+                              onDelete: { viewModel.removeRule(id: rule.id) })
             }
-            AddRuleRow(isEnabled: viewModel.canAddRule) { isAddingRule = true }
+            AddRuleRow(isEnabled: viewModel.canAddRule) { ruleSheet = .add }
         }
     }
 

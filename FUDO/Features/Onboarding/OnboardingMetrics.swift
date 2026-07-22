@@ -53,6 +53,50 @@ enum OnboardingMetrics {
     /// Ignore a second CTA tap fired inside one transition (RiteOff ctaSpamGuard).
     static let ctaGuard: TimeInterval = 0.5
 
+    /// The "ONLY 60 SECONDS" interstitial (batch #3, re-cut batch #4): the
+    /// block scales in, the chrono arms, THEN "AND WE LOCK YOU IN" lands, then
+    /// the CTA slides up. No auto-advance — the lock line earns the tap.
+    enum SixtySeconds {
+        /// Scale-in + ring — the intro beat before the lock line lands.
+        static let intro: TimeInterval = 1.7
+        /// The chrono ring arms itself over most of the intro.
+        static let ringFill: TimeInterval = 1.6
+        /// Lock line → CTA slide-up.
+        static let ctaDelay: TimeInterval = 0.4
+        static let ringDiameter: CGFloat = 180
+        static let ringWidth: CGFloat = 6
+        /// Scale-in of the whole block — energetic, not a fade.
+        static let scaleFrom: CGFloat = 0.8
+    }
+
+    /// OB 13 (batch #5) — the "Locking…" beat and the reveal choreography.
+    /// Three STRICT phases: the pill dwells, fades out COMPLETELY, a blank
+    /// breath, then the reveal enters in one staggered pass (headline → curve
+    /// draw-in → CTA). Two phases are never on screen together.
+    enum Projection {
+        /// The pill's dwell — one breath, spec range 0.9–1.2 s.
+        static let lockingBeat: TimeInterval = 1.0
+        /// Loader fade-out — FINISHED before anything enters.
+        static let loaderFade: TimeInterval = 0.25
+        /// The black breath between loader-out and reveal-in.
+        static let blankGap: TimeInterval = 0.15
+        /// Headline in → the curve card enters.
+        static let curveDelay: TimeInterval = 0.35
+        /// The line draws itself left → right.
+        static let draw: TimeInterval = 1.0
+        /// The headline's internal scale (welcome-hook grammar): small lead,
+        /// giant Bebas date, then the number line.
+        static let leadSize: CGFloat = 26
+        static let dateSize: CGFloat = 58
+    }
+
+    /// Deselection snap on the answer rows (tester batch #1, 2026-07-16): under
+    /// the house 0.5 s curve, the OLD row was still fading while the new one lit
+    /// up — a single-select read as multi for half a second. Selection keeps the
+    /// premium curve; deselection gets out of the way. Assumed exception to the
+    /// 0.4-0.6 s rule, same family as uncheck's quickLongPress.
+    static let optionDeselect: TimeInterval = 0.15
+
     /// Bebas hook sizes (brief, verbatim).
     enum Hook {
         static let transformationLead: CGFloat = 34

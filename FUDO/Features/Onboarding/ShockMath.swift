@@ -19,6 +19,7 @@ enum ShockMath {
         case .young1824: return 21
         case .adult2534: return 29
         case .mature35plus: return 40
+        case .senior55plus: return 60
         }
     }
 
@@ -27,10 +28,14 @@ enum ShockMath {
         case .teen1317, .young1824: return 30
         case .adult2534: return 40
         case .mature35plus: return 50
+        case .senior55plus: return 70
         }
     }
 
-    private static func hoursPerDay(_ scroll: OnboardingAnswers.ScrollTime) -> Double {
+    /// Internal, not private (batch #2): the report's screen-time gauge reads
+    /// the SAME hours the shock number is built from — a second mapping of the
+    /// same answer would drift.
+    static func hoursPerDay(_ scroll: OnboardingAnswers.ScrollTime) -> Double {
         switch scroll {
         case .underTwoHours: return 1.5
         case .twoToFourHours: return 3

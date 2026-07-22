@@ -29,6 +29,15 @@ final class OnboardingViewModel {
     /// OB 17 — the CTA stays dead until his finger has left a stroke.
     private(set) var hasSignature = false
 
+    /// The 60-seconds beat plays ONCE per funnel run (batch #4): backing out
+    /// of the quiz must land on the FINISHED state — lock line + CTA posed —
+    /// never replay the launch. Session memory, deliberately not persisted.
+    private(set) var sixtySecondsPlayed = false
+
+    /// OB 13's "Locking…" beat, same one-shot pattern: a re-entry on the
+    /// projection poses the revealed state cold, never the loader again.
+    private(set) var projectionPlayed = false
+
     init(store: GameStore, flags: OnboardingFlags = OnboardingFlags(),
          onFinished: @escaping () -> Void = {}) {
         self.store = store
@@ -48,10 +57,16 @@ final class OnboardingViewModel {
         case .scrollHours: return draft.scrollTime != nil
         case .age: return draft.age != nil
         case .procrastination: return draft.procrastination != nil
+        case .wakeUp: return draft.wakeTime != nil
+        case .training: return draft.trainingLoad != nil
+        case .focus: return draft.focusSpan != nil
         case .goals: return !draft.goals.isEmpty
         case .struggle: return draft.struggle != nil
+        case .attempts: return draft.quitHistory != nil
         case .commitment: return draft.commitment != nil
-        case .compose: return setup.canCompose
+        // 11a always advances: the chips default to the recommendation, a
+        // duration always exists. 11b gates on composing only (BUG B, carnet).
+        case .composeRules: return setup.canCompose
         case .contract: return hasSignature
         default: return true
         }
@@ -88,6 +103,14 @@ final class OnboardingViewModel {
         self.step = step
     }
     #endif
+
+    /// The flow-level chrome (bar + chevron). The step decides (`showsProgress`)
+    /// with ONE dynamic exception: the projection's "Locking…" beat is a loader,
+    /// and loaders never carry the bar — it returns with the reveal (batch #5).
+    var showsChrome: Bool {
+        if step == .projection && !projectionPlayed { return false }
+        return step.showsProgress
+    }
 
     /// Horizontal slide + fade: the funnel reads as forward motion. The welcome act
     /// overrides it with a pure crossfade (the video must never slide).
@@ -137,10 +160,19 @@ final class OnboardingViewModel {
     /// dojo can never greet a man who isn't there.
     var playerRank: Rank { store.player?.rank ?? diagnosticRank }
 
-    // MARK: - OB 11
+    // MARK: - The 60-seconds beat
 
-    /// Called on entering the compose screen. D3 makes the answer constant today,
-    /// so this is a no-op — it exists so the day the rule changes, ONE place changes.
+    func markSixtySecondsPlayed() { sixtySecondsPlayed = true }
+
+    // MARK: - OB 13 — the locking beat
+
+    func markProjectionPlayed() { projectionPlayed = true }
+
+    // MARK: - OB 11a
+
+    /// Called on entering the duration screen (11a — the compose split's first
+    /// half). The recommendation is constant today, so this is a no-op — it
+    /// exists so the day the rule changes, ONE place changes.
     func prepareCompose() {
         let recommended = OnboardingCopy.recommendedPreset(for: draft)
         guard recommended != setup.recommendedPreset else { return }
@@ -150,6 +182,10 @@ final class OnboardingViewModel {
     // MARK: - OB 17 — checkpoint 1
 
     func registerSignature() { hasSignature = true }
+
+    /// "Clear" (tester batch #1): the strokes die in the screen's @State; here
+    /// only the FACT of the signature is revoked — the CTA goes dead again.
+    func clearSignature() { hasSignature = false }
 
     /// Checkpoint 1 (kill-safety): the player becomes REAL here — his OVR exists even
     /// if he kills the app at the paywall. The CHALLENGE does not: its day-1 clock

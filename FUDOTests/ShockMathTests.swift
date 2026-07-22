@@ -8,6 +8,8 @@ struct ShockMathTests {
         #expect(ShockMath.result(age: .young1824, scroll: .fourToSixHours).horizonAge == 30)
         #expect(ShockMath.result(age: .adult2534, scroll: .fourToSixHours).horizonAge == 40)
         #expect(ShockMath.result(age: .mature35plus, scroll: .fourToSixHours).horizonAge == 50)
+        // Senior bracket (tester batch #1): the shock math works at any age.
+        #expect(ShockMath.result(age: .senior55plus, scroll: .fourToSixHours).horizonAge == 70)
     }
 
     @Test func fourToSixHoursAtTwentyOneCostsNineYearsOfEvenings() {

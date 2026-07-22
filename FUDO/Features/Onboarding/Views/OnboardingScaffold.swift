@@ -19,6 +19,10 @@ struct OnboardingScaffold<Content: View>: View {
     var subtitle: String?
     var ctaTitle: String = "Continue"
     var canAdvance: Bool
+    /// OB 13's staggered reveal (batch #5): the CTA is the LAST element to
+    /// enter. Hidden ≠ disabled — a grisé CTA says "answer first", an absent
+    /// one says "the screen isn't done talking". Defaults to visible.
+    var ctaVisible: Bool = true
     /// Drama screens (OB 06): the block CENTERS between the chrome line and the
     /// CTA — symmetric spacers, breathing above AND below — instead of stacking
     /// from the top.
@@ -83,6 +87,9 @@ struct OnboardingScaffold<Content: View>: View {
         }
         .buttonStyle(.plain)
         .disabled(!canAdvance)
+        .opacity(ctaVisible ? 1 : 0)
+        .offset(y: ctaVisible ? 0 : 24)
+        .allowsHitTesting(ctaVisible)
         .animation(AppAnimation.standard, value: canAdvance)
         .padding(.horizontal, FudoSpacing.screenMargin)
         .padding(.bottom, 12)

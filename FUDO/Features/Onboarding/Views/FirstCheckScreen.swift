@@ -1,25 +1,40 @@
 import SwiftUI
 
-/// OB 14 — the only screen where his HAND learns something: the 1 s hold, the
-/// ring filling, the haptic climbing, the seal. And his first check isn't a
-/// task — it's "I started". The flame lights before day 1 even exists.
+/// OB 14 (S5d recut) — the only screen where his HAND learns something, and it
+/// learns it on the REAL component: a Task Row, the same anatomy as the Home
+/// checklist (icon tile · title · check circle), the same 1.0 s HoldToConfirm
+/// (same clock, same progressive haptics — zero relearning at the Home). One
+/// idea on screen: the row, alone, centered. No visible CTA until the gesture
+/// is done — the check is the only way forward.
 ///
-/// ⚠️ This is a DEMO. The challenge does not exist yet (it's born at OB 19), so
-/// nothing here calls `store.checkTask`, no OVR moves, no streak is written. The
-/// "Day 0" flame is pure visual. Wiring a real check here would hand him a free
-/// delta and break the anti-farming pool — do not "finish" this screen.
+/// The progress ring draws around the CHECK CIRCLE, not the card: HoldToConfirm
+/// takes any InsettableShape, so `CheckCircleRing` anchors the ring on the
+/// coche while the press target stays the whole row. The gesture engine is
+/// untouched — no reinvented hold.
+///
+/// ⚠️ Still a DEMO. The challenge does not exist yet (born at OB 19): nothing
+/// calls `store.checkTask`, no OVR moves, no streak is written, and the row
+/// can NOT be unchecked (one-way — the Home teaches the undo, not this).
+/// Wiring a real check here would hand him a free delta and break the
+/// anti-farming pool — do not "finish" this screen.
 struct FirstCheckScreen: View {
     let onAdvance: () -> Void
+    /// DEBUG previews only — renders the post-check resting state (flame + CTA).
+    var startsSealed = false
 
     @State private var hasSealed = false
     @State private var revealed = false
-    @State private var inviting = false
+    @State private var hintPulsing = false
     @State private var showsFlame = false
-    @State private var burstTrigger = 0
+    @State private var showsCTA = false
+    @State private var burstToken = 0
+    @State private var sealOpacity: Double = 0
 
+    /// Seal → burst settles → flame lights → CTA slides up. Each step waits for
+    /// the previous one to land; the whole beat stays under 2 s.
     private static let flameDelay: TimeInterval = 0.45
-    private static let cardDelay: TimeInterval = 0.15
-    private static let ringDelay: TimeInterval = 0.3
+    private static let ctaDelay: TimeInterval = 0.55
+    private static let rowRevealDelay: TimeInterval = 0.2
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -28,99 +43,84 @@ struct FirstCheckScreen: View {
                 .frame(height: 24)
                 .padding(.top, 8)
 
-            Text("Validate your first action.")
+            Text("Your first rep.")
                 .fudoFont(.title(28, weight: .bold))
                 .foregroundStyle(FudoColor.textPrimary)
                 .padding(.top, 56)
+                .opacity(revealed ? 1 : 0)
 
-            quoteCard
-                .padding(.top, 28)
+            Spacer(minLength: 0)
 
-            holdRing
-                .frame(maxWidth: .infinity)
-                .padding(.top, 56)
+            // THE row — alone, centered, generous. The screen is the row.
+            checkRow
+                .opacity(revealed ? 1 : 0)
+                .offset(y: revealed ? 0 : 12)
 
-            Text("Hold to check.")
-                .fudoFont(.caption(13))
-                .foregroundStyle(FudoColor.textSecondary)
+            hint
                 .frame(maxWidth: .infinity)
                 .padding(.top, 20)
 
             flame
                 .frame(maxWidth: .infinity)
-                .padding(.top, 22)
+                .padding(.top, 26)
 
             Spacer(minLength: 0)
         }
         .padding(.horizontal, FudoSpacing.screenMargin)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .safeAreaInset(edge: .bottom) { cta }
         .onboardingWarmWash(.bottom)
         .onAppear { runIntro() }
     }
 
-    /// The frame underlines this card in vermillon: the sentence is the point.
-    private var quoteCard: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("\"I started my Monk Mode.\"")
-                .fudoFont(.headline(17))
-                .foregroundStyle(FudoColor.textPrimary)
-            Text("Your first check. It counts.")
-                .fudoFont(.caption(13))
-                .foregroundStyle(FudoColor.textSecondary)
+    // MARK: - The row
+
+    @ViewBuilder private var checkRow: some View {
+        let row = FirstCheckRow(isChecked: hasSealed)
+            .overlay { sealEcho }
+            .overlay(alignment: .trailing) { burst }
+            .accessibilityElement(children: .combine)
+            .accessibilityValue(hasSealed ? "Checked" : "Not checked")
+
+        if hasSealed {
+            row   // one-way demo: no uncheck path, the sealed row is inert
+        } else {
+            row
+                .holdToConfirm(in: FirstCheckRow.checkRingShape) { seal() }
+                .accessibilityAction(named: "Check") { seal() }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(FudoSpacing.cardPaddingMajor)
-        .background {
-            RoundedRectangle(cornerRadius: FudoSpacing.radiusCard, style: .continuous)
-                .fill(FudoColor.bgCard)
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: FudoSpacing.radiusCard, style: .continuous)
-                .strokeBorder(FudoColor.accent.opacity(0.55), lineWidth: 1)
-        }
-        .opacity(revealed ? 1 : 0)
-        .animation(AppAnimation.standard.delay(Self.cardDelay), value: revealed)
     }
 
-    private var holdRing: some View {
-        ZStack {
-            // strokeBorder insets like HoldToConfirm does, so the track and the
-            // progress ring sit on exactly the same circle.
-            Circle()
-                .strokeBorder(FudoColor.border, lineWidth: OnboardingMetrics.firstCheckRingWidth)
+    /// Brief full ring around the coche the instant the hold seals — the row
+    /// restyles to checked underneath it (same trick as the Home row: the
+    /// moment reads as "sealed", not "swapped").
+    private var sealEcho: some View {
+        FirstCheckRow.checkRingShape
+            .inset(by: HoldToConfirmMetrics.ringWidth / 2)
+            .stroke(FudoColor.accent,
+                    style: StrokeStyle(lineWidth: HoldToConfirmMetrics.ringWidth, lineCap: .round))
+            .opacity(sealOpacity)
+            .allowsHitTesting(false)
+    }
 
-            if hasSealed {
-                Image(systemName: "checkmark")
-                    .fudoFont(.glyph(34, weight: .bold))
-                    .foregroundStyle(FudoColor.textPrimary)
-                    .transition(.opacity)
-            } else {
-                Text("HOLD")
-                    .fudoFont(.label(15, weight: .bold))
-                    .kerning(4)
-                    .foregroundStyle(FudoColor.textPrimary)
-                    .transition(.opacity)
-            }
-
-            if burstTrigger > 0 {
-                // From the RING, like the Home's day ring — not a centre pop.
-                ParticleBurstView(color: FudoColor.accent,
-                                  particleCount: ParticleBurstMetrics.checkCount,
-                                  originRadius: OnboardingMetrics.firstCheckRingDiameter / 2)
-                    .id(burstTrigger)
-            }
+    @ViewBuilder private var burst: some View {
+        if burstToken > 0 {
+            // From the check circle, like the Home row — not a centre pop.
+            ParticleBurstView(color: FudoColor.accent)
+                .id(burstToken)
+                .offset(x: -FirstCheckRow.checkCenterInset)
         }
-        .frame(width: OnboardingMetrics.firstCheckRingDiameter,
-               height: OnboardingMetrics.firstCheckRingDiameter)
-        .contentShape(Circle())
-        // The invitation breathes until he holds — he should understand without reading.
-        .opacity(hasSealed ? 1 : (inviting ? 1 : 0.75))
-        .holdToConfirm(in: Circle(), completionHaptic: .success,
-                       ringColor: FudoColor.accent,
-                       ringWidth: OnboardingMetrics.firstCheckRingWidth) { seal() }
-        .scaleEffect(revealed ? 1 : 0.96)
-        .opacity(revealed ? 1 : 0)
-        .animation(AppAnimation.standard.delay(Self.ringDelay), value: revealed)
+    }
+
+    // MARK: - Around the row
+
+    private var hint: some View {
+        Text("Hold to check")
+            .fudoFont(.caption(13))
+            .foregroundStyle(FudoColor.textSecondary)
+            // Breathes until he holds — he should understand without reading.
+            .opacity(hasSealed ? 0 : (hintPulsing ? 1 : 0.55))
+            .animation(AppAnimation.standard, value: hasSealed)
     }
 
     private var flame: some View {
@@ -135,36 +135,181 @@ struct FirstCheckScreen: View {
         .offset(y: showsFlame ? 0 : 10)
     }
 
+    /// Hidden until the gesture is done — appearing is its slide-up. The check
+    /// is the only unlock; there is no way to skip the rep.
+    private var cta: some View {
+        Button(action: onAdvance) {
+            Text("Continue")
+                .fudoFont(.headline())
+                .foregroundStyle(FudoColor.textPrimary)
+                .frame(maxWidth: .infinity)
+                .frame(height: FudoSpacing.ctaHeight)
+                .background { Capsule().fill(FudoColor.accent) }
+        }
+        .buttonStyle(.plain)
+        .opacity(showsCTA ? 1 : 0)
+        .offset(y: showsCTA ? 0 : 24)
+        .allowsHitTesting(showsCTA)
+        .padding(.horizontal, FudoSpacing.screenMargin)
+        .padding(.bottom, 12)
+    }
+
+    // MARK: - Sequence
+
     private func runIntro() {
-        withAnimation(AppAnimation.standard) { revealed = true }
+        if startsSealed {
+            revealed = true
+            hasSealed = true
+            showsFlame = true
+            showsCTA = true
+            return
+        }
+        withAnimation(AppAnimation.standard.delay(Self.rowRevealDelay)) { revealed = true }
         withAnimation(.easeInOut(duration: OnboardingMetrics.hintPulse)
             .repeatForever(autoreverses: true)) {
-            inviting = true
+            hintPulsing = true
         }
     }
 
-    /// HoldToConfirm already fires onConfirm once per hold, but it re-arms after
-    /// its seal delay — a second hold during the settle would advance twice.
+    /// HoldToConfirm fires the success haptic and guarantees one call per hold,
+    /// but it re-arms after its seal delay — the guard keeps a second hold from
+    /// replaying the sequence.
     private func seal() {
         guard !hasSealed else { return }
-        hasSealed = true
-        burstTrigger += 1
+        withAnimation(AppAnimation.standard) { hasSealed = true }
+        burstToken += 1
+        sealOpacity = 1
+        withAnimation(AppAnimation.standard) { sealOpacity = 0 }
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(Self.flameDelay))
             Haptics.medium()
             withAnimation(AppAnimation.standard) { showsFlame = true }
-            try? await Task.sleep(for: .seconds(OnboardingMetrics.firstCheckSettle))
-            onAdvance()   // the gesture IS the CTA — the frame has no button
+            try? await Task.sleep(for: .seconds(Self.ctaDelay))
+            withAnimation(.easeOut(duration: 0.5)) { showsCTA = true }
         }
     }
 }
 
+// MARK: - The demo row
+
+/// The Home checklist row's anatomy, replicated for the demo (the real
+/// `ChecklistRowView` carries live-store contracts — delta return, uncheck
+/// dialog — that this one-way demo must not expose). Same icon tile, same
+/// 26 pt check circle, same checked restyle: what his hand learns here is
+/// exactly what the Home hands him at day 1.
+private struct FirstCheckRow: View {
+    let isChecked: Bool
+
+    /// Trailing distance to the check-circle center (circle is 26 pt wide,
+    /// generous major padding for the demo's large tap target).
+    static var checkCenterInset: CGFloat { FudoSpacing.cardPaddingMajor + 13 }
+    /// The hold ring, anchored on the coche — 4 pt of air around the circle.
+    static var checkRingShape: CheckCircleRing {
+        CheckCircleRing(centerTrailingInset: checkCenterInset, radius: 20)
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "flag.fill")
+                .fudoFont(.glyph(15, weight: .medium))
+                .foregroundStyle(FudoColor.textPrimary)
+                .frame(width: 36, height: 36)
+                .background {
+                    RoundedRectangle(cornerRadius: FudoSpacing.radiusNested, style: .continuous)
+                        .fill(FudoColor.bgPrimary)
+                }
+
+            Text("I started my Monk Mode")
+                .fudoFont(.body())
+                .strikethrough(isChecked, color: FudoColor.textSecondary)
+                .foregroundStyle(isChecked ? FudoColor.textSecondary : FudoColor.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+
+            Spacer(minLength: 8)
+
+            checkCircle
+        }
+        .padding(FudoSpacing.cardPaddingMajor)
+        .background {
+            RoundedRectangle(cornerRadius: FudoSpacing.radiusCard, style: .continuous)
+                .fill(FudoColor.bgCard)
+                .strokeBorder(FudoColor.border, lineWidth: 1)
+        }
+        .opacity(isChecked ? 0.65 : 1)
+        .contentShape(RoundedRectangle(cornerRadius: FudoSpacing.radiusCard, style: .continuous))
+        .accessibilityLabel("I started my Monk Mode")
+    }
+
+    private var checkCircle: some View {
+        ZStack {
+            if isChecked {
+                Circle().fill(FudoColor.accent)
+                Image(systemName: "checkmark")
+                    .fudoFont(.glyph(12, weight: .bold))
+                    .foregroundStyle(FudoColor.textPrimary)
+            } else {
+                Circle().strokeBorder(FudoColor.border, lineWidth: 1.5)
+            }
+        }
+        .frame(width: 26, height: 26)
+    }
+}
+
+/// A ring anchored on the row's check circle: HoldToConfirm strokes and trims
+/// whatever InsettableShape it's given, so this is all it takes to draw the
+/// hold progress around the coche while the press target stays the whole row.
+/// Trim starts at 12 o'clock, clockwise — same read as every FUDO ring.
+private struct CheckCircleRing: InsettableShape {
+    let centerTrailingInset: CGFloat
+    let radius: CGFloat
+    var insetAmount: CGFloat = 0
+
+    func inset(by amount: CGFloat) -> CheckCircleRing {
+        var shape = self
+        shape.insetAmount += amount
+        return shape
+    }
+
+    func path(in rect: CGRect) -> Path {
+        let center = CGPoint(x: rect.maxX - centerTrailingInset, y: rect.midY)
+        var path = Path()
+        path.addArc(center: center, radius: max(radius - insetAmount, 1),
+                    startAngle: .degrees(-90), endAngle: .degrees(270), clockwise: false)
+        return path
+    }
+}
+
 #if DEBUG
-/// The hold and the seal only exist under a finger — the canvas shows the resting
-/// state. The gesture itself is a device check.
-#Preview("OB 14 — first hold") {
+/// The hold itself only exists under a finger — the resting state shows the
+/// row + pulsing hint; the gesture feel is a device check.
+#Preview("OB 14 — before the check") {
     OnboardingPreviewChrome {
         FirstCheckScreen(onAdvance: {})
+    }
+}
+
+/// Mid-hold, faked statically: the ring drawn at 60 % around the coche —
+/// geometry check for the CheckCircleRing anchor.
+#Preview("OB 14 — mid-hold (static)") {
+    OnboardingPreviewChrome {
+        FirstCheckRow(isChecked: false)
+            .overlay {
+                FirstCheckRow.checkRingShape
+                    .inset(by: HoldToConfirmMetrics.ringWidth / 2)
+                    .trim(from: 0, to: 0.6)
+                    .stroke(FudoColor.accent,
+                            style: StrokeStyle(lineWidth: HoldToConfirmMetrics.ringWidth,
+                                               lineCap: .round))
+            }
+            .padding(FudoSpacing.screenMargin)
+    }
+}
+
+/// Post-check resting state: sealed row, flame lit, CTA up.
+#Preview("OB 14 — after the check") {
+    OnboardingPreviewChrome {
+        FirstCheckScreen(onAdvance: {}, startsSealed: true)
     }
 }
 #endif

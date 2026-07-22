@@ -33,11 +33,13 @@ struct WelcomeHook {
         microLine: "Willpower isn't the fix.", ctaTitle: "Continue",
         feature: .none)
 
+    // No micro-line (batch #3): the "60 seconds" promise got its own beat —
+    // the interstitial right after this screen. The CTA hands over to it.
     static let mechanism = WelcomeHook(
         clip: .doors,
         leadLines: ["YOUR PROTOCOL.", "YOUR SCORE."], leadSize: OnboardingMetrics.Hook.mechanismLead,
         climaxLines: ["30 DAYS."], climaxSize: OnboardingMetrics.Hook.mechanismClimax,
-        microLine: "60 seconds to build yours.", ctaTitle: "Continue",
+        microLine: nil, ctaTitle: "Build mine",
         feature: .protocolCard)
 }
 

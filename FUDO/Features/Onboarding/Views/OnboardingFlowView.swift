@@ -47,12 +47,15 @@ struct OnboardingFlowView: View {
             // Stable chrome (UX pass 2026-07-16): the bar and the chevron sit
             // ABOVE the sliding screens, so the bar only fills — it never slides
             // in with a screen. Screens keep an empty slot where it renders.
-            if viewModel.step.showsProgress {
+            // `showsChrome`, not `step.showsProgress`: the projection's locking
+            // beat is a loader, and loaders never carry the bar (batch #5).
+            if viewModel.showsChrome {
                 OnboardingChromeHeader(step: viewModel.step, onBack: viewModel.back)
                     .transition(.opacity)
             }
         }
         .animation(AppAnimation.standard, value: viewModel.step)
+        .animation(AppAnimation.standard, value: viewModel.showsChrome)
     }
 
     // MARK: - Routing
@@ -71,6 +74,10 @@ struct OnboardingFlowView: View {
             WelcomeHookScreen(hook: .pain, onAdvance: viewModel.advance)
         case .mechanism:
             WelcomeHookScreen(hook: .mechanism, onAdvance: viewModel.advance)
+        case .sixtySeconds:
+            SixtySecondsScreen(hasPlayed: viewModel.sixtySecondsPlayed,
+                               onPlayed: viewModel.markSixtySecondsPlayed,
+                               onAdvance: viewModel.advance)
 
         // MARK: Act 1 — diagnostic & self-persuasion
         //
@@ -110,6 +117,28 @@ struct OnboardingFlowView: View {
                 ShockStatScreen(shock: shock, pain: pain,
                                 onAdvance: viewModel.advance)
             }
+
+        // The habit block (batch #2) — four fast, factual questions after the
+        // blow. Each one becomes a benchmarked section of the report.
+
+        case .wakeUp:
+            SingleChoiceScreen(step: .wakeUp,
+                               title: "When do you get up?",
+                               options: WakeBracket.allCases, titleFor: \.optionTitle,
+                               selection: $viewModel.draft.wakeTime,
+                               onAdvance: viewModel.advance)
+        case .training:
+            SingleChoiceScreen(step: .training,
+                               title: "Training sessions\nper week?",
+                               options: TrainingLoad.allCases, titleFor: \.optionTitle,
+                               selection: $viewModel.draft.trainingLoad,
+                               onAdvance: viewModel.advance)
+        case .focus:
+            SingleChoiceScreen(step: .focus,
+                               title: "How long can you focus\nwithout your phone?",
+                               options: FocusSpan.allCases, titleFor: \.optionTitle,
+                               selection: $viewModel.draft.focusSpan,
+                               onAdvance: viewModel.advance)
         case .goals:
             MultiChoiceScreen(step: .goals, 
                               title: "What do you actually\nwant?",
@@ -123,6 +152,12 @@ struct OnboardingFlowView: View {
                                options: OnboardingAnswers.Struggle.allCases,
                                titleFor: \.optionTitle,
                                selection: $viewModel.draft.struggle,
+                               onAdvance: viewModel.advance)
+        case .attempts:
+            SingleChoiceScreen(step: .attempts,
+                               title: "How many times have you\ntried and quit?",
+                               options: QuitHistory.allCases, titleFor: \.optionTitle,
+                               selection: $viewModel.draft.quitHistory,
                                onAdvance: viewModel.advance)
         case .reflection:
             if let struggle = viewModel.draft.struggle {
@@ -139,9 +174,11 @@ struct OnboardingFlowView: View {
             // belongs to the diagnostic, the duration to compose.
             BuildLoaderScreen(
                 stats: OnboardingCopy.analysisLoaderStats(draft: viewModel.draft),
+                // "Benchmarking" sells the report's gauges (batch #2) — the
+                // comparison the next screen actually draws.
                 steps: ["Reading your answers",
+                        "Benchmarking your habits",
                         "Locating your weak spot",
-                        "Measuring the damage",
                         "Compiling your report"],
                 onAdvance: viewModel.advance)
         case .report:
@@ -153,7 +190,11 @@ struct OnboardingFlowView: View {
 
         // MARK: Act 2 — climax
 
-        case .compose:
+        case .protocolIntro:
+            ProtocolIntroScreen(onAdvance: viewModel.advance)
+        case .composeDuration:
+            ComposeDurationScreen(viewModel: viewModel)
+        case .composeRules:
             ComposeProtocolScreen(viewModel: viewModel)
         case .projection:
             ProjectionScreen(base: OVREngine.startingOVR(from: viewModel.draft.answers),
@@ -161,11 +202,14 @@ struct OnboardingFlowView: View {
                              projectedOVR: viewModel.projectedOVR,
                              projectedRank: viewModel.projectedRank,
                              date: viewModel.projectionDate,
+                             hasPlayed: viewModel.projectionPlayed,
+                             onPlayed: viewModel.markProjectionPlayed,
                              onAdvance: viewModel.advance)
         case .firstCheck:
             FirstCheckScreen(onAdvance: viewModel.advance)
         case .socialProof:
-            SocialProofScreen(flags: flags, onAdvance: viewModel.advance)
+            SocialProofScreen(flags: flags, durationDays: viewModel.setup.durationDays,
+                              onAdvance: viewModel.advance)
 
         // MARK: Act 3 — engagement, contract, paywall
 
@@ -180,7 +224,8 @@ struct OnboardingFlowView: View {
                            durationDays: viewModel.setup.durationDays,
                            hasSignature: viewModel.hasSignature,
                            onSign: viewModel.signContract,
-                           onSignatureStroke: viewModel.registerSignature)
+                           onSignatureStroke: viewModel.registerSignature,
+                           onSignatureCleared: viewModel.clearSignature)
         case .paywall:
             PaywallGateView(contract: flags.contract, date: viewModel.projectionDate,
                             onContinue: viewModel.passPaywall)

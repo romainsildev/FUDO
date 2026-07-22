@@ -111,38 +111,60 @@ enum OnboardingCopy {
 
     // MARK: - The report
 
-    /// One row of the report card. `detail` is the optional second line.
+    /// One section of the report. `value` is the hero figure, `detail` the one
+    /// line under it, `gauge` the YOU / AVERAGE / TARGET bars (benchmarked
+    /// sections only — a gauge on a qualitative answer would be an invented
+    /// comparison, honesty guard).
     struct ReportRow: Equatable {
         let label: String
         let value: String
         var detail: String?
+        var gauge: ReportGauge?
     }
 
     /// The ONE dense screen of the funnel — its job is the synthesis. Every
-    /// line is his own answer or his own multiplication (ShockMath); nothing
-    /// invented (D4). The OVR is deliberately absent: the reveal comes next.
+    /// line is his own answer or his own multiplication (ShockMath); every
+    /// benchmark is a public rounded average from `ReportBenchmarks`; nothing
+    /// invented (D4 + batch #2 honesty guard). The OVR is deliberately absent:
+    /// the reveal comes next.
+    ///
+    /// Accordion (batch #1, kept in v2): collapsed shows label + hero value,
+    /// the tap unfolds gauge + detail. Every row must carry a detail: a fold
+    /// with nothing behind it is a dead tap.
     static func reportRows(draft: OnboardingDraft) -> [ReportRow] {
         var rows: [ReportRow] = []
         if let pain = draft.pain {
-            rows.append(ReportRow(label: "THE FIGHT", value: pain.optionTitle))
+            rows.append(ReportRow(label: "THE FIGHT", value: pain.optionTitle,
+                                  detail: fightDetail(pain)))
         }
         if let scroll = draft.scrollTime {
-            var detail: String?
+            var detail = "The hours are yours to reassign."
             if let age = draft.age {
                 let shock = ShockMath.result(age: age, scroll: scroll)
                 detail = "≈ \(shock.headline) gone by \(shock.horizonAge)"
             }
             rows.append(ReportRow(label: "SCREEN TIME", value: "\(scroll.optionTitle) a day",
-                                  detail: detail))
+                                  detail: detail,
+                                  gauge: ReportBenchmarks.screenGauge(scroll: scroll)))
         }
-        if let struggle = draft.struggle {
-            rows.append(ReportRow(label: "WEAK SPOT", value: reportWall(struggle)))
+        if let wake = draft.wakeTime {
+            rows.append(ReportRow(label: "MORNING", value: morningValue(wake),
+                                  detail: morningDetail(wake),
+                                  gauge: ReportBenchmarks.wakeGauge(bracket: wake)))
         }
-        if !draft.goals.isEmpty {
-            let list = Goal.allCases.filter { draft.goals.contains($0) }
-                .map(\.optionTitle).joined(separator: " · ")
-            rows.append(ReportRow(label: "TARGETS", value: "\(draft.goals.count) locked",
-                                  detail: list))
+        if let load = draft.trainingLoad {
+            rows.append(ReportRow(label: "TRAINING", value: trainingValue(load),
+                                  detail: trainingDetail(load),
+                                  gauge: ReportBenchmarks.trainingGauge(load: load)))
+        }
+        if let span = draft.focusSpan {
+            rows.append(ReportRow(label: "FOCUS", value: span.optionTitle,
+                                  detail: focusDetail(span),
+                                  gauge: ReportBenchmarks.focusGauge(span: span)))
+        }
+        if let history = draft.quitHistory {
+            rows.append(ReportRow(label: "TRACK RECORD", value: history.optionTitle,
+                                  detail: trackRecordDetail(history)))
         }
         if let scroll = draft.scrollTime {
             rows.append(ReportRow(label: "POTENTIAL",
@@ -152,13 +174,63 @@ enum OnboardingCopy {
         return rows
     }
 
-    private static func reportWall(_ struggle: OnboardingAnswers.Struggle) -> String {
-        switch struggle {
-        case .startStrongThenQuit: return "You quit at week 2"
-        case .threeDaysMax: return "You quit at day 3"
-        case .cantEvenStart: return "You never start"
+    private static func morningValue(_ bracket: WakeBracket) -> String {
+        bracket == .beforeSix ? "Up before 6" : "Up at \(bracket.optionTitle.lowercased())"
+    }
+
+    // Gauge-section details sit in a ~60 % column next to the graph (batch #3):
+    // two short lines max, the visual carries the rest.
+    private static func morningDetail(_ bracket: WakeBracket) -> String {
+        switch bracket {
+        case .beforeSix: return "Up before the fight starts. Keep it."
+        case .sixToSeven: return "Solid base. The protocol locks it in."
+        case .sevenToNine: return "The day starts without you."
+        case .afterNine: return "The morning is gone. Day 1 takes it back."
         }
     }
+
+    private static func trainingValue(_ load: TrainingLoad) -> String {
+        "\(load.optionTitle) a week"
+    }
+
+    private static func trainingDetail(_ load: TrainingLoad) -> String {
+        switch load {
+        case .zero: return "Zero sessions. Daily reps fix that."
+        case .oneToTwo: return "Sometimes isn't a system. Daily is."
+        case .threeToFour: return "The habit exists. Make it unbreakable."
+        case .fivePlus: return "The body works. Lock the rest to its level."
+        }
+    }
+
+    private static func focusDetail(_ span: FocusSpan) -> String {
+        switch span {
+        case .underTen: return "The phone owns your attention. Take it back."
+        case .tenToThirty: return "Short leash. Daily reps stretch it."
+        case .thirtyToSixty: return "Real focus exists. Make it the default."
+        case .hourPlus: return "The focus is there. Aim it at your targets."
+        }
+    }
+
+    private static func trackRecordDetail(_ history: QuitHistory) -> String {
+        switch history {
+        case .firstTime: return "First real attempt. No scar tissue — build it right, once."
+        case .twoToThree: return "You've quit before. This time the OVR keeps the receipts."
+        case .lostCount: return "Quitting is a pattern. Patterns break under a visible score."
+        }
+    }
+
+    /// Accordion detail under THE FIGHT — his own answer folded open, then the
+    /// pivot to the protocol. Product mechanics, never an invented measurement (D4).
+    private static func fightDetail(_ pain: Pain) -> String {
+        switch pain {
+        case .doomscrolling: return "You named it yourself. Every rule points at the feed."
+        case .wakingUpEarly: return "You named it yourself. The protocol starts with your mornings."
+        case .trainingConsistently: return "You named it yourself. The protocol makes showing up daily."
+        case .reading: return "You named it yourself. The protocol books the time back."
+        case .stayingFocused: return "You named it yourself. The protocol trains focus daily."
+        }
+    }
+
 
     // MARK: - OB 11 — the recommendation (Romain 2026-07-16: 60 supersedes D3's 30)
 
@@ -198,17 +270,16 @@ enum OnboardingCopy {
 /// no "statistically" in front of a number that doesn't exist. What's left says
 /// the same thing without claiming a study.
 enum SocialProofCopy {
-    /// OB 15 — no rating line and no stars: both ARE a rating claim.
-    static let proofTitle = "Men like you,\nlocked in."
-
-    // PLACEHOLDER — real, consented tester quotes required before submit.
-    // See docs/ONBOARDING-PLAN.md §"Le point resté ouvert". Shipping invented
-    // quotes attributed to named people is not a copy choice, it's a claim.
-    static let testimonials: [(quote: String, author: String)] = [
-        ("Held 60 days for the first time in my life.", "— Ryan, 19 — OVR 71"),
-        ("Started at 41. OVR 91 today. Different person.", "— Marcus, 22 — Sensei"),
-        ("The character evolving is what kept me going.", "— Tom, 24 — OVR 84"),
-    ]
+    // OB 15 (batch #6) — the named testimonials are GONE, not pending: invented
+    // people with invented OVRs were an App Review exposure (2.3.1), not a
+    // placeholder. The honest cut is a blunt non-nominative stat + his own
+    // number turned back at him. Zero ratings, zero stars, zero first names,
+    // zero unverifiable "our users" claims.
+    static let heroLead = "MOST MEN\nARE DONE\nBY "
+    static let heroAccent = "DAY 4."
+    /// "…signed for 60." — the duration is HIS, injected by the screen.
+    static let counterLead = "You just signed for "
+    static let frameLine = "No community. No excuses. You against you."
 
     /// OB 18 — was "you are statistically dead by day 4" (no such statistic exists).
     static let reminderStake = "Without it, most men are done by day 4."

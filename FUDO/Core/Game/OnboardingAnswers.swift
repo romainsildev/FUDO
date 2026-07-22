@@ -22,12 +22,16 @@ struct OnboardingAnswers: Equatable {
     }
 
     enum Procrastination: CaseIterable {
-        case stoppedLyingToMyself, everyMonth, everyWeek
+        // "Every day" (tester batch #1, 2026-07-16) joins at the floor: 0 pt,
+        // same as everyWeek — the existing scale is untouched, the floor just
+        // gained a second, worse face.
+        case stoppedLyingToMyself, everyMonth, everyWeek, everyDay
         var points: Int {
             switch self {
             case .stoppedLyingToMyself: 2
             case .everyMonth: 1
             case .everyWeek: 0
+            case .everyDay: 0
             }
         }
     }

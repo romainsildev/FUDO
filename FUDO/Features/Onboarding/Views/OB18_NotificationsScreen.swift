@@ -48,13 +48,15 @@ struct NotificationsScreen: View {
             notificationPreview
                 .padding(.top, 40)
 
-            Text(wasDenied
-                 ? "You can turn it on later in Settings."
-                 : "iOS will ask for permission next.")
-                .fudoFont(.caption(13))
-                .foregroundStyle(FudoColor.textSecondary)
-                .padding(.top, 16)
-                .animation(AppAnimation.standard, value: wasDenied)
+            // Only the fallback line survives (batch #10): "iOS will ask next"
+            // just repeated what the CTA already says.
+            if wasDenied {
+                Text("You can turn it on later in Settings.")
+                    .fudoFont(.caption(13))
+                    .foregroundStyle(FudoColor.textSecondary)
+                    .padding(.top, 16)
+                    .transition(.opacity)
+            }
 
             Spacer(minLength: 0)
         }

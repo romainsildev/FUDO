@@ -271,6 +271,40 @@ struct OnboardingViewModelTests {
         #expect(store.activeChallenge?.startDate == store.effectiveToday, "day 1 is today (D2)")
     }
 
+    // MARK: - Kill-safety: the post-paywall trio resumes where he stopped
+
+    @Test func passingThePaywallRecordsTheTrioStartForResume() throws {
+        // The write side: once the paywall is passed, the trio's current step is
+        // persisted so a kill doesn't lose it.
+        let (viewModel, store, flags) = try makeViewModel()
+        answerTheQuiz(viewModel)
+        viewModel.jump(to: .contract)
+        viewModel.registerSignature()
+        viewModel.signContract()
+        viewModel.passPaywall()
+
+        #expect(flags.postPaywallStep == .notifications, "the trio's first step is remembered")
+        let resumed = OnboardingViewModel(store: store, flags: flags)
+        #expect(resumed.step == .notifications)
+    }
+
+    @Test func aKillOnTheWidgetScreenResumesOnTheWidgetScreen() throws {
+        // The read side: he reached OB 21, left to add the widget, the app was
+        // killed. A relaunch must land on OB 21 — not back at the top of the trio.
+        let (_, store, flags) = try makeViewModel()
+        flags.hasCompletedOnboarding = true
+        flags.postPaywallStep = .widgetPromo
+
+        let resumed = OnboardingViewModel(store: store, flags: flags)
+        #expect(resumed.step == .widgetPromo)
+    }
+
+    @Test func withoutARememberedStepTheTrioResumesAtItsStart() throws {
+        let (_, _, flags) = try makeViewModel()
+        flags.hasCompletedOnboarding = true   // no postPaywallStep written yet
+        #expect(flags.resumeStep == .notifications)
+    }
+
     @Test func committingTwiceCreatesOneChallenge() throws {
         // A background/foreground mid-loader replays the .task — it must not
         // start a second challenge.

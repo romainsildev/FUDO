@@ -30,6 +30,9 @@ final class OnboardingFlags {
         /// Deliberately OUTSIDE reset(): replaying the funnel in DEBUG must never
         /// ask the user for a review twice.
         static let reviewPrompted = "onboarding.reviewPrompted"
+        /// Furthest post-paywall trio step reached — so a kill on OB 21 (to add
+        /// the widget) resumes on OB 21, not back at the top of the trio.
+        static let postPaywallStep = "onboarding.postPaywallStep"
     }
 
     private let defaults: UserDefaults
@@ -57,6 +60,21 @@ final class OnboardingFlags {
         set { defaults.set(newValue, forKey: Key.reviewPrompted) }
     }
 
+    /// The last post-paywall trio step he was actually on. Written as the trio
+    /// advances (VM); read by `resumeStep`. nil until the trio starts.
+    var postPaywallStep: OnboardingStep? {
+        get {
+            guard defaults.object(forKey: Key.postPaywallStep) != nil,
+                  let step = OnboardingStep(rawValue: defaults.integer(forKey: Key.postPaywallStep))
+            else { return nil }
+            return step
+        }
+        set {
+            if let newValue { defaults.set(newValue.rawValue, forKey: Key.postPaywallStep) }
+            else { defaults.removeObject(forKey: Key.postPaywallStep) }
+        }
+    }
+
     var contract: ContractSnapshot? {
         get {
             guard let data = defaults.data(forKey: Key.contract) else { return nil }
@@ -76,7 +94,9 @@ final class OnboardingFlags {
 
     /// Where a relaunch re-enters the funnel.
     var resumeStep: OnboardingStep {
-        if hasCompletedOnboarding { return .notifications }   // paywall passed → the trio
+        // Paywall passed → resume exactly where he was in the trio (kill on OB 21
+        // to add the widget must land back on OB 21), else the trio's first step.
+        if hasCompletedOnboarding { return postPaywallStep ?? .notifications }
         if contract != nil { return .paywall }               // signed → straight to the paywall
         return .splash                                        // nothing committed → replay
     }
@@ -86,6 +106,7 @@ final class OnboardingFlags {
         hasCompletedOnboarding = true
         hasFinishedPostPaywall = true
         contract = nil
+        postPaywallStep = nil
     }
 
     /// Replays the whole funnel (DEBUG menu). `reviewPrompted` survives on purpose.
@@ -93,5 +114,6 @@ final class OnboardingFlags {
         defaults.removeObject(forKey: Key.completed)
         defaults.removeObject(forKey: Key.postPaywall)
         defaults.removeObject(forKey: Key.contract)
+        defaults.removeObject(forKey: Key.postPaywallStep)
     }
 }

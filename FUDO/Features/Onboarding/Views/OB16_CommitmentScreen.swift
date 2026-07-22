@@ -9,10 +9,15 @@ import SwiftUI
 /// the whole beat, and it belongs to this question alone.
 struct CommitmentScreen: View {
     @Binding var selection: OnboardingAnswers.Commitment?
+    /// The duration he chose at 11a — the "Change it now" nudge only appears if
+    /// he's on something longer than 30 and answers "A little".
+    var currentDurationDays: Int = 30
+    var onPickThirtyDays: () -> Void = {}
     let onAdvance: () -> Void
 
     @State private var revealed = false
     @State private var bonusShown: OnboardingAnswers.Commitment?
+    @State private var switchedToThirty = false
 
     private static let rowStagger: TimeInterval = 0.04
     private static let bonusLinger: TimeInterval = 1.2
@@ -34,9 +39,42 @@ struct CommitmentScreen: View {
                     .foregroundStyle(FudoColor.textSecondary)
                     .padding(.top, 8)
                     .opacity(revealed ? 1 : 0)
+
+                changeDurationNudge
+                    .animation(AppAnimation.standard, value: selection)
+                    .animation(AppAnimation.standard, value: switchedToThirty)
             }
         }
         .onAppear { revealed = true }
+    }
+
+    /// Under the "A little" hint: a discrete bright-red micro-CTA that drops the
+    /// draft's duration to 30 without leaving the screen. Shown only when he
+    /// picked longer than 30 AND answered "A little"; once tapped it becomes a
+    /// brief confirmation.
+    @ViewBuilder private var changeDurationNudge: some View {
+        if selection == .somewhat {
+            if switchedToThirty {
+                Label("Now 30 days.", systemImage: "checkmark")
+                    .fudoFont(.caption(12, weight: .semibold))
+                    .foregroundStyle(FudoColor.positive)
+                    .padding(.top, 6)
+                    .transition(.opacity)
+            } else if currentDurationDays != 30 {
+                Button {
+                    Haptics.light()
+                    onPickThirtyDays()
+                    withAnimation(AppAnimation.standard) { switchedToThirty = true }
+                } label: {
+                    Text("Change it now")
+                        .fudoFont(.caption(13, weight: .bold))
+                        .foregroundStyle(FudoColor.accentPressed)
+                        .padding(.top, 6)
+                }
+                .buttonStyle(.plain)
+                .transition(.opacity)
+            }
+        }
     }
 
     private func row(_ option: OnboardingAnswers.Commitment, index: Int) -> some View {

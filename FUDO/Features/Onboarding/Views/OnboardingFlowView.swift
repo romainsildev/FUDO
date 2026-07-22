@@ -180,6 +180,8 @@ struct OnboardingFlowView: View {
                         "Benchmarking your habits",
                         "Locating your weak spot",
                         "Compiling your report"],
+                hasStarted: viewModel.analysisStarted,
+                onStart: viewModel.markAnalysisStarted,
                 onAdvance: viewModel.advance)
         case .report:
             ReportScreen(rows: OnboardingCopy.reportRows(draft: viewModel.draft),
@@ -216,7 +218,10 @@ struct OnboardingFlowView: View {
         // MARK: Act 3 — engagement, contract, paywall
 
         case .commitment:
-            CommitmentScreen(selection: $viewModel.draft.commitment, onAdvance: viewModel.advance)
+            CommitmentScreen(selection: $viewModel.draft.commitment,
+                             currentDurationDays: viewModel.setup.durationDays,
+                             onPickThirtyDays: { viewModel.setup.selectDuration(days: 30) },
+                             onAdvance: viewModel.advance)
         case .contract:
             ContractScreen(startingOVR: viewModel.diagnosticOVR,
                            rank: viewModel.diagnosticRank,

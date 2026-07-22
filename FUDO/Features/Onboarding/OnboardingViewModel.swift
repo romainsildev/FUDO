@@ -42,6 +42,11 @@ final class OnboardingViewModel {
     /// poses the finished track cold, never replays the draw-in.
     private(set) var socialProofPlayed = false
 
+    /// OB 12's analysis no longer auto-starts (batch #10, Romain — perceived
+    /// consent): the user taps "Analyze my answers". This remembers he did, so a
+    /// re-render doesn't drop him back to the waiting state.
+    private(set) var analysisStarted = false
+
     init(store: GameStore, flags: OnboardingFlags = OnboardingFlags(),
          onFinished: @escaping () -> Void = {}) {
         self.store = store
@@ -82,7 +87,16 @@ final class OnboardingViewModel {
         Haptics.light()
         direction = .forward
         step = next
+        persistPostPaywallResume()
         releaseGuard()
+    }
+
+    /// Kill-safety: once the paywall is passed, remember the exact trio step so a
+    /// relaunch (e.g. he left to add the widget on OB 21) resumes right here and
+    /// not at the top of the trio.
+    private func persistPostPaywallResume() {
+        guard flags.hasCompletedOnboarding else { return }
+        flags.postPaywallStep = step
     }
 
     func back() {
@@ -175,6 +189,10 @@ final class OnboardingViewModel {
     // MARK: - OB 15 — the duel track
 
     func markSocialProofPlayed() { socialProofPlayed = true }
+
+    // MARK: - OB 12 — the analysis loader
+
+    func markAnalysisStarted() { analysisStarted = true }
 
     // MARK: - OB 11a
 

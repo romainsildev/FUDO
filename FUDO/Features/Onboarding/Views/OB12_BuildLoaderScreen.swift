@@ -12,7 +12,17 @@ import SwiftUI
 struct BuildLoaderScreen: View {
     let stats: [OnboardingCopy.LoaderStat]
     let steps: [String]
+    /// Batch #10: the analysis no longer auto-starts. `hasStarted` (from the VM)
+    /// is the one-shot memory — false shows the waiting state + CTA, true means
+    /// he already tapped (a re-render must not drop him back to waiting).
+    var hasStarted = false
+    var onStart: () -> Void = {}
     let onAdvance: () -> Void
+
+    /// waiting → he hasn't tapped; running → the theater plays; the pill appears
+    /// at the end of `finish()`.
+    private enum Phase { case waiting, running }
+    @State private var phase: Phase = .waiting
 
     // MARK: Timing (fill = OnboardingMetrics.buildLoaderDuration)
 
@@ -32,7 +42,7 @@ struct BuildLoaderScreen: View {
         (200, 126), (140, 134), (310, 122), (180, 142), (55, 132)
     ]
 
-    @State private var hasStarted = false
+    @State private var runBegan = false
     @State private var progress: Double = 0
     @State private var percent = 0
     @State private var stepStates: [BuildBullet.State]
@@ -52,9 +62,13 @@ struct BuildLoaderScreen: View {
         let radius: CGFloat
     }
 
-    init(stats: [OnboardingCopy.LoaderStat], steps: [String], onAdvance: @escaping () -> Void) {
+    init(stats: [OnboardingCopy.LoaderStat], steps: [String],
+         hasStarted: Bool = false, onStart: @escaping () -> Void = {},
+         onAdvance: @escaping () -> Void) {
         self.stats = stats
         self.steps = steps
+        self.hasStarted = hasStarted
+        self.onStart = onStart
         self.onAdvance = onAdvance
         _stepStates = State(initialValue: Array(repeating: .idle, count: steps.count))
     }
@@ -62,11 +76,11 @@ struct BuildLoaderScreen: View {
     var body: some View {
         VStack(spacing: 0) {
             Text("ANALYZING\nYOUR ANSWERS")
-                .fudoFont(.onboardingDisplay(40))
+                .fudoFont(.onboardingDisplay(48))
                 .foregroundStyle(FudoColor.textPrimary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 72)
+                .padding(.top, 52)
 
             Spacer(minLength: 0)
 
@@ -81,11 +95,44 @@ struct BuildLoaderScreen: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .opacity(phase == .waiting ? 0.4 : 1)
             .padding(.bottom, 48)
         }
         .padding(.horizontal, FudoSpacing.screenMargin)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .task { await run() }
+        // Consent gate (batch #10): the theater waits for HIS tap.
+        .safeAreaInset(edge: .bottom) {
+            if phase == .waiting { analyzeCTA }
+        }
+        .task { await bootstrap() }
+    }
+
+    /// The primary CTA that launches the analysis — the perceived-consent beat.
+    private var analyzeCTA: some View {
+        Button {
+            onStart()
+            phase = .running
+            Task { await run() }
+        } label: {
+            Text("Analyze my answers")
+                .fudoFont(.headline())
+                .foregroundStyle(FudoColor.textPrimary)
+                .frame(maxWidth: .infinity)
+                .frame(height: FudoSpacing.ctaHeight)
+                .background { Capsule().fill(FudoColor.accent) }
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, FudoSpacing.screenMargin)
+        .padding(.bottom, 12)
+    }
+
+    /// One-shot: if he already tapped (VM remembers), skip the waiting state and
+    /// run straight away rather than asking him to consent twice.
+    private func bootstrap() async {
+        if hasStarted {
+            phase = .running
+            await run()
+        }
     }
 
     // MARK: - The ring and its satellites
@@ -170,8 +217,8 @@ struct BuildLoaderScreen: View {
     // MARK: - Choreography
 
     private func run() async {
-        guard !hasStarted else { return }
-        hasStarted = true
+        guard !runBegan else { return }
+        runBegan = true
         stepStates[0] = .active
 
         async let percentDrive: Void = drivePercent()
@@ -352,6 +399,9 @@ private struct BuildBullet: View {
             .frame(width: 1, height: Self.connectorHeight)
     }
 
+    /// Subtle design-system markers (batch #10 — no toy checkmark): idle = hollow
+    /// border ring · active = accent ring · done = filled accent dot. The same
+    /// grammar as OB 19's step dots — one loader language.
     @ViewBuilder private var marker: some View {
         switch state {
         case .idle:
@@ -367,22 +417,19 @@ private struct BuildBullet: View {
     }
 }
 
-/// Vermillon-filled done marker with a cream check, spring pop on appear —
-/// mounted only on the idle/active → done transition.
+/// Vermillon-filled done dot, a quiet spring pop on appear — no checkmark
+/// (batch #10: the toy tick read as a child's sticker). Mounted only on the
+/// idle/active → done transition.
 private struct DoneMarker: View {
     @State private var scale: CGFloat = 0.4
 
     var body: some View {
-        ZStack {
-            Circle().fill(FudoColor.accent)
-            Image(systemName: "checkmark")
-                .fudoFont(.glyph(7, weight: .heavy))
-                .foregroundStyle(FudoColor.textPrimary)
-        }
-        .scaleEffect(scale)
-        .onAppear {
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) { scale = 1 }
-        }
+        Circle()
+            .fill(FudoColor.accent)
+            .scaleEffect(scale)
+            .onAppear {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) { scale = 1 }
+            }
     }
 }
 
@@ -406,7 +453,8 @@ private struct DotsCascade: View {
 }
 
 #if DEBUG
-#Preview("Analysis loader") {
+/// Waiting state (default): dim timeline + "Analyze my answers" CTA, no auto-start.
+#Preview("Analysis loader — waiting") {
     OnboardingPreviewChrome {
         BuildLoaderScreen(
             stats: OnboardingCopy.analysisLoaderStats(draft: .previewAnswered),
@@ -415,6 +463,19 @@ private struct DotsCascade: View {
                     "Measuring the damage",
                     "Compiling your report"],
             onAdvance: {})
+    }
+}
+
+/// Already-started (one-shot re-entry): runs straight through, no waiting CTA.
+#Preview("Analysis loader — running") {
+    OnboardingPreviewChrome {
+        BuildLoaderScreen(
+            stats: OnboardingCopy.analysisLoaderStats(draft: .previewAnswered),
+            steps: ["Reading your answers",
+                    "Locating your weak spot",
+                    "Measuring the damage",
+                    "Compiling your report"],
+            hasStarted: true, onStart: {}, onAdvance: {})
     }
 }
 #endif

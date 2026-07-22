@@ -39,10 +39,13 @@ struct WidgetPromoScreen: View {
 
                 stepsList
                     .padding(.top, FudoSpacing.sectionGap)
-
-                laterButton
-                    .padding(.top, 32)
             }
+        }
+        // "Later" sits directly under the primary CTA (batch #10): a second
+        // bottom inset stacks below the scaffold's own, not adrift mid-screen.
+        .safeAreaInset(edge: .bottom) {
+            laterButton
+                .padding(.bottom, 8)
         }
         .task { await runIntro() }
     }

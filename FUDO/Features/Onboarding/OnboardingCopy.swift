@@ -282,7 +282,6 @@ enum SocialProofCopy {
     /// Duel-track labels (batch #8): grey = the others, vermilion = him.
     static let trackAverageLabel = "MOST MEN"
     static func trackYouLabel(days: Int) -> String { "YOU — DAY \(days)" }
-    static let frameLine = "No community. No excuses. You against you."
 
     /// OB 18 — was "you are statistically dead by day 4" (no such statistic exists).
     static let reminderStake = "Without it, most men are done by day 4."

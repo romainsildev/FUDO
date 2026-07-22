@@ -55,16 +55,11 @@ struct SocialProofScreen: View {
                               grayDuration: Self.grayDraw, redDuration: Self.redDraw)
                     .padding(.top, 44)
 
+                // No caption below (Romain): hook + track + subline, nothing else.
                 counterpoint
                     .padding(.top, 36)
                     .opacity(footerVisible ? 1 : 0)
                     .offset(y: footerVisible ? 0 : 8)
-
-                Text(SocialProofCopy.frameLine)
-                    .fudoFont(.caption(13))
-                    .foregroundStyle(FudoColor.textSecondary.opacity(0.8))
-                    .padding(.top, 12)
-                    .opacity(footerVisible ? 1 : 0)
             }
         }
         .task { await run() }

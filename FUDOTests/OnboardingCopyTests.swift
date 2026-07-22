@@ -180,7 +180,7 @@ struct OnboardingCopyTests {
 
     @Test func theProofCopyClaimsNoMeasurementWeNeverMade() {
         let shipped = [SocialProofCopy.heroLead + SocialProofCopy.heroAccent,
-                       SocialProofCopy.counterLead, SocialProofCopy.frameLine,
+                       SocialProofCopy.counterLead,
                        SocialProofCopy.trackAverageLabel, SocialProofCopy.trackYouLabel(days: 60),
                        SocialProofCopy.reminderStake, SocialProofCopy.widgetStake]
         for line in shipped {

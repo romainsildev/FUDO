@@ -11,7 +11,7 @@ struct DebugMenuSection: View {
     @State private var pendingAction: DebugAction?
 
     private enum DebugAction: String, CaseIterable, Identifiable {
-        case wipeAndReseed, wipeBlank, replayOnboarding, completeChallenge, abandonChallenge
+        case wipeAndReseed, wipeBlank, replayOnboarding, triggerRankUp, completeChallenge, abandonChallenge
 
         var id: String { rawValue }
 
@@ -20,6 +20,7 @@ struct DebugMenuSection: View {
             case .wipeAndReseed: return "Wipe & reseed"
             case .wipeBlank: return "Wipe vierge"
             case .replayOnboarding: return "Replay onboarding"
+            case .triggerRankUp: return "Trigger rank-up"
             case .completeChallenge: return "Complete challenge"
             case .abandonChallenge: return "Abandon challenge"
             }
@@ -30,6 +31,7 @@ struct DebugMenuSection: View {
             case .wipeAndReseed: return "Erase everything, replay the day-12 seed."
             case .wipeBlank: return "Erase everything, stay blank (no auto-seed)."
             case .replayOnboarding: return "Erase everything INCLUDING the player, replay the funnel from OB 00."
+            case .triggerRankUp: return "Present the rank-up cover for the current rank."
             case .completeChallenge: return "End the active challenge as completed."
             case .abandonChallenge: return "Abandon with the normal penalty."
             }
@@ -38,7 +40,7 @@ struct DebugMenuSection: View {
         var needsActiveChallenge: Bool {
             switch self {
             case .completeChallenge, .abandonChallenge: return true
-            case .wipeAndReseed, .wipeBlank, .replayOnboarding: return false
+            case .wipeAndReseed, .wipeBlank, .replayOnboarding, .triggerRankUp: return false
             }
         }
     }
@@ -98,6 +100,7 @@ struct DebugMenuSection: View {
             // RootView only re-routes on scene-active; flipping the flag it watches
             // raises the cover now, instead of making you background the app.
             appState.hasCompletedOnboarding = false
+        case .triggerRankUp: store.debugTriggerRankUp()
         case .completeChallenge: store.debugCompleteActiveChallenge()
         case .abandonChallenge: store.abandonChallenge()
         }

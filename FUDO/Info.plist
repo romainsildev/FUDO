@@ -6,5 +6,7 @@
 	<array>
 		<string>BebasNeue-Regular.ttf</string>
 	</array>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>FUDO saves your share card to your photo library.</string>
 </dict>
 </plist>

@@ -493,6 +493,17 @@ extension GameStore {
         player.lastDayClosedAt = now   // idle clock for decay starts now
         save()
     }
+
+    /// Poses a REAL `pendingRankUp` on demand so the rank-up cover can be tested on
+    /// device. The high-water mark fires the cover ONCE per rank (a reseed crosses
+    /// ranks on a throwaway seed store, so it never re-triggers on the app store) —
+    /// this is the only on-demand path. Non-destructive: uses the current rank so
+    /// the cover's OVR line stays consistent, and leaves the persisted OVR and the
+    /// mark untouched. `private(set) var pendingRankUp` can only be set here.
+    func debugTriggerRankUp() {
+        guard let player else { return }
+        pendingRankUp = player.rank
+    }
     // `wipeAll` now lives on the main class (shared with the production erase).
 }
 #endif

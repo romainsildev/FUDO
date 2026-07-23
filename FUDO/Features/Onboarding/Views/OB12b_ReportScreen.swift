@@ -1,32 +1,32 @@
 import SwiftUI
 
-/// The REPORT, document cut (design pass 2026-07-22 — Whoop hero figures, Noom
-/// restated answers, Typeform skeleton). The accordion and its single card are
-/// GONE: this is one continuous scrollable document — header, then full-width
-/// sections stacked, then a closing verdict, then the CTA. The CTA does not
-/// exist on screen until he has scrolled to the end: the report must be READ,
-/// not skipped.
+/// The REPORT, gamified cut (design pass 2026-07-23 — Romain: soft, round,
+/// finished, low mental load; the clinical document is gone). Three storeys:
 ///
-/// Each section: eyebrow → his own answer restated ("You said: …", the proof
-/// of computation) → a HERO figure (counts up as it scrolls in) → the viz at
-/// full section width → verdict tag → one line of prescription. Sections
-/// reveal on scroll-in (LazyVStack: `onAppear` fires at viewport entry), never
-/// in one global pass.
+///  1. HERO — the sensei hands him the report: the master centered in a
+///     vermilion ring that draws itself in, warm aura behind, then two lines —
+///     his stated fight and the honest verdict count.
+///  2. GRID — 2×2 soft glass cards, one per benchmarked domain. Each card:
+///     label, his own answer as the hero figure (the proof of computation),
+///     one rail (red dot = him, grey tick = average, green tick = target),
+///     and a ▲/▼ corner badge. One shape per card, nothing else to read.
+///  3. CLOSING — potential curve + his track record's pivot line, then the
+///     CTA. The CTA exists nowhere else: reaching it means the report was read.
 ///
 /// Colour grammar (never inverted): red = him today, grey = the average guy,
 /// green = the protocol's target, vermilion = the product speaking. Every
 /// benchmark comes from `ReportBenchmarks` (honesty guard); the OVR is
-/// deliberately NOT here — the CTA walks into the reveal.
+/// deliberately NOT here — the reveal is the next screen.
 struct ReportScreen: View {
     let rows: [OnboardingCopy.ReportRow]
     let onAdvance: () -> Void
 
-    private let sections: [ReportSection]
+    private let summary: ReportSummary
 
     init(rows: [OnboardingCopy.ReportRow], onAdvance: @escaping () -> Void) {
         self.rows = rows
         self.onAdvance = onAdvance
-        self.sections = ReportSection.sections(from: rows)
+        self.summary = ReportSummary.summary(from: rows)
     }
 
     var body: some View {
@@ -39,18 +39,16 @@ struct ReportScreen: View {
             ScrollView(showsIndicators: false) {
                 // Lazy on purpose: a block's onAppear IS its scroll-in trigger.
                 LazyVStack(alignment: .leading, spacing: 0) {
-                    header
-                        .padding(.top, 24)
-                        .padding(.bottom, 12)
+                    ReportHeroBlock(summary: summary, answerCount: rows.count)
+                        .padding(.top, 12)
 
-                    ForEach(sections) { section in
-                        sectionDivider
-                        ReportSectionBlock(section: section,
-                                           saidLine: saidLine(for: section))
+                    if !summary.cards.isEmpty {
+                        ReportCardGrid(cards: summary.cards)
+                            .padding(.top, 28)
                     }
 
-                    sectionDivider
-                    ReportClosingBlock(sections: sections, onAdvance: onAdvance)
+                    ReportClosingBlock(summary: summary, onAdvance: onAdvance)
+                        .padding(.top, 36)
                         .padding(.bottom, 24)
                 }
             }
@@ -59,240 +57,222 @@ struct ReportScreen: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(FudoColor.bgPrimary.ignoresSafeArea())
     }
+}
 
-    // MARK: - Header (scrolls away with the content — no space wasted up top)
+// MARK: - Metrics
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
+private enum ReportMetrics {
+    static let ringDiameter: CGFloat = 190
+    static let senseiHeight: CGFloat = 176
+    static let ringDraw: TimeInterval = 0.6
+    /// Cascade step between the grid's cards.
+    static let cardStagger: TimeInterval = 0.07
+    static let gridSpacing: CGFloat = 12
+}
+
+// MARK: - Hero
+
+/// Title, then the sensei in his ring, then the two lines. One entrance
+/// choreography: ring draws in → light haptic → lines rise, staggered.
+private struct ReportHeroBlock: View {
+    let summary: ReportSummary
+    let answerCount: Int
+
+    @State private var ringProgress: CGFloat = 0
+    @State private var senseiVisible = false
+    @State private var linesVisible = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
             Text("YOUR REPORT")
                 .fudoFont(.onboardingDisplay(44))
                 .foregroundStyle(FudoColor.textPrimary)
 
-            // Honest methodology, one line: his answers, today's date, nothing else.
-            Text("\(OnboardingCopy.longDate(.now)) · Computed from your \(rows.count) answers. Nothing invented.")
+            Text("Computed from your \(answerCount) answers. Nothing invented.")
                 .fudoFont(.caption(12))
                 .foregroundStyle(FudoColor.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 6)
+
+            stage
+                .frame(maxWidth: .infinity)
+                .padding(.top, 20)
+
+            heroLines
+                .padding(.top, 18)
         }
+        .task { await run() }
     }
 
-    private var sectionDivider: some View {
-        Rectangle()
-            .fill(FudoColor.border)
-            .frame(height: 1)
+    /// Sensei centered in the day-ring recipe (aura + track + vermilion arc) —
+    /// the Home stage's grammar, sized for a document header.
+    private var stage: some View {
+        ZStack {
+            RadialGradient(colors: [FudoColor.accent.opacity(senseiVisible ? 0.14 : 0), .clear],
+                           center: .center, startRadius: 16,
+                           endRadius: ReportMetrics.ringDiameter * 0.65)
+                .animation(AppAnimation.slow, value: senseiVisible)
+
+            Circle()
+                .stroke(FudoColor.border, lineWidth: FudoSpacing.ringWidth)
+                .frame(width: ReportMetrics.ringDiameter, height: ReportMetrics.ringDiameter)
+
+            Circle()
+                .trim(from: 0, to: ringProgress)
+                .stroke(FudoColor.accent,
+                        style: StrokeStyle(lineWidth: FudoSpacing.ringWidth, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .frame(width: ReportMetrics.ringDiameter, height: ReportMetrics.ringDiameter)
+
+            SenseiAssetProvider.image(for: .sensei)
+                .resizable()
+                .scaledToFit()
+                .frame(height: ReportMetrics.senseiHeight)
+                .opacity(senseiVisible ? 1 : 0)
+                .scaleEffect(senseiVisible ? 1 : 0.94)
+                .animation(AppAnimation.slow, value: senseiVisible)
+        }
+        .frame(height: ReportMetrics.ringDiameter + 8)
     }
 
-    /// "You said: …" — the Noom move: restate the answer the numbers were
-    /// computed from. Only on benchmarked sections, and only when the hero
-    /// figure isn't already the same words (a hero repeating its own proof line
-    /// reads as padding, not proof).
-    private func saidLine(for section: ReportSection) -> String? {
-        guard section.heroIsDerived else { return nil }
-        return "You said: \(section.value.lowercased())"
+    private var heroLines: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let fight = summary.fight {
+                (Text("Your fight: ").foregroundStyle(FudoColor.textSecondary)
+                    + Text(fight).foregroundStyle(FudoColor.textPrimary))
+                    .fudoFont(.body(15, weight: .semibold))
+            }
+
+            Text(summary.verdictLine)
+                .fudoFont(.title(20, weight: .bold))
+                .foregroundStyle(FudoColor.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .opacity(linesVisible ? 1 : 0)
+        .offset(y: linesVisible ? 0 : 12)
+    }
+
+    private func run() async {
+        senseiVisible = true
+        withAnimation(.easeOut(duration: ReportMetrics.ringDraw)) { ringProgress = 1 }
+        try? await Task.sleep(for: .seconds(ReportMetrics.ringDraw))
+        guard !Task.isCancelled else { return }
+        Haptics.light()
+        withAnimation(AppAnimation.standard) { linesVisible = true }
     }
 }
 
-// MARK: - Section block
+// MARK: - Card grid
 
-/// One full-width section of the document. Owns its scroll-in state: reveal
-/// (opacity + rise) fires on `onAppear` — inside a LazyVStack that means
-/// viewport entry, and the viz components animate on their own appearance.
-private struct ReportSectionBlock: View {
-    let section: ReportSection
-    let saidLine: String?
+/// 2×2 soft cards, cascading in on scroll-entry.
+private struct ReportCardGrid: View {
+    let cards: [ReportSummary.Card]
 
     @State private var appeared = false
 
+    private let columns = [
+        GridItem(.flexible(), spacing: ReportMetrics.gridSpacing),
+        GridItem(.flexible(), spacing: ReportMetrics.gridSpacing),
+    ]
+
+    var body: some View {
+        LazyVGrid(columns: columns, spacing: ReportMetrics.gridSpacing) {
+            ForEach(Array(cards.enumerated()), id: \.element.id) { index, card in
+                ReportDomainCard(card: card)
+                    .opacity(appeared ? 1 : 0)
+                    .offset(y: appeared ? 0 : 14)
+                    .animation(AppAnimation.standard
+                        .delay(Double(index) * ReportMetrics.cardStagger),
+                               value: appeared)
+            }
+        }
+        .onAppear { appeared = true }
+    }
+}
+
+/// One domain: label, his value, the rail, a corner verdict badge. His value
+/// IS the restated answer — the proof the rail was computed from him.
+private struct ReportDomainCard: View {
+    let card: ReportSummary.Card
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Eyebrow — badge + tracked label.
-            HStack(spacing: 8) {
-                Image(systemName: section.icon)
-                    .fudoFont(.glyph(13))
+            HStack(spacing: 6) {
+                Image(systemName: card.icon)
+                    .fudoFont(.glyph(11))
                     .foregroundStyle(FudoColor.accent)
-                Text(section.label)
-                    .fudoFont(.label(11, weight: .semibold))
-                    .kerning(1.5)
+                Text(card.label)
+                    .fudoFont(.label(9, weight: .semibold))
+                    .kerning(1.2)
                     .foregroundStyle(FudoColor.textSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
 
-            if let saidLine {
-                Text(saidLine)
-                    .fudoFont(.caption(13))
-                    .foregroundStyle(FudoColor.textSecondary)
-                    .padding(.top, 10)
-            }
-
-            // The hero figure — the section's one big number (or word).
-            ReportHeroText(value: section.heroValue, play: appeared)
-                .padding(.top, saidLine == nil ? 12 : 6)
-
-            verdictTag(section.verdict)
+            Text(card.value)
+                .fudoFont(.stat(19))
+                .foregroundStyle(FudoColor.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.55)
                 .padding(.top, 10)
 
-            if let viz = section.viz {
-                vizView(viz)
-                    .padding(.top, 16)
-            }
-
-            if let detail = section.detail {
-                Text(detail)
-                    .fudoFont(.caption(13))
-                    .foregroundStyle(FudoColor.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 14)
-            }
+            ReportDialView(gauge: card.gauge)
+                .padding(.top, 10)
         }
-        .padding(.vertical, 24)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .opacity(appeared ? 1 : 0)
-        .offset(y: appeared ? 0 : 16)
-        .onAppear {
-            withAnimation(.easeOut(duration: 0.5)) { appeared = true }
-        }
+        .background { FudoGlassCard() }
+        .overlay(alignment: .topTrailing) { badge.padding(9) }
     }
 
-    private func verdictTag(_ verdict: ReportSection.Verdict) -> some View {
-        let color = toneColor(verdict.tone)
-        return HStack(spacing: 4) {
-            if let beats = verdict.beatsAverage {
-                Image(systemName: beats ? "arrow.up" : "arrow.down")
-                    .fudoFont(.glyph(8, weight: .bold))
-            }
-            Text(verdict.text)
-                .fudoFont(.label(10, weight: .bold))
-                .kerning(1.2)
-        }
-        .foregroundStyle(color)
-        .padding(.horizontal, 7)
-        .padding(.vertical, 3)
-        .background {
-            Capsule().fill(color.opacity(0.12))
-        }
-    }
-
-    private func toneColor(_ tone: ReportSection.Tone) -> Color {
-        switch tone {
-        case .good: return FudoColor.positive
-        case .bad: return FudoColor.negative
-        case .accent: return FudoColor.accent
-        case .neutral: return FudoColor.textSecondary
-        }
-    }
-
-    /// Full section width for every viz — the 104 pt thumbnail era is over.
-    /// GeometryReader-based ones (dial rail, curve) get explicit heights.
-    @ViewBuilder private func vizView(_ viz: ReportSection.Viz) -> some View {
-        switch viz {
-        case let .bars(gauge):
-            ReportGaugeView(gauge: gauge)
-        case let .dial(gauge):
-            ReportDialView(gauge: gauge)
-        case let .weekDots(filled, target):
-            ReportDotsView(mode: .week(filled: filled, target: target))
-        case .streakDots:
-            ReportDotsView(mode: .streak)
-        case .curve:
-            ReportCurveView()
-                .frame(height: 72)
-        }
+    /// ▲/▼, instant read — the arrow carries the green/red (palette rule).
+    private var badge: some View {
+        let color = card.beatsAverage ? FudoColor.positive : FudoColor.negative
+        return Image(systemName: card.beatsAverage ? "arrow.up" : "arrow.down")
+            .fudoFont(.glyph(8, weight: .bold))
+            .foregroundStyle(color)
+            .frame(width: 18, height: 18)
+            .background { Circle().fill(color.opacity(0.14)) }
     }
 }
 
-// MARK: - Hero figure
+// MARK: - Closing + CTA
 
-/// The section's big number. When the value opens on digits it COUNTS UP on
-/// scroll-in (monospaced stat face, the suffix preserved through the format
-/// closure — one spelling in flight and at rest); a word hero just lands with
-/// the block's reveal.
-private struct ReportHeroText: View {
-    let value: String
-    let play: Bool
-
-    @State private var counted: Double = 0
-
-    /// Leading number split: prefix symbols (~, ≈), the numeric part, the rest.
-    private var numeric: (target: Double, decimals: Bool, prefix: String, suffix: String)? {
-        var prefix = ""
-        var rest = Substring(value)
-        while let first = rest.first, "~≈".contains(first) {
-            prefix.append(first)
-            rest = rest.dropFirst()
-        }
-        let digits = rest.prefix { $0.isNumber || $0 == "." }
-        guard let target = Double(digits), !digits.isEmpty else { return nil }
-        return (target, digits.contains("."), prefix, String(rest.dropFirst(digits.count)))
-    }
-
-    var body: some View {
-        if let numeric {
-            CountUpText(value: counted) { current in
-                let clamped = max(0, current)
-                let figure = numeric.decimals
-                    ? "\((clamped * 10).rounded() / 10)"
-                    : "\(Int(clamped.rounded()))"
-                return numeric.prefix + figure + numeric.suffix
-            }
-            .fudoFont(.stat(44))
-            .foregroundStyle(FudoColor.textPrimary)
-            .lineLimit(1)
-            .minimumScaleFactor(0.6)
-            .onChange(of: play, initial: true) { _, playing in
-                guard playing else { return }
-                withAnimation(.easeOut(duration: 0.8)) { counted = numeric.target }
-            }
-        } else {
-            Text(value)
-                .fudoFont(.title(34, weight: .bold))
-                .foregroundStyle(FudoColor.textPrimary)
-                .lineLimit(2)
-                .minimumScaleFactor(0.6)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-}
-
-// MARK: - Closing verdict + CTA
-
-/// The end of the document: one synthesis line computed from his own verdict
-/// tags (nothing new is claimed), then the CTA slides in — it exists nowhere
-/// else on the screen, so reaching it means the report was read.
+/// The ramp to the reveal: the potential curve rising off the average's flat
+/// line, his own numbers as the promise, his own history as the pivot — then
+/// the CTA slides in. Nothing here is a new claim.
 private struct ReportClosingBlock: View {
-    let sections: [ReportSection]
+    let summary: ReportSummary
     let onAdvance: () -> Void
 
     @State private var appeared = false
 
-    private var benchmarked: [ReportSection] {
-        sections.filter { $0.verdict.beatsAverage != nil }
-    }
-    private var deficits: Int {
-        benchmarked.filter { $0.verdict.beatsAverage == false }.count
-    }
-
-    private var verdictLine: String {
-        if benchmarked.isEmpty {
-            return "The protocol turns what you told us into a daily score."
-        }
-        if deficits == 0 {
-            return "Above the average man on every benchmark. The protocol turns that into rank."
-        }
-        let plural = deficits == 1 ? "benchmark" : "benchmarks"
-        return "\(deficits) of \(benchmarked.count) \(plural) below the average man. The protocol attacks every one from day 1."
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("THE VERDICT")
+            Text("POTENTIAL")
                 .fudoFont(.label(11, weight: .semibold))
                 .kerning(1.5)
                 .foregroundStyle(FudoColor.textSecondary)
 
-            Text(verdictLine)
-                .fudoFont(.title(22, weight: .bold))
-                .foregroundStyle(FudoColor.textPrimary)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 12)
+            ReportCurveView()
+                .frame(height: 64)
+                .padding(.top, 14)
+
+            if let potential = summary.potentialLine {
+                Text("\(potential).")
+                    .fudoFont(.title(20, weight: .bold))
+                    .foregroundStyle(FudoColor.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 16)
+            }
+
+            if let trackRecord = summary.trackRecordLine {
+                Text(trackRecord)
+                    .fudoFont(.caption(13))
+                    .foregroundStyle(FudoColor.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 8)
+            }
 
             Button(action: onAdvance) {
                 Text("See what you can become")
@@ -303,69 +283,36 @@ private struct ReportClosingBlock: View {
                     .background { Capsule().fill(FudoColor.accent) }
             }
             .buttonStyle(.plain)
-            .padding(.top, 28)
+            .padding(.top, 26)
         }
-        .padding(.top, 24)
         .frame(maxWidth: .infinity, alignment: .leading)
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 20)
         .onAppear {
-            withAnimation(.easeOut(duration: 0.5)) { appeared = true }
-        }
-    }
-}
-
-// MARK: - Hero derivation
-
-extension ReportSection {
-    /// Benchmarked sections carry a derived hero (the gauge's own YOU value —
-    /// "5 h", "8 min"); qualitative ones ARE their own hero (the answer).
-    var heroIsDerived: Bool {
-        if let viz {
-            switch viz {
-            case .bars, .dial: return true
-            // TRAINING's hero stays his answer (the dots carry the numbers) —
-            // a derived hero here would just repeat the said line.
-            case .weekDots, .streakDots, .curve: return false
-            }
-        }
-        return false
-    }
-
-    /// What the big figure prints: the gauge's YOU value where one exists
-    /// (the number his bars are drawn from — one source), else the answer.
-    var heroValue: String {
-        guard heroIsDerived, let viz else { return value }
-        switch viz {
-        case let .bars(gauge), let .dial(gauge):
-            return gauge.you.valueLabel
-        case .weekDots:
-            return value
-        case .streakDots, .curve:
-            return value
+            withAnimation(AppAnimation.standard) { appeared = true }
         }
     }
 }
 
 #if DEBUG
-#Preview("Report document — full draft") {
+#Preview("Report — full draft") {
     OnboardingPreviewChrome {
         ReportScreen(rows: OnboardingCopy.reportRows(draft: .previewAnswered), onAdvance: {})
     }
 }
 
-/// The heaviest profile — longest lines, worst gauges, red tags everywhere,
-/// the closing verdict at its bluntest. Scroll to the very end in the canvas:
-/// the CTA must not exist before the last section.
-#Preview("Report document — heavy profile") {
+/// The heaviest profile — every badge down, the verdict at its bluntest.
+/// Scroll to the very end in the canvas: the CTA must not exist before the
+/// closing block.
+#Preview("Report — heavy profile") {
     OnboardingPreviewChrome {
         ReportScreen(rows: OnboardingCopy.reportRows(draft: .previewHeavy), onAdvance: {})
     }
 }
 
-/// The disciplined case — YOU legitimately beats AVERAGE: green tags up,
-/// honest bars, the flattering verdict he actually earned.
-#Preview("Report document — light profile") {
+/// The disciplined case — YOU legitimately beats AVERAGE: badges up, the
+/// flattering verdict he actually earned.
+#Preview("Report — light profile") {
     OnboardingPreviewChrome {
         ReportScreen(rows: OnboardingCopy.reportRows(draft: .previewLight), onAdvance: {})
     }

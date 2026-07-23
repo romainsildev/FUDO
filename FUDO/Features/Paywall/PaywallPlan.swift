@@ -72,13 +72,14 @@ struct PaywallPlan: Identifiable, Equatable {
 extension PaywallPlan {
     /// Device/canvas stand-ins while the sandbox is blocked (no banking
     /// agreement = StoreKit resolves nothing). Prices mirror the live RC
-    /// dashboard config (fudo_weekly_599 / fudo_annual_4399).
+    /// dashboard config (fudo_weekly_599 / fudo_annual_4399 at $44.99), and
+    /// BOTH plans carry the 3-day trial (Romain, conflit #25 — ASC updated).
     static let mockWeekly = PaywallPlan(
         kind: .weekly, price: "$5.99", rawPrice: Decimal(string: "5.99") ?? 5.99,
         trialDays: 3, perMonthPrice: nil)
     static let mockAnnual = PaywallPlan(
-        kind: .annual, price: "$43.99", rawPrice: Decimal(string: "43.99") ?? 43.99,
-        trialDays: nil, perMonthPrice: "$3.67")
+        kind: .annual, price: "$44.99", rawPrice: Decimal(string: "44.99") ?? 44.99,
+        trialDays: 3, perMonthPrice: "$3.75")
 
     /// Same plan, trial promise removed — what an intro-ineligible user sees.
     /// Mirrors the real gate in `EntitlementStore.trialEligibleIDs`.

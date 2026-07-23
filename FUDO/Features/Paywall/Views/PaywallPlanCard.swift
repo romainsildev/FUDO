@@ -59,13 +59,19 @@ struct PaywallPlanCard: View {
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
-    /// "FREE for 3 days" carries the trial card; the annual talks per-month.
+    /// "FREE for 3 days" carries any trial plan; the annual stacks its monthly
+    /// equivalent underneath (both emitted into the parent VStack).
     @ViewBuilder
     private var subtitleView: some View {
         if let trialDays = plan.trialDays {
             Text("FREE for \(trialDays) days")
                 .fudoFont(.body(14, weight: .semibold))
                 .foregroundStyle(FudoColor.textPrimary)
+            if let perMonth = plan.perMonthPrice {
+                Text("\(perMonth) per month")
+                    .fudoFont(.caption())
+                    .foregroundStyle(FudoColor.textSecondary)
+            }
         } else if let perMonth = plan.perMonthPrice {
             Text("\(perMonth) per month")
                 .fudoFont(.caption())

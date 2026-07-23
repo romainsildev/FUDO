@@ -118,7 +118,7 @@ struct PaywallScreen: View {
                         plan: plan,
                         isSelected: viewModel.selectedKind == plan.kind,
                         badgeText: badgeText(for: plan),
-                        badgeStyle: plan.trialDays != nil ? .trial : .savings,
+                        badgeStyle: plan.kind == .annual ? .savings : .trial,
                         action: { viewModel.select(plan.kind) })
                 }
                 Text(PricingCopy.hook)
@@ -131,12 +131,16 @@ struct PaywallScreen: View {
         }
     }
 
-    /// Trial plan → "3 DAYS FREE" (vermillon, the hook) · annual → computed
-    /// "SAVE 86%" (green, the recommendation). Never both on one card.
+    /// ONE corner badge per card, never two fighting (trial lives on BOTH plans
+    /// since conflit #25, so it no longer differentiates): the annual's corner
+    /// carries its headline argument — the computed "SAVE 86%" — while its trial
+    /// speaks through the subtitle, the timeline, the CTA and the recap. The
+    /// weekly keeps the vermillon trial hook.
     private func badgeText(for plan: PaywallPlan) -> String? {
-        if let trialDays = plan.trialDays { return "\(trialDays) DAYS FREE" }
-        if plan.kind == .annual { return viewModel.savingsPercent.map { "SAVE \($0)%" } }
-        return nil
+        if plan.kind == .annual {
+            return viewModel.savingsPercent.map { "SAVE \($0)%" }
+        }
+        return plan.trialDays.map { "\($0) DAYS FREE" }
     }
 
     /// Offline / store failure — message + Retry, never a dead end (2.1).

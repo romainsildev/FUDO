@@ -7,11 +7,11 @@ struct PaywallPlanTests {
     // MARK: - Savings badge (computed, never hardcoded — D4)
 
     @Test func savingsMatchTheLiveDashboardPrices() {
-        // fudo_weekly_599 ($5.99) vs fudo_annual_4399 ($43.99):
+        // fudo_weekly_599 ($5.99) vs fudo_annual_4399 ($44.99):
         // 52 weeks = $311.48 → annual is ~14% of that → SAVE 86%.
         let percent = PaywallPlan.savingsPercent(
             weekly: Decimal(string: "5.99") ?? 0,
-            annual: Decimal(string: "43.99") ?? 0)
+            annual: Decimal(string: "44.99") ?? 0)
         #expect(percent == 86)
     }
 
@@ -36,21 +36,24 @@ struct PaywallPlanTests {
     // MARK: - CTA copy (plan-driven, honest)
 
     @Test func trialPlanDrivesTheTrialCTA() {
+        // Both plans carry the 3-day trial since conflit #25.
         #expect(PaywallPlan.mockWeekly.ctaTitle == "Start my 3-day free trial")
+        #expect(PaywallPlan.mockAnnual.ctaTitle == "Start my 3-day free trial")
     }
 
     @Test func planWithoutTrialFallsBackToContinue() {
-        #expect(PaywallPlan.mockAnnual.ctaTitle == "Continue")
+        #expect(PaywallPlan.mockAnnual.strippingTrial().ctaTitle == "Continue")
     }
 
     // MARK: - Price recap + renewal notice (full price + auto-renew, pre-purchase)
 
     @Test func recapCarriesTrialThenPrice() {
         #expect(PaywallPlan.mockWeekly.priceRecapLine == "3 days free, then $5.99/week")
+        #expect(PaywallPlan.mockAnnual.priceRecapLine == "3 days free, then $44.99/year")
     }
 
     @Test func recapWithoutTrialBillsToday() {
-        #expect(PaywallPlan.mockAnnual.priceRecapLine == "$43.99/year, billed today")
+        #expect(PaywallPlan.mockAnnual.strippingTrial().priceRecapLine == "$44.99/year, billed today")
     }
 
     @Test func renewalNoticeNamesAutoRenewAndCancel() {

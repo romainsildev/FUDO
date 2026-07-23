@@ -54,12 +54,12 @@ final class SettingsViewModel {
 
     // MARK: - Reminder time (§DÉFI)
 
-    /// Persist the new reminder time, then reschedule if the daily switch is on.
+    /// Persist the new reminder time. `setReminderMinutes` saves → the store's single
+    /// mutation seam recomputes the whole conditional set (daily/evening/streak) on
+    /// the new time — no direct schedule call here.
     func updateReminderMinutes(_ minutes: Int) {
         reminderMinutes = minutes
         store.setReminderMinutes(minutes)
-        guard dailyReminderEnabled else { return }
-        Task { await NotificationService.scheduleDailyReminder(atMinutes: minutes) }
     }
 
     // MARK: - Notification switches (§NOTIFICATIONS)
@@ -72,14 +72,23 @@ final class SettingsViewModel {
         }
         prefs.setEnabled(enabled, for: category)
 
-        // Only the daily reminder schedules anything today. Turning it on must
-        // actually ask for permission and queue a request (the RiteOff lesson:
-        // "Allow" that scheduled nothing) — turning it off cancels it.
-        guard category == .dailyReminder else { return }
-        if enabled {
-            Task { await enableDailyReminder() }
-        } else {
-            NotificationService.cancelDailyReminder()
+        switch category {
+        case .dailyReminder:
+            // Turning it ON must actually ask for permission (RiteOff lesson: an
+            // "Allow" that scheduled nothing). OFF just recomputes — the planner
+            // drops the daily now that its switch reads false.
+            if enabled {
+                Task { await enableDailyReminder() }
+            } else {
+                NotificationService.recompute(from: store)
+            }
+        case .eveningReminders:
+            // Gates evening + streak-danger — recompute picks up the new value.
+            NotificationService.recompute(from: store)
+        case .rankCelebrations:
+            // Gates ONLY the immediate rank-up notification (self-checked at the
+            // gain moment). Nothing scheduled ahead, so nothing to recompute.
+            break
         }
     }
 
@@ -91,9 +100,10 @@ final class SettingsViewModel {
             // Denied → the switch cannot honestly stay on. Reflect the real state.
             dailyReminderEnabled = false
             prefs.setEnabled(false, for: .dailyReminder)
+            NotificationService.recompute(from: store)
             return
         }
-        await NotificationService.scheduleDailyReminder(atMinutes: reminderMinutes)
+        NotificationService.recompute(from: store)
     }
 
     // MARK: - Subscription (§SUBSCRIPTION)

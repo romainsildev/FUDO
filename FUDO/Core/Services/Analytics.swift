@@ -106,6 +106,10 @@ enum AnalyticsEvent {
 
     // Widget (P7) — fired from the app on foreground when the installed families change.
     static let widgetDetected = "widget_detected"
+
+    // Notifications (S9) — fired in the UNUserNotificationCenter delegate on tap,
+    // before routing the deep link. Property: {id} = the notification's stable slug.
+    static let notificationTapped = "notification_tapped"
 }
 
 /// Anonymizes a habit into a stable slug for `habit_detail_viewed` (plan §1.8):

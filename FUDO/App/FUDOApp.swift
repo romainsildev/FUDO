@@ -5,6 +5,9 @@ import UIKit
 
 @main
 struct FUDOApp: App {
+    // The notification delegate lives in UIKit (SwiftUI can't own it); it forwards
+    // taps into NotificationRouter for RootView to present.
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     private let container: ModelContainer?
     @State private var gameStore: GameStore?
     @State private var entitlementStore: EntitlementStore?
@@ -65,6 +68,7 @@ struct FUDOApp: App {
                 RootView()
                     .environment(gameStore)
                     .environment(entitlementStore)
+                    .environment(NotificationRouter.shared)
                     .modelContainer(container)
             } else {
                 Color.clear   // test-host shell — never visible outside unit-test sessions

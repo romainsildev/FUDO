@@ -160,7 +160,7 @@ final class PaywallViewModel {
             purchaseState = .purchasing
             try? await Task.sleep(for: .seconds(0.9))
             entitlements?.debugProOverride = true
-            finishUnlocked()
+            finishUnlocked(trialDays: plan.trialDays)
             return
         }
         #endif
@@ -169,7 +169,7 @@ final class PaywallViewModel {
         switch await entitlements.purchase(plan) {
         case .success:
             trackPurchaseSuccess(plan)
-            finishUnlocked()
+            finishUnlocked(trialDays: plan.trialDays)
         case .cancelled:
             // He stayed on the fence — no guilt copy, no error, back to idle.
             Analytics.track(AnalyticsEvent.purchaseFailed,
@@ -212,12 +212,14 @@ final class PaywallViewModel {
         }
     }
 
-    private func finishUnlocked() {
+    /// A trial purchase queues the D-1 "before you're billed" reminder (the paywall's
+    /// promise); a direct purchase and a restore pass `nil` — nothing to remind.
+    private func finishUnlocked(trialDays: Int? = nil) {
         purchaseState = .idle
         Haptics.success()
-        // S9 wires the real D-1 trial reminder; the hook point exists now so the
-        // success path never changes shape.
-        NotificationService.scheduleTrialEndingReminderStub()
+        if let trialDays {
+            NotificationService.scheduleTrialEndingReminder(trialDays: trialDays)
+        }
         onFinished()
     }
 }

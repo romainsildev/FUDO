@@ -381,9 +381,9 @@ final class GameStore {
         pendingRankUp = nil
         save()
         flags.reset()
-        // A funnel restart must not leave yesterday's reminder firing for a
-        // challenge that no longer exists.
-        NotificationService.cancelDailyReminder()
+        // A funnel restart must not leave ANY notification firing for a world that
+        // no longer exists (daily, evening, streak, decay, trial, rank-up).
+        NotificationService.cancelAll()
     }
 
     /// fetch+delete — `ModelContext.delete(model:)` batch is unreliable on iOS 17.
@@ -408,11 +408,16 @@ final class GameStore {
                             ["rank": rank.displayName.lowercased(),
                              "ovr": OVREngine.displayedOVR(player.ovrValue),
                              "day_index": activeChallenge?.currentDayNumber(now: now, calendar: calendar) ?? 0])
+            // Notify at the gain ONLY if we're not on screen — foreground shows the
+            // RankUpCover instead (the service self-gates on app state + the toggle).
+            NotificationService.postRankUpIfBackgrounded(rankName: rank.displayName, rankRaw: rank.rawValue)
         }
     }
 
     func consumeRankUp() -> Rank? {
         defer { pendingRankUp = nil }
+        // The in-app cover handled it: drop any twin notification already delivered.
+        NotificationService.cancelRankUp()
         return pendingRankUp
     }
 
@@ -424,6 +429,10 @@ final class GameStore {
 
     /// The store's calendar, exposed so views derive week layouts on the same clock.
     var displayCalendar: Calendar { calendar }
+
+    /// Wall-clock now on the store's injected clock — the notification planner needs
+    /// the true instant (not the grace-adjusted `effectiveToday`) to place fire times.
+    var wallClockNow: Date { now }
 
     /// Day number "X" of "day X / Y" for the active challenge, on the store's clock.
     var todayNumber: Int? {
@@ -470,6 +479,11 @@ final class GameStore {
             // through here, so the App Group snapshot never drifts. Cheap: it only
             // reloads timelines when the encoded snapshot actually changed.
             WidgetBridge.refresh(from: self)
+            // Same seam for local notifications: the conditional set (daily/evening/
+            // streak/decay) is recomputed from the fresh state after every mutation —
+            // a check that completes the day wipes tonight's nudges, a rollover
+            // re-arms tomorrow's. Pure planning; the system write no-ops in tests.
+            NotificationService.recompute(from: self)
         } catch {
             // 100 % local store: a failing save has no user-facing recovery path yet.
             // Surface loudly in DEBUG; SwiftData autosave will retry in release.
@@ -530,9 +544,9 @@ extension GameStore {
         save()
         UserDefaults.standard.set(true, forKey: DebugSeed.seedDisabledKey)
         flags.reset()
-        // Otherwise a replayed funnel leaves yesterday's reminder firing for a
-        // challenge that no longer exists.
-        NotificationService.cancelDailyReminder()
+        // Otherwise a replayed funnel leaves notifications firing for a challenge
+        // that no longer exists.
+        NotificationService.cancelAll()
     }
 
     /// Ends the active challenge as `.completed` right now (no day-log closure —

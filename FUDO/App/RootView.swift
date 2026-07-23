@@ -11,10 +11,14 @@ struct RootView: View {
     @Environment(GameStore.self) private var gameStore
     // Optional on purpose: previews and the test shell never configure RevenueCat.
     @Environment(EntitlementStore.self) private var entitlementStore: EntitlementStore?
+    // Optional too: only the real app injects the router (previews/tests don't).
+    @Environment(NotificationRouter.self) private var router: NotificationRouter?
     @Environment(\.scenePhase) private var scenePhase
     @State private var appState: AppState
     @State private var flags: OnboardingFlags
     @State private var cover: FudoCover?
+    /// Set from a rank-up notification tap (deep link) — presents the share card.
+    @State private var deepLinkShare: ShareCardRequest?
 
     init() {
         // Route BEFORE the first frame: the flags read is synchronous, so the
@@ -50,6 +54,9 @@ struct RootView: View {
         // restore, DEBUG override) — reflected without a relaunch.
         .onChange(of: entitlementStore?.isPro) { _, _ in syncEntitlement() }
         .onChange(of: entitlementStore?.isResolved) { _, _ in syncEntitlement() }
+        // A rank-up notification tapped while the app was already running: present
+        // the share card. (Cold-launch taps are caught by `refresh()` on appear.)
+        .onChange(of: router?.pendingDeepLink) { _, _ in handlePendingDeepLink() }
     }
 
     private var mainRoot: some View {
@@ -85,6 +92,21 @@ struct RootView: View {
                 }
                 .preferredColorScheme(.dark)
             }
+            // Deep-linked share card (rank-up notification tap). Separate from the
+            // cover above: the deep-link handler consumes the pending mark first, so
+            // the two never contend for the same rank-up event.
+            .shareCardPreview($deepLinkShare)
+    }
+
+    /// Drain a rank-up deep link into the share card. Consumes the in-memory rank-up
+    /// mark first so the celebration cover doesn't ALSO fire for the same event, then
+    /// clears the router so re-entry is a no-op.
+    private func handlePendingDeepLink() {
+        guard case .rankUpShare(let rank) = router?.pendingDeepLink else { return }
+        _ = gameStore.consumeRankUp()
+        deepLinkShare = ShareCardRequest(variant: .rankUp,
+                                         data: ShareCardData.rankUp(to: rank, from: gameStore))
+        router?.pendingDeepLink = nil
     }
 
     /// Drains `pendingRankUp` into a presentation; dismissing consumes the mark so
@@ -109,6 +131,9 @@ struct RootView: View {
         // with no reminder, no dojo, no widget pitch.
         appState.hasCompletedOnboarding = flags.isFullyDone
         syncEntitlement()
+        // A tap that cold-launched the app set the deep link before this view could
+        // observe it — drain it here on the first appear / every activation.
+        handlePendingDeepLink()
     }
 
     /// Mirror the entitlement into routing. Unresolved reads as PRO: a paying

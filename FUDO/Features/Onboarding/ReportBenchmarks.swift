@@ -115,14 +115,6 @@ enum ReportBenchmarks {
               youBeatsAverage: focusMinutes(span) >= focusAverageMinutes)   // more is better
     }
 
-    /// The TRAINING week viz (S5d): his sessions as filled dots, the target as
-    /// outlined slots, on a 7-day week. Recovered from the gauge's own fraction
-    /// so the mapping lives HERE with the scale it was built on.
-    static func trainingWeekDots(gauge: ReportGauge) -> (filled: Int, target: Int) {
-        let sessions = Int((gauge.you.fraction * trainingScaleSessions).rounded())
-        return (filled: min(max(sessions, 0), 7), target: Int(trainingTargetSessions))
-    }
-
     // MARK: - Assembly
 
     private static func gauge(you: Double, youLabel: String,

@@ -6,12 +6,14 @@ import SwiftUI
 ///  1. HERO — the sensei hands him the report: the master centered in a
 ///     vermilion ring that draws itself in, warm aura behind, then two lines —
 ///     his stated fight and the honest verdict count.
-///  2. GRID — 2×2 soft glass cards, one per benchmarked domain. Each card:
+///  2. STACK — full-width soft glass cards, one per benchmarked domain
+///     (airy pass, Romain same day: the 2×2 grid read as clutter). Each card:
 ///     label, his own answer as the hero figure (the proof of computation),
-///     one rail (red dot = him, grey tick = average, green tick = target),
-///     and a ▲/▼ corner badge. One shape per card, nothing else to read.
-///  3. CLOSING — potential curve + his track record's pivot line, then the
-///     CTA. The CTA exists nowhere else: reaching it means the report was read.
+///     one rail (red dot = him, grey tick = average, green tick = target,
+///     values under the ticks), and a ▲/▼ corner badge. One shape per card,
+///     no caption sentences anywhere.
+///  3. CLOSING — potential curve + the one promise line, then the CTA. The
+///     CTA exists nowhere else: reaching it means the report was read.
 ///
 /// Colour grammar (never inverted): red = him today, grey = the average guy,
 /// green = the protocol's target, vermilion = the product speaking. Every
@@ -39,16 +41,16 @@ struct ReportScreen: View {
             ScrollView(showsIndicators: false) {
                 // Lazy on purpose: a block's onAppear IS its scroll-in trigger.
                 LazyVStack(alignment: .leading, spacing: 0) {
-                    ReportHeroBlock(summary: summary, answerCount: rows.count)
+                    ReportHeroBlock(summary: summary)
                         .padding(.top, 12)
 
                     if !summary.cards.isEmpty {
-                        ReportCardGrid(cards: summary.cards)
-                            .padding(.top, 28)
+                        ReportCardStack(cards: summary.cards)
+                            .padding(.top, 40)
                     }
 
                     ReportClosingBlock(summary: summary, onAdvance: onAdvance)
-                        .padding(.top, 36)
+                        .padding(.top, 48)
                         .padding(.bottom, 24)
                 }
             }
@@ -65,9 +67,10 @@ private enum ReportMetrics {
     static let ringDiameter: CGFloat = 190
     static let senseiHeight: CGFloat = 176
     static let ringDraw: TimeInterval = 0.6
-    /// Cascade step between the grid's cards.
+    /// Cascade step between the stacked cards.
     static let cardStagger: TimeInterval = 0.07
-    static let gridSpacing: CGFloat = 12
+    static let cardSpacing: CGFloat = 16
+    static let cardPadding: CGFloat = 20
 }
 
 // MARK: - Hero
@@ -76,7 +79,6 @@ private enum ReportMetrics {
 /// choreography: ring draws in → light haptic → lines rise, staggered.
 private struct ReportHeroBlock: View {
     let summary: ReportSummary
-    let answerCount: Int
 
     @State private var ringProgress: CGFloat = 0
     @State private var senseiVisible = false
@@ -88,18 +90,12 @@ private struct ReportHeroBlock: View {
                 .fudoFont(.onboardingDisplay(44))
                 .foregroundStyle(FudoColor.textPrimary)
 
-            Text("Computed from your \(answerCount) answers. Nothing invented.")
-                .fudoFont(.caption(12))
-                .foregroundStyle(FudoColor.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 6)
-
             stage
                 .frame(maxWidth: .infinity)
-                .padding(.top, 20)
+                .padding(.top, 28)
 
             heroLines
-                .padding(.top, 18)
+                .padding(.top, 24)
         }
         .task { await run() }
     }
@@ -162,21 +158,16 @@ private struct ReportHeroBlock: View {
     }
 }
 
-// MARK: - Card grid
+// MARK: - Card stack
 
-/// 2×2 soft cards, cascading in on scroll-entry.
-private struct ReportCardGrid: View {
+/// Full-width cards, stacked, cascading in on scroll-entry.
+private struct ReportCardStack: View {
     let cards: [ReportSummary.Card]
 
     @State private var appeared = false
 
-    private let columns = [
-        GridItem(.flexible(), spacing: ReportMetrics.gridSpacing),
-        GridItem(.flexible(), spacing: ReportMetrics.gridSpacing),
-    ]
-
     var body: some View {
-        LazyVGrid(columns: columns, spacing: ReportMetrics.gridSpacing) {
+        VStack(spacing: ReportMetrics.cardSpacing) {
             ForEach(Array(cards.enumerated()), id: \.element.id) { index, card in
                 ReportDomainCard(card: card)
                     .opacity(appeared ? 1 : 0)
@@ -190,48 +181,49 @@ private struct ReportCardGrid: View {
     }
 }
 
-/// One domain: label, his value, the rail, a corner verdict badge. His value
-/// IS the restated answer — the proof the rail was computed from him.
+/// One domain, one full-width card: label, his value BIG, the rail with its
+/// tick values, a corner verdict badge. His value IS the restated answer —
+/// the proof the rail was computed from him. No other words on the card.
 private struct ReportDomainCard: View {
     let card: ReportSummary.Card
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 6) {
+            HStack(spacing: 7) {
                 Image(systemName: card.icon)
-                    .fudoFont(.glyph(11))
+                    .fudoFont(.glyph(13))
                     .foregroundStyle(FudoColor.accent)
                 Text(card.label)
-                    .fudoFont(.label(9, weight: .semibold))
-                    .kerning(1.2)
+                    .fudoFont(.label(11, weight: .semibold))
+                    .kerning(1.5)
                     .foregroundStyle(FudoColor.textSecondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
             }
 
             Text(card.value)
-                .fudoFont(.stat(19))
+                .fudoFont(.stat(30))
                 .foregroundStyle(FudoColor.textPrimary)
                 .lineLimit(1)
-                .minimumScaleFactor(0.55)
-                .padding(.top, 10)
+                .minimumScaleFactor(0.6)
+                .padding(.top, 14)
 
             ReportDialView(gauge: card.gauge)
-                .padding(.top, 10)
+                .padding(.top, 16)
         }
-        .padding(14)
+        .padding(ReportMetrics.cardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background { FudoGlassCard() }
-        .overlay(alignment: .topTrailing) { badge.padding(9) }
+        .overlay(alignment: .topTrailing) {
+            badge.padding(ReportMetrics.cardPadding - 6)
+        }
     }
 
     /// ▲/▼, instant read — the arrow carries the green/red (palette rule).
     private var badge: some View {
         let color = card.beatsAverage ? FudoColor.positive : FudoColor.negative
         return Image(systemName: card.beatsAverage ? "arrow.up" : "arrow.down")
-            .fudoFont(.glyph(8, weight: .bold))
+            .fudoFont(.glyph(10, weight: .bold))
             .foregroundStyle(color)
-            .frame(width: 18, height: 18)
+            .frame(width: 24, height: 24)
             .background { Circle().fill(color.opacity(0.14)) }
     }
 }
@@ -239,8 +231,8 @@ private struct ReportDomainCard: View {
 // MARK: - Closing + CTA
 
 /// The ramp to the reveal: the potential curve rising off the average's flat
-/// line, his own numbers as the promise, his own history as the pivot — then
-/// the CTA slides in. Nothing here is a new claim.
+/// line, his own numbers as the one promise line — then the CTA slides in.
+/// Nothing here is a new claim.
 private struct ReportClosingBlock: View {
     let summary: ReportSummary
     let onAdvance: () -> Void
@@ -255,23 +247,15 @@ private struct ReportClosingBlock: View {
                 .foregroundStyle(FudoColor.textSecondary)
 
             ReportCurveView()
-                .frame(height: 64)
-                .padding(.top, 14)
+                .frame(height: 72)
+                .padding(.top, 16)
 
             if let potential = summary.potentialLine {
                 Text("\(potential).")
-                    .fudoFont(.title(20, weight: .bold))
+                    .fudoFont(.title(22, weight: .bold))
                     .foregroundStyle(FudoColor.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 16)
-            }
-
-            if let trackRecord = summary.trackRecordLine {
-                Text(trackRecord)
-                    .fudoFont(.caption(13))
-                    .foregroundStyle(FudoColor.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 8)
+                    .padding(.top, 20)
             }
 
             Button(action: onAdvance) {

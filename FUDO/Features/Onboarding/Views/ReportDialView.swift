@@ -5,54 +5,49 @@ import SwiftUI
 /// as a green tick. The dot slides from the target out to his real position on
 /// appearance: the gap between green and red IS the message.
 ///
-/// Under the rail, one quiet caption: "avg ~4h30 · goal 2 h" — the two
-/// benchmark values spelled out (his own value is the card's hero figure, never
-/// repeated here).
+/// The graph labels itself (airy pass, same day): each tick's value sits right
+/// under it — "~4h30" grey, "2 h" green. No caption sentence; his own value is
+/// the card's hero figure, never repeated here.
 ///
 /// Display note: the three marks are re-spread across the rail (min → 0.08,
 /// max → 0.92) so clustered values stay readable — the ORDER and the printed
 /// values are the honest part, the rail has no axis to lie about.
 struct ReportDialView: View {
     let gauge: ReportGauge
-    /// false = rail only (no caption line).
-    var showsCaption: Bool = true
 
     @State private var slide: CGFloat = 0
 
-    private static let railHeight: CGFloat = 5
-    private static let tickSize = CGSize(width: 2, height: 12)
-    private static let dotDiameter: CGFloat = 12
+    private static let railHeight: CGFloat = 6
+    private static let tickSize = CGSize(width: 2, height: 14)
+    private static let dotDiameter: CGFloat = 14
+    /// Room under the rail for the tick value labels.
+    private static let labelBand: CGFloat = 18
+    /// Widest a tick label renders before its position gets clamped inboard.
+    private static let labelWidth: CGFloat = 52
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            rail
-                .frame(height: max(Self.tickSize.height, Self.dotDiameter))
-
-            if showsCaption {
-                Text("avg \(gauge.average.valueLabel) · goal \(gauge.target.valueLabel)")
-                    .fudoFont(.caption(10, weight: .medium))
-                    .foregroundStyle(FudoColor.textSecondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+        rail
+            .frame(height: max(Self.tickSize.height, Self.dotDiameter) + Self.labelBand)
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.6)) { slide = 1 }
             }
-        }
-        .onAppear {
-            withAnimation(.easeOut(duration: 0.6)) { slide = 1 }
-        }
     }
 
     private var rail: some View {
         GeometryReader { geometry in
             let width = geometry.size.width
-            ZStack(alignment: .leading) {
+            let markHeight = max(Self.tickSize.height, Self.dotDiameter)
+            ZStack(alignment: .topLeading) {
                 Capsule()
                     .fill(FudoColor.border.opacity(0.6))
                     .frame(height: Self.railHeight)
-                    .frame(maxHeight: .infinity)
+                    .frame(height: markHeight)
 
                 tick(color: FudoColor.textSecondary)
+                    .frame(height: markHeight)
                     .offset(x: width * spread(gauge.average.fraction) - Self.tickSize.width / 2)
                 tick(color: FudoColor.positive)
+                    .frame(height: markHeight)
                     .offset(x: width * spread(gauge.target.fraction) - Self.tickSize.width / 2)
 
                 // His dot starts on the target and slides out to where he is:
@@ -60,9 +55,33 @@ struct ReportDialView: View {
                 Circle()
                     .fill(FudoColor.negative)
                     .frame(width: Self.dotDiameter, height: Self.dotDiameter)
+                    .frame(height: markHeight)
                     .offset(x: width * youPosition(animated: slide) - Self.dotDiameter / 2)
+
+                // The ticks' values, right under them — the rail's only words.
+                tickLabel(gauge.average.valueLabel, color: FudoColor.textSecondary,
+                          at: spread(gauge.average.fraction), width: width)
+                    .offset(y: markHeight + 4)
+                tickLabel(gauge.target.valueLabel, color: FudoColor.positive,
+                          at: spread(gauge.target.fraction), width: width)
+                    .offset(y: markHeight + 4)
             }
         }
+    }
+
+    /// A value centered on its tick, clamped so edge ticks keep their label
+    /// inside the rail's bounds.
+    private func tickLabel(_ value: String, color: Color,
+                           at position: CGFloat, width: CGFloat) -> some View {
+        let half = Self.labelWidth / 2
+        let center = min(max(width * position, half), width - half)
+        return Text(value)
+            .fudoFont(.caption(10, weight: .semibold))
+            .foregroundStyle(color)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .frame(width: Self.labelWidth)
+            .offset(x: center - half)
     }
 
     private func tick(color: Color) -> some View {
@@ -101,11 +120,11 @@ struct ReportDialView: View {
     .preferredColorScheme(.dark)
 }
 
-#Preview("Rail — up before 6, no caption") {
+#Preview("Rail — up before 6") {
     ZStack {
         FudoColor.bgCard
-        ReportDialView(gauge: ReportBenchmarks.wakeGauge(bracket: .beforeSix), showsCaption: false)
-            .frame(width: 150)
+        ReportDialView(gauge: ReportBenchmarks.wakeGauge(bracket: .beforeSix))
+            .frame(width: 320)
             .padding(20)
     }
     .preferredColorScheme(.dark)

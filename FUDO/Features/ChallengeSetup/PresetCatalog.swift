@@ -102,6 +102,18 @@ enum PresetCatalog {
         all.first { $0.preset == preset } ?? all[0]
     }
 
+    /// The fullest standard protocol (Monk Mode 90/120) — the source pool for the
+    /// "Restart harder" escalation: the discipline held at its hardest.
+    static var fullProtocol: [EditableRule] { hardcoreProtocol }
+
+    /// Up to `limit` standard-protocol rules the user isn't already running
+    /// (matched by SF Symbol), in protocol order — the "Restart harder" additions.
+    /// Returns fewer (or none) when he already runs the whole protocol.
+    static func hardenAdditions(excludingIcons icons: Set<String>, limit: Int) -> [EditableRule] {
+        guard limit > 0 else { return [] }
+        return Array(fullProtocol.filter { !icons.contains($0.iconName) }.prefix(limit))
+    }
+
     /// Display name of any preset — the ONE source (audit 2026-07-15: Progression
     /// used to re-declare its own list and drifted to "Classic 75"). `.custom` has
     /// no catalog entry, so it is named from its own duration.

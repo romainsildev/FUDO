@@ -2,8 +2,9 @@ import Foundation
 import Observation
 import SwiftData
 
-/// Input for creating a challenge's rules at setup.
-struct RuleDraft {
+/// Input for creating a challenge's rules at setup. Equatable so a completion
+/// summary (which carries the reusable rule set) can be compared in tests.
+struct RuleDraft: Equatable {
     var title: String
     var iconName: String
     var domain: String? = nil
@@ -42,6 +43,10 @@ final class GameStore {
     private(set) var activeChallenge: Challenge?
     /// D6 — set once per rank, the first time the OVR enters it. Consumed by the rank-up cover.
     private(set) var pendingRankUp: Rank?
+    /// Set once when a challenge crosses its finish line (rollover or debug). The
+    /// challenge-complete cover drains it via `consumeChallengeCompletion()`. Flat
+    /// value type — it survives `activeChallenge` being nil'd at completion.
+    private(set) var pendingChallengeCompletion: ChallengeCompletionSummary?
 
     init(modelContext: ModelContext, calendar: Calendar = .current,
          nowProvider: @escaping () -> Date = Date.init) {
@@ -202,7 +207,48 @@ final class GameStore {
         challenge.status = .completed
         challenge.endOVR = player.ovrValue
         player.completedChallengesCount += 1
+        let summary = buildCompletionSummary(challenge, player: player)
+        // The verdict cover subsumes any rank-up crossed on the FINAL closure — its
+        // beat 1 replays the sensei climb start→end, so drop the twin cover mark
+        // (RootView also gates the rank-up binding while a completion is pending).
+        pendingRankUp = nil
+        pendingChallengeCompletion = summary
         activeChallenge = nil
+        // Rank persists (PlayerState untouched) — this event is only the run's story.
+        Analytics.track(AnalyticsEvent.challengeCompleted,
+                        ["duration_days": summary.durationDays,
+                         "days_complete": summary.daysComplete,
+                         "days_missed": summary.daysMissed,
+                         "ovr_start": summary.startOVR,
+                         "ovr_end": summary.endOVR,
+                         "rank_end": summary.endRank.displayName.lowercased()])
+    }
+
+    /// Flattens the finished challenge's `@Model` graph into the pure verdict struct:
+    /// per-day completion flags, per-rule miss tallies, and the reusable rule set.
+    private func buildCompletionSummary(_ challenge: Challenge,
+                                        player: PlayerState) -> ChallengeCompletionSummary {
+        let closedLogs = challenge.dayLogs.filter(\.isClosed)
+        let activeRules = challenge.activeRules
+        let missCounts = activeRules.map { rule in
+            RuleMissCount(title: rule.title, sortOrder: rule.sortOrder,
+                          misses: closedLogs.filter { !$0.isChecked(rule) }.count)
+        }
+        let reused = activeRules.map {
+            RuleDraft(title: $0.title, iconName: $0.iconName, domain: $0.domain)
+        }
+        return ChallengeCompletionSummary.make(
+            id: challenge.id, preset: challenge.preset, durationDays: challenge.durationDays,
+            startOVRValue: challenge.startOVR, endOVRValue: challenge.endOVR ?? player.ovrValue,
+            closedDayCompletions: closedLogs.map(\.isComplete),
+            reusedRules: reused, ruleMissCounts: missCounts)
+    }
+
+    /// Drains the challenge-complete mark — the cover calls this on dismiss so the
+    /// same verdict never re-presents.
+    func consumeChallengeCompletion() -> ChallengeCompletionSummary? {
+        defer { pendingChallengeCompletion = nil }
+        return pendingChallengeCompletion
     }
 
     private func ensureTodayLog(for challenge: Challenge, player: PlayerState) {
@@ -231,11 +277,20 @@ final class GameStore {
         } else {
             ticksApplied = 0
         }
-        let ticksDue = OVREngine.totalDecayTicks(daysIdle: wholeDays(from: idleStart, to: now)) - ticksApplied
+        let daysIdle = wholeDays(from: idleStart, to: now)
+        let ticksDue = OVREngine.totalDecayTicks(daysIdle: daysIdle) - ticksApplied
         guard ticksDue > 0 else { return }
+        // First tick of THIS idle episode: no decay had been applied yet since the
+        // idle clock started (a prior episode's stale `lastDecayTickAt` predates
+        // `idleStart`, so `ticksApplied` reads 0 and the new episode fires once).
+        let isFirstTick = ticksApplied == 0
         player.ovrValue = OVREngine.decayedOVR(current: player.ovrValue, ticks: ticksDue)
         player.ovrHistory.append(OVRPoint(date: calendar.startOfDay(for: now), value: player.ovrValue))
         player.lastDecayTickAt = now
+        if isFirstTick {
+            Analytics.track(AnalyticsEvent.decayStarted,
+                            ["ovr": OVREngine.displayedOVR(player.ovrValue), "days_idle": daysIdle])
+        }
     }
 
     private func wholeDays(from: Date, to: Date) -> Int {
@@ -291,8 +346,16 @@ final class GameStore {
         }
         challenge.status = .abandoned
         challenge.endOVR = player.ovrValue
+        // Captured before nil'ing — the abandon event mirrors challenge_completed's
+        // shape. This is the ONE abandon path, so the Settings button reports too.
+        // It never sets `pendingChallengeCompletion`: abandon and complete can't collide.
+        let dayIndex = challenge.currentDayNumber(now: now, calendar: calendar)
+        let daysComplete = challenge.dayLogs.filter { $0.isClosed && $0.isComplete }.count
         activeChallenge = nil
         save()
+        Analytics.track(AnalyticsEvent.challengeAbandoned,
+                        ["day_index": dayIndex, "days_complete": daysComplete,
+                         "ovr": OVREngine.displayedOVR(player.ovrValue)])
     }
 
     // MARK: - Rule editing (Settings §DÉFI — allowed until day rulesLockDay)

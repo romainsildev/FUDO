@@ -251,4 +251,39 @@ struct GameStoreTests {
         #expect(player.rank == .novice)
         #expect(player.highestRankReached == Rank.disciple.rawValue)   // high-water never drops
     }
+
+    // MARK: - Challenge completion (S11)
+
+    /// A challenge reaching its finish line at rollover marks completion once, tallies
+    /// the run, keeps the player, and hands a summary the cover can drain exactly once.
+    @Test func completingAChallengeSetsAndDrainsThePendingSummary() throws {
+        let (store, clock) = try makeStore(startingAt: try date(day: 1))
+        let challenge = try startMonk30(store)               // 30 days, day 1 = today
+        // Live-complete day 1 so the tally has one complete day.
+        for rule in challenge.activeRules { store.checkTask(rule) }
+        // Jump past the last day (+ grace) — the rollover closes all 30 days and completes.
+        clock.now = try date(day: 32, hour: 9)
+        store.processRolloverIfNeeded()
+
+        let summary = try #require(store.pendingChallengeCompletion)
+        #expect(store.activeChallenge == nil)
+        #expect(summary.durationDays == 30)
+        #expect(summary.daysComplete == 1)                   // only day 1 was checked
+        #expect(summary.daysMissed == 29)
+        #expect(summary.reusedRules.count == challenge.activeRules.count)
+        #expect(store.player?.completedChallengesCount == 1) // PlayerState kept, count bumped
+
+        #expect(store.consumeChallengeCompletion() != nil)
+        #expect(store.pendingChallengeCompletion == nil)     // drained exactly once
+    }
+
+    /// Abandon and complete must not collide: abandon never raises the verdict cover.
+    @Test func abandoningNeverSetsTheCompletionMark() throws {
+        let (store, _) = try makeStore(startingAt: try date(day: 1))
+        _ = try startMonk30(store)
+        store.abandonChallenge()
+        #expect(store.activeChallenge == nil)
+        #expect(store.pendingChallengeCompletion == nil)
+        #expect(store.player?.completedChallengesCount == 0)
+    }
 }

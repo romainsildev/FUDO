@@ -17,6 +17,10 @@ struct RootView: View {
     @State private var appState: AppState
     @State private var flags: OnboardingFlags
     @State private var cover: FudoCover?
+    /// The end-of-challenge sequence (verdict → share → hook), then a pre-filled
+    /// setup if a hook CTA is chosen. Local flow state, drained from the store's
+    /// completion mark so it survives `activeChallenge` being nil'd at completion.
+    @State private var completionFlow: CompletionFlowStep?
     /// Set from a rank-up notification tap (deep link) — presents the share card.
     @State private var deepLinkShare: ShareCardRequest?
 
@@ -57,6 +61,36 @@ struct RootView: View {
         // A rank-up notification tapped while the app was already running: present
         // the share card. (Cold-launch taps are caught by `refresh()` on appear.)
         .onChange(of: router?.pendingDeepLink) { _, _ in handlePendingDeepLink() }
+        // The DEBUG "Complete challenge" marks completion outside a scene refresh;
+        // scene rollovers are covered by `refresh()`. Both funnel into the drain,
+        // which no-ops once a flow is already showing.
+        .onChange(of: gameStore.pendingChallengeCompletion?.id) { _, _ in drainCompletion() }
+    }
+
+    @ViewBuilder
+    private func completionFlowContent(_ step: CompletionFlowStep) -> some View {
+        switch step {
+        case .verdict(let summary):
+            ChallengeCompleteCoverView(
+                summary: summary,
+                onClose: { completionFlow = nil },
+                onLaunch: { intent in completionFlow = .setup(intent) })
+        case .setup(let intent):
+            // Same standalone screen the Home CTA uses — pre-filled, attributed to
+            // the post-challenge origin. A back or a successful launch drops the flow.
+            ChallengeSetupStandaloneView(store: gameStore, intent: intent) {
+                completionFlow = nil
+            }
+        }
+    }
+
+    /// Move the store's one-shot completion mark into the local flow. Consuming it
+    /// immediately hands ownership to `completionFlow` (the summary is a value, it
+    /// survives) and stops the rank-up cover from also firing for the same event.
+    private func drainCompletion() {
+        guard completionFlow == nil,
+              let summary = gameStore.consumeChallengeCompletion() else { return }
+        completionFlow = .verdict(summary)
     }
 
     private var mainRoot: some View {
@@ -80,6 +114,14 @@ struct RootView: View {
                 default:
                     EmptyView()
                 }
+            }
+            // End-of-challenge sequence — drained from the store's completion mark
+            // (see `drainCompletion`). One cover whose content swaps verdict → setup
+            // when a hook CTA is chosen, so there is no dismiss/re-present race.
+            .fullScreenCover(item: $completionFlow) { step in
+                completionFlowContent(step)
+                    .preferredColorScheme(.dark)
+                    .interactiveDismissDisabled(true)
             }
             // Rank-up celebration — presented above the tabs from the store's
             // high-water mark (D6), so it fires whether the rank was crossed by a
@@ -113,7 +155,13 @@ struct RootView: View {
     /// the same rank never re-celebrates.
     private var rankUpBinding: Binding<RankUpPresentation?> {
         Binding(
-            get: { gameStore.pendingRankUp.map { RankUpPresentation(rank: $0) } },
+            get: {
+                // The challenge-complete sequence subsumes any rank-up crossed on the
+                // final closure (its beat 1 replays the climb), so suppress the twin
+                // cover while a completion is pending or already on screen.
+                guard completionFlow == nil, gameStore.pendingChallengeCompletion == nil else { return nil }
+                return gameStore.pendingRankUp.map { RankUpPresentation(rank: $0) }
+            },
             set: { newValue in
                 if newValue == nil { _ = gameStore.consumeRankUp() }
             }
@@ -122,6 +170,10 @@ struct RootView: View {
 
     private func refresh() {
         gameStore.processRolloverIfNeeded()
+        // A rollover that just finished the challenge left a completion mark — raise
+        // the verdict sequence on this same activation (the mark is set inside the
+        // rollover above).
+        drainCompletion()
         // Foreground: fire `widget_detected` only when the installed families
         // changed (self-guarded, DEBUG no-op). Cheap async call, safe every wake.
         WidgetBridge.reportInstalledWidgetsIfChanged()
@@ -152,6 +204,21 @@ struct RootView: View {
             cover = .paywall
         } else {
             cover = nil
+        }
+    }
+}
+
+/// The end-of-challenge flow, one presentation: the verdict sequence, then the
+/// pre-filled setup if a hook CTA is chosen. Both cases ride the SAME cover so
+/// the swap is a content change (no dismiss/re-present flicker between them).
+enum CompletionFlowStep: Identifiable {
+    case verdict(ChallengeCompletionSummary)
+    case setup(ChallengeSetupIntent)
+
+    var id: String {
+        switch self {
+        case .verdict(let summary): return "verdict-\(summary.id)"
+        case .setup(let intent):    return "setup-\(intent.id)"
         }
     }
 }

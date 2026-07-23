@@ -10,10 +10,19 @@ struct ChallengeSetupStandaloneView: View {
     let onExit: () -> Void
 
     init(store: GameStore, recommendedPreset: ChallengePreset = .monk60,
-         onExit: @escaping () -> Void) {
-        _viewModel = State(initialValue: ChallengeSetupViewModel(store: store,
-                                                                 recommendedPreset: recommendedPreset))
+         initialPreset: ChallengePreset? = nil, initialRules: [EditableRule]? = nil,
+         origin: ChallengeOrigin = .home, onExit: @escaping () -> Void) {
+        _viewModel = State(initialValue: ChallengeSetupViewModel(
+            store: store, recommendedPreset: recommendedPreset,
+            initialPreset: initialPreset, initialRules: initialRules, origin: origin))
         self.onExit = onExit
+    }
+
+    /// Convenience for the post-challenge cover — unpacks a pre-filled intent.
+    init(store: GameStore, intent: ChallengeSetupIntent, onExit: @escaping () -> Void) {
+        self.init(store: store, recommendedPreset: intent.recommendedPreset,
+                  initialPreset: intent.initialPreset, initialRules: intent.initialRules,
+                  origin: .postChallenge, onExit: onExit)
     }
 
     var body: some View {

@@ -53,8 +53,25 @@ extension ShareCardData {
             endOVR: nil)
     }
 
+    /// CHALLENGE-END card from the flattened completion summary — the S11 trigger
+    /// path. The verdict cover has no live `Challenge`/`PlayerState` to pass (the
+    /// challenge is already `.completed` and `activeChallenge` nil), so it builds
+    /// the card off the same values the verdict shows. `streak` is unused by the
+    /// challenge-end card layout (it leads with the OVR delta), hence 0.
+    static func challengeEnd(summary: ChallengeCompletionSummary) -> ShareCardData {
+        ShareCardData(
+            rank: summary.endRank,
+            ovr: summary.endOVR,
+            streak: 0,
+            dayNumber: summary.durationDays,
+            totalDays: summary.durationDays,
+            presetTitle: PresetCatalog.title(for: summary.preset, days: summary.durationDays),
+            startOVR: summary.startOVR,
+            endOVR: summary.endOVR)
+    }
+
     /// CHALLENGE-END card — the delta that makes the clip ("OVR 43 → 76").
-    /// Template only for now; the end-of-challenge trigger is wired in S11.
+    /// Kept for callers holding the live models (previews, future paths).
     @MainActor
     static func challengeEnd(challenge: Challenge, player: PlayerState) -> ShareCardData {
         let endValue = challenge.endOVR ?? player.ovrValue

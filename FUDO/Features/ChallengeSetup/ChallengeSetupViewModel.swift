@@ -15,6 +15,9 @@ final class ChallengeSetupViewModel {
 
     let recommendedPreset: ChallengePreset
     private let store: GameStore
+    /// Where a launch from this skin is attributed (`challenge_started.origin`).
+    /// Home/onboarding default to `.home`; the post-challenge cover passes `.postChallenge`.
+    private let origin: ChallengeOrigin
 
     private(set) var selectedPreset: ChallengePreset
     var rules: [EditableRule]
@@ -25,11 +28,20 @@ final class ChallengeSetupViewModel {
     /// resets when a preset (re)loads its defaults, true on any manual rule edit.
     private(set) var rulesEdited = false
 
-    init(store: GameStore, recommendedPreset: ChallengePreset = .monk60) {
+    /// `initialPreset` decouples the selected chip from the "recommended" label —
+    /// the post-challenge cover recommends the superior preset but may seed a
+    /// different starting selection. `initialRules` seeds a custom set (Restart
+    /// harder = reused rules + escalation); nil falls back to the preset defaults.
+    /// Changing a chip afterward still reloads that preset's defaults (chip semantics).
+    init(store: GameStore, recommendedPreset: ChallengePreset = .monk60,
+         initialPreset: ChallengePreset? = nil, initialRules: [EditableRule]? = nil,
+         origin: ChallengeOrigin = .home) {
         self.store = store
         self.recommendedPreset = recommendedPreset
-        self.selectedPreset = recommendedPreset
-        self.rules = PresetCatalog.definition(for: recommendedPreset).defaultRules
+        self.origin = origin
+        let start = initialPreset ?? recommendedPreset
+        self.selectedPreset = start
+        self.rules = initialRules ?? PresetCatalog.definition(for: start).defaultRules
     }
 
     // MARK: - Preset selection
@@ -127,6 +139,7 @@ final class ChallengeSetupViewModel {
         guard canCommit else { return false }
         let drafts = enabledRules.map(\.draft)
         return store.startChallenge(preset: selectedPreset, durationDays: durationDays,
-                                    rules: drafts, reminderMinutes: reminderMinutes) != nil
+                                    rules: drafts, reminderMinutes: reminderMinutes,
+                                    origin: origin) != nil
     }
 }

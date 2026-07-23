@@ -98,6 +98,14 @@ enum AnalyticsEvent {
     static let streakMilestone = "streak_milestone"
     static let rankUp = "rank_up"
 
+    // Retention loop (S11) — challenge end, between-challenges, next-challenge choice.
+    // challenge_completed / decay_started fired from GameStore; challenge_abandoned
+    // too (covers the Settings abandon path); next_challenge_chosen from the cover.
+    static let challengeCompleted = "challenge_completed"
+    static let challengeAbandoned = "challenge_abandoned"
+    static let nextChallengeChosen = "next_challenge_chosen"
+    static let decayStarted = "decay_started"
+
     // Engagement (§1.8)
     static let flameSheetViewed = "flame_sheet_viewed"
     static let statsViewed = "stats_viewed"

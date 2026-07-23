@@ -9,6 +9,13 @@ struct RuleDraft {
     var domain: String? = nil
 }
 
+/// Where a `startChallenge` call came from — the `origin` of `challenge_started`
+/// (ANALYTICS-PLAN §1.4). Supplied by the caller since the store can't know it.
+enum ChallengeOrigin: String {
+    case onboarding, home
+    case postChallenge = "post_challenge"
+}
+
 /// One edited rule of the ACTIVE challenge (Settings → Edit rules). `id` is the
 /// existing TaskRule.id when the rule survives, a fresh UUID when it is added.
 /// `isEnabled == false` keeps the rule but drops it from the day (isActive).
@@ -78,6 +85,7 @@ final class GameStore {
     func checkTask(_ rule: TaskRule) {
         guard let player, let challenge = activeChallenge, rule.isActive,
               let log = currentLog(), !log.isChecked(rule) else { return }   // nothing ever pays twice
+        let isFirstEver = totalChecksAllTime == 0   // the real first check (demo excluded)
         let unchecked = challenge.activeRules.filter { !log.isChecked($0) }.count
         let delta = OVREngine.checkDelta(pool: log.dailyGainPool,
                                          alreadyGained: log.checksTotal,
@@ -85,6 +93,17 @@ final class GameStore {
         log.checks.append(TaskCheck(ruleID: rule.id, checkedAt: now, ovrDelta: delta))
         applyOVRChange(delta, to: player)   // applied LIVE — Home and sensei react
         save()
+        let total = challenge.activeRules.count
+        let done = challenge.activeRules.filter { log.isChecked($0) }.count
+        Analytics.track(AnalyticsEvent.taskChecked,
+                        ["day_index": log.dayNumber, "tasks_done": done,
+                         "tasks_total": total, "is_first_ever": isFirstEver])
+        // Ring sealed at 100 % — the live activation moment (day_index == 1 = D1).
+        if total > 0, done == total {
+            Analytics.track(AnalyticsEvent.dayCompleted,
+                            ["day_index": log.dayNumber, "streak": player.currentStreak,
+                             "ovr": OVREngine.displayedOVR(player.ovrValue), "tasks_total": total])
+        }
     }
 
     func uncheckTask(_ rule: TaskRule) {
@@ -93,6 +112,7 @@ final class GameStore {
         log.checks.removeAll { $0.ruleID == rule.id }
         applyOVRChange(OVREngine.refund(for: check), to: player)   // exact reversal
         save()
+        Analytics.track(AnalyticsEvent.taskUnchecked, ["day_index": log.dayNumber])
     }
 
     /// Today's OPEN log (effective gameplay day, grace period included).
@@ -144,6 +164,7 @@ final class GameStore {
         let activeIDs = Set(challenge.activeRules.map(\.id))
         let checkedIDs = Set(log.checks.map(\.ruleID))
         let isComplete = !activeIDs.isEmpty && activeIDs.subtracting(checkedIDs).isEmpty
+        let previousStreak = player.currentStreak
         let closure = OVREngine.closeDay(isComplete: isComplete, pool: log.dailyGainPool,
                                          checksTotal: log.checksTotal, currentOVR: player.ovrValue,
                                          currentStreak: player.currentStreak, bestStreak: player.bestStreak)
@@ -158,7 +179,20 @@ final class GameStore {
         // clock honest when catching up several missed days at once.
         player.lastDayClosedAt = calendar.date(byAdding: .day, value: 1, to: log.date) ?? now
         raiseRankMarkIfNeeded(player)
+        if !isComplete {
+            Analytics.track(AnalyticsEvent.dayFailed,
+                            ["day_index": log.dayNumber,
+                             "tasks_missed": activeIDs.subtracting(checkedIDs).count,
+                             "ovr_delta": closure.logDelta])
+        } else if closure.newStreak > previousStreak,
+                  Self.streakMilestones.contains(closure.newStreak) {
+            // Crossed once: the streak climbs one day at a time, so each threshold hits once.
+            Analytics.track(AnalyticsEvent.streakMilestone, ["streak": closure.newStreak])
+        }
     }
+
+    /// Analytics thresholds only — no OVR effect, so NOT a GameConfig constant.
+    private static let streakMilestones: Set<Int> = [3, 7, 14, 21, 30, 60, 90]
 
     private func allDaysClosed(_ challenge: Challenge) -> Bool {
         challenge.dayLogs.filter(\.isClosed).count >= challenge.durationDays
@@ -215,7 +249,8 @@ final class GameStore {
     /// or the rule count exceeds GameConfig.maxRules.
     @discardableResult
     func startChallenge(preset: ChallengePreset, durationDays: Int,
-                        rules: [RuleDraft], reminderMinutes: Int) -> Challenge? {
+                        rules: [RuleDraft], reminderMinutes: Int,
+                        origin: ChallengeOrigin = .home) -> Challenge? {
         guard let player, activeChallenge == nil,
               !rules.isEmpty, rules.count <= GameConfig.maxRules else { return nil }
         let start = OVREngine.effectiveDay(now: now, calendar: calendar)
@@ -232,6 +267,10 @@ final class GameStore {
         activeChallenge = challenge
         ensureTodayLog(for: challenge, player: player)
         save()
+        Analytics.track(AnalyticsEvent.challengeStarted,
+                        ["preset": preset.rawValue, "duration_days": durationDays,
+                         "rules_count": rules.count, "origin": origin.rawValue,
+                         "challenges_completed_before": player.completedChallengesCount])
         return challenge
     }
 
@@ -363,6 +402,12 @@ final class GameStore {
         if rank.rawValue > player.highestRankReached {
             pendingRankUp = rank
             player.highestRankReached = rank.rawValue
+            // The ONE rank-crossing detection point (live checks + rollover both route
+            // here). The rank-up COVER events (§1.8) are separate — not fired here.
+            Analytics.track(AnalyticsEvent.rankUp,
+                            ["rank": rank.displayName.lowercased(),
+                             "ovr": OVREngine.displayedOVR(player.ovrValue),
+                             "day_index": activeChallenge?.currentDayNumber(now: now, calendar: calendar) ?? 0])
         }
     }
 

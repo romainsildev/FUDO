@@ -19,6 +19,11 @@ final class EntitlementStore {
     /// True once the first CustomerInfo (cache or network) has been applied.
     private(set) var isResolved = false
 
+    /// Was the last ACTIVE pro period the free trial? Remembered while active so
+    /// `subscription_expired.had_trial` can be reported once the entitlement drops
+    /// (an expired entitlement no longer reports its own period). Analytics only.
+    private var lastActiveWasTrial = false
+
     /// RC packages stay HERE, keyed by plan kind — `PaywallPlan` is RC-free.
     private var packages: [PaywallPlan.Kind: Package] = [:]
     private var listenTask: Task<Void, Never>?
@@ -69,8 +74,17 @@ final class EntitlementStore {
     }
 
     private func apply(_ info: CustomerInfo) {
-        isProLive = info.entitlements[AppConfig.proEntitlementID]?.isActive == true
+        let wasResolved = isResolved
+        let wasPro = isProLive
+        let entitlement = info.entitlements[AppConfig.proEntitlementID]
+        let nowPro = entitlement?.isActive == true
+        isProLive = nowPro
         isResolved = true
+        // Churn (plan §1.7): the pro entitlement was active and is now gone.
+        if wasResolved, wasPro, !nowPro {
+            Analytics.track(AnalyticsEvent.subscriptionExpired, ["had_trial": lastActiveWasTrial])
+        }
+        if nowPro { lastActiveWasTrial = entitlement?.periodType == .trial }
     }
 
     // MARK: - Offering → plans

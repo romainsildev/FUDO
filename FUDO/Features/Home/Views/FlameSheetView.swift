@@ -32,6 +32,7 @@ struct FlameSheetView: View {
         .padding(.horizontal, FudoSpacing.screenMargin)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(FudoColor.bgPrimary)
+        .onAppear { Analytics.track(AnalyticsEvent.flameSheetViewed) }
     }
 
     // MARK: - Hero

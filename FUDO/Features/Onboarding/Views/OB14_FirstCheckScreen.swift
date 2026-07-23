@@ -180,6 +180,8 @@ struct FirstCheckScreen: View {
     /// replaying the sequence.
     private func seal() {
         guard !hasSealed else { return }
+        // The one-and-only real hold-to-check of the demo (no store mutation).
+        Analytics.track(AnalyticsEvent.onboardingFirstCheckDone)
         withAnimation(AppAnimation.standard) { hasSealed = true }
         burstToken += 1
         sealOpacity = 1

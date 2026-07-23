@@ -39,6 +39,10 @@ struct FUDOApp: App {
         Purchases.logLevel = .debug
         #endif
         Purchases.configure(withAPIKey: AppConfig.revenueCatAPIKey)
+        // Analytics next — PostHog in Release, a no-op in DEBUG (zero capture, so
+        // dev/seed data never pollutes the funnels). All events go through the
+        // `Analytics` facade; no other file imports PostHog.
+        Analytics.configure()
         let entitlements = EntitlementStore()
         entitlements.start()
         _entitlementStore = State(initialValue: entitlements)

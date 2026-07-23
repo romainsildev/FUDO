@@ -36,6 +36,10 @@ struct StatsView: View {
                     ChallengeSetupStandaloneView(store: store) { setupCover = nil }
                 }
             }
+            .onAppear { Analytics.track(AnalyticsEvent.statsViewed) }
+            .onChange(of: viewModel.period) { _, newPeriod in
+                Analytics.track(AnalyticsEvent.statsPeriodChanged, ["period": newPeriod.analyticsValue])
+            }
     }
 
     @ViewBuilder

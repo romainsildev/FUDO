@@ -89,4 +89,45 @@ enum OnboardingStep: Int, CaseIterable {
 
     var next: OnboardingStep? { OnboardingStep(rawValue: rawValue + 1) }
     var previous: OnboardingStep? { OnboardingStep(rawValue: rawValue - 1) }
+
+    /// Stable snake_case name for `onboarding_screen_viewed` (ANALYTICS-PLAN §1.2).
+    /// `step` = `rawValue` (the OB index); this is the paired `screen` value. New
+    /// steps keep the same naming pattern — never a numbered event per screen.
+    var analyticsScreen: String {
+        switch self {
+        case .splash: return "splash"
+        case .transformation: return "welcome_transformation"
+        case .pain: return "welcome_pain"
+        case .mechanism: return "welcome_mechanism"
+        case .sixtySeconds: return "sixty_seconds"
+        case .painPoint: return "pain_point"
+        case .scrollHours: return "scroll_hours"
+        case .age: return "age"
+        case .procrastination: return "procrastination"
+        case .shockStat: return "shock_stat"
+        case .wakeUp: return "wake_up"
+        case .training: return "training"
+        case .focus: return "focus"
+        case .goals: return "goals"
+        case .struggle: return "struggle"
+        case .attempts: return "attempts"
+        case .reflection: return "reflection"
+        case .loaderAnalysis: return "loader_analysis"
+        case .report: return "report"
+        case .diagnostic: return "diagnostic"
+        case .protocolIntro: return "protocol_intro"
+        case .composeDuration: return "compose_duration"
+        case .composeRules: return "compose_rules"
+        case .projection: return "projection"
+        case .firstCheck: return "first_check"
+        case .socialProof: return "social_proof"
+        case .commitment: return "commitment"
+        case .contract: return "contract"
+        case .paywall: return "paywall"
+        case .notifications: return "notifications"
+        case .loaderSetup: return "loader_setup"
+        case .welcomeDojo: return "welcome_dojo"
+        case .widgetPromo: return "widget_promo"
+        }
+    }
 }

@@ -13,6 +13,15 @@ enum StatsPeriod: String, CaseIterable, Hashable {
         }
     }
 
+    /// `stats_period_changed.period` (plan §1.8) — stable, not the UI caption.
+    var analyticsValue: String {
+        switch self {
+        case .week:      "7d"
+        case .month:     "30d"
+        case .challenge: "challenge"
+        }
+    }
+
     /// Trailing calendar days counted back from today (inclusive). nil = the whole run.
     var trailingDays: Int? {
         switch self {

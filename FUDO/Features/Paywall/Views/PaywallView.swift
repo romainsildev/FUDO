@@ -77,6 +77,7 @@ struct PaywallScreen: View {
         .overlay(alignment: .topTrailing) { closeButton }
         .task { await viewModel.load() }
         .task { await revealCloseAfterDelay() }
+        .onAppear { viewModel.trackViewed() }
         .sheet(item: $safariLink) { link in
             SafariView(url: link.url).ignoresSafeArea()
         }
@@ -269,7 +270,7 @@ struct PaywallScreen: View {
     @ViewBuilder
     private var closeButton: some View {
         if let onClose, closeVisible {
-            Button(action: onClose) {
+            Button { viewModel.trackDismissed(); onClose() } label: {
                 Image(systemName: "xmark")
                     .fudoFont(.glyph(13, weight: .semibold))
                     .foregroundStyle(FudoColor.textSecondary)

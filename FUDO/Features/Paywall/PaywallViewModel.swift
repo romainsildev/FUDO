@@ -37,6 +37,19 @@ final class PaywallViewModel {
     private(set) var selectedKind: PaywallPlan.Kind = .annual
     private(set) var purchaseState: PurchaseState = .idle
 
+    /// Analytics: the placement value + when the screen appeared (dwell time).
+    private var analyticsViewedAt: Date?
+    private var didTrackViewed = false
+
+    /// `paywall_*` placement (plan §1.3): the funnel end vs. the trial-expired
+    /// reactivation cover.
+    var placement: String {
+        switch context {
+        case .onboarding: return "onboarding"
+        case .reactivation: return "trial_expired"
+        }
+    }
+
     init(context: PaywallContext, entitlements: EntitlementStore?,
          onFinished: @escaping () -> Void) {
         self.context = context
@@ -83,6 +96,16 @@ final class PaywallViewModel {
             loadState = .loaded
         } catch {
             loadState = .failed
+            // A dead CTA on unloaded products = rejection 2.1 + lost trials — a signal.
+            Analytics.track(AnalyticsEvent.paywallProductsFailed, ["reason": Self.failureReason(error)])
+        }
+    }
+
+    private static func failureReason(_ error: Error) -> String {
+        switch error {
+        case EntitlementStore.PlanLoadError.storeUnavailable: return "store_unavailable"
+        case EntitlementStore.PlanLoadError.offeringMissing: return "offering_missing"
+        default: return "error"
         }
     }
 
@@ -107,8 +130,24 @@ final class PaywallViewModel {
     }
     #endif
 
+    /// Fired by the flow on appear (guarded once) + on the X (dwell + selection).
+    func trackViewed() {
+        guard !didTrackViewed else { return }
+        didTrackViewed = true
+        analyticsViewedAt = Date()
+        Analytics.track(AnalyticsEvent.paywallViewed, ["placement": placement])
+    }
+
+    func trackDismissed() {
+        let seconds = analyticsViewedAt.map { Int(Date().timeIntervalSince($0)) } ?? 0
+        Analytics.track(AnalyticsEvent.paywallDismissed,
+                        ["placement": placement, "seconds_on_screen": seconds,
+                         "plan_selected": selectedKind.rawValue])
+    }
+
     func select(_ kind: PaywallPlan.Kind) {
         guard !isBusy else { return }
+        Analytics.track(AnalyticsEvent.paywallPlanSelected, ["plan": kind.rawValue])
         selectedKind = kind
         // A stale failure message about the OTHER plan shouldn't shame this one.
         if case .failed = purchaseState { purchaseState = .idle }
@@ -129,12 +168,33 @@ final class PaywallViewModel {
         purchaseState = .purchasing
         switch await entitlements.purchase(plan) {
         case .success:
+            trackPurchaseSuccess(plan)
             finishUnlocked()
         case .cancelled:
             // He stayed on the fence — no guilt copy, no error, back to idle.
+            Analytics.track(AnalyticsEvent.purchaseFailed,
+                            ["plan": plan.kind.rawValue, "reason": "cancelled"])
             purchaseState = .idle
         case .failed(let message):
+            Analytics.track(AnalyticsEvent.purchaseFailed,
+                            ["plan": plan.kind.rawValue, "reason": "error"])
             purchaseState = .failed(message)
+        }
+    }
+
+    /// A trial plan starts a trial; a no-trial plan is a direct purchase. The
+    /// trial→paid conversion is RevenueCat's source of truth (plan §1.3), not
+    /// emitted here — so `is_trial_conversion` is always false at purchase time.
+    private func trackPurchaseSuccess(_ plan: PaywallPlan) {
+        let priceUSD = NSDecimalNumber(decimal: plan.rawPrice).doubleValue
+        if let trialDays = plan.trialDays {
+            Analytics.track(AnalyticsEvent.trialStarted,
+                            ["plan": plan.kind.rawValue, "price_usd": priceUSD,
+                             "trial_days": trialDays])
+        } else {
+            Analytics.track(AnalyticsEvent.purchaseCompleted,
+                            ["plan": plan.kind.rawValue, "price_usd": priceUSD,
+                             "is_trial_conversion": false])
         }
     }
 
@@ -143,6 +203,7 @@ final class PaywallViewModel {
         purchaseState = .restoring
         switch await entitlements.restore() {
         case .restored:
+            Analytics.track(AnalyticsEvent.purchaseRestored)
             finishUnlocked()
         case .nothingToRestore:
             purchaseState = .failed("No previous purchase found on this Apple ID.")

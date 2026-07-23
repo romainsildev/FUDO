@@ -20,6 +20,11 @@ final class ChallengeSetupViewModel {
     var rules: [EditableRule]
     var reminderMinutes: Int = ChallengeSetupViewModel.defaultReminderMinutes
 
+    /// Did the user touch the rules since the last preset default was loaded?
+    /// Read by `onboarding_challenge_composed.rules_edited` (analytics only) —
+    /// resets when a preset (re)loads its defaults, true on any manual rule edit.
+    private(set) var rulesEdited = false
+
     init(store: GameStore, recommendedPreset: ChallengePreset = .monk60) {
         self.store = store
         self.recommendedPreset = recommendedPreset
@@ -36,6 +41,7 @@ final class ChallengeSetupViewModel {
         guard preset != selectedPreset else { return }
         selectedPreset = preset
         rules = PresetCatalog.definition(for: preset).defaultRules
+        rulesEdited = false   // fresh preset defaults = a clean baseline
     }
 
     /// Frame-04 chips entry point (30 / 60 / 75 / 90).
@@ -57,11 +63,13 @@ final class ChallengeSetupViewModel {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard canAddRule, !trimmed.isEmpty else { return false }
         rules.append(EditableRule(title: trimmed, iconName: iconName))
+        rulesEdited = true
         return true
     }
 
     func removeRule(id: UUID) {
         rules.removeAll { $0.id == id }
+        rulesEdited = true
     }
 
     func toggleRule(id: UUID) {
@@ -71,6 +79,7 @@ final class ChallengeSetupViewModel {
             guard enabledRules.count < GameConfig.maxRules else { return }
         }
         rules[index].isEnabled.toggle()
+        rulesEdited = true
     }
 
     func updateRule(id: UUID, title: String, iconName: String) {
@@ -78,6 +87,7 @@ final class ChallengeSetupViewModel {
         guard let index = rules.firstIndex(where: { $0.id == id }), !trimmed.isEmpty else { return }
         rules[index].title = trimmed
         rules[index].iconName = iconName
+        rulesEdited = true
     }
 
     /// Time rules bake the value into the title — the checklist stays dumb strings.
@@ -86,6 +96,7 @@ final class ChallengeSetupViewModel {
               rules[index].valueKind == .time else { return }
         rules[index].timeMinutes = minutes
         rules[index].title = "Wake up before \(EditableRule.formattedTime(minutes: minutes))"
+        rulesEdited = true
     }
 
     // MARK: - Recap (screen 3 / standalone CTA)

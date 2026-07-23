@@ -27,6 +27,14 @@ struct HabitDetailView: View {
         }
         .background(FudoColor.bgPrimary.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            // Anonymous slug — the user-typed title never leaves the device (plan §1.8).
+            if let rule {
+                Analytics.track(AnalyticsEvent.habitDetailViewed,
+                                ["habit": AnalyticsHabit.slug(iconName: rule.iconName,
+                                                              index: rule.sortOrder)])
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .principal) {
                 HStack(spacing: 7) {

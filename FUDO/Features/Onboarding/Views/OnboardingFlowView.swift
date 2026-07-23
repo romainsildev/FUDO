@@ -56,6 +56,11 @@ struct OnboardingFlowView: View {
         }
         .animation(AppAnimation.standard, value: viewModel.step)
         .animation(AppAnimation.standard, value: viewModel.showsChrome)
+        // onAppear-equivalent for every screen: one parametrized
+        // `onboarding_screen_viewed`, fired on the initial step and each change.
+        .onChange(of: viewModel.step, initial: true) { _, _ in
+            viewModel.trackScreenAppeared()
+        }
     }
 
     // MARK: - Routing

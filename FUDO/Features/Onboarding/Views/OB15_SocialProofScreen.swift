@@ -125,6 +125,8 @@ struct SocialProofScreen: View {
         try? await Task.sleep(for: .seconds(OnboardingMetrics.reviewPromptDelay))
         guard !Task.isCancelled else { return }
         flags.reviewPrompted = true
+        // Log the ASK (iOS decides whether its sheet actually shows — not observable).
+        Analytics.track(AnalyticsEvent.reviewPromptRequested, ["placement": "onboarding_peak"])
         requestReview()
     }
 }

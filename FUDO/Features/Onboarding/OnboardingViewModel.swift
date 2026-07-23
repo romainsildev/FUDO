@@ -54,6 +54,13 @@ final class OnboardingViewModel {
     /// re-render doesn't drop him back to the waiting state.
     private(set) var analysisStarted = false
 
+    // MARK: - Analytics session state (ANALYTICS-PLAN §1.2)
+    /// Screens counted for `onboarding_completed.screens_seen`; start time for its
+    /// `duration_seconds`. `didTrackCompleted` makes that event exactly-once.
+    private var analyticsScreensSeen = 0
+    private var analyticsStartedAt: Date?
+    private var didTrackCompleted = false
+
     init(store: GameStore, flags: OnboardingFlags = OnboardingFlags(),
          onFinished: @escaping () -> Void = {}) {
         self.store = store
@@ -99,6 +106,7 @@ final class OnboardingViewModel {
     /// resume write below never ran).
     private func advance(force: Bool) {
         guard force || !isAdvancing, canAdvance, let next = step.next else { return }
+        trackAdvancingAway(from: step)
         isAdvancing = true
         Haptics.light()
         direction = .forward
@@ -129,6 +137,52 @@ final class OnboardingViewModel {
             try? await Task.sleep(for: .seconds(OnboardingMetrics.ctaGuard))
             isAdvancing = false
         }
+    }
+
+    // MARK: - Analytics (ANALYTICS-PLAN §1.2)
+
+    /// Fired by the flow on every step appearance (`onChange(initial:)`), so it is
+    /// the exact onAppear-equivalent for `onboarding_screen_viewed`. `step` = the
+    /// OB index; `screen` = its stable name. The projection screen also emits its
+    /// own OVR event here.
+    func trackScreenAppeared() {
+        if analyticsStartedAt == nil { analyticsStartedAt = Date() }
+        analyticsScreensSeen += 1
+        Analytics.track(AnalyticsEvent.onboardingScreenViewed,
+                        ["step": step.rawValue, "screen": step.analyticsScreen])
+        if step == .projection {
+            Analytics.track(AnalyticsEvent.onboardingProjectionViewed,
+                            ["starting_ovr": diagnosticOVR,
+                             "projected_ovr": OVREngine.displayedOVR(projectedOVR)])
+        }
+    }
+
+    /// Committing an answer by advancing = the `question_answered` moment; leaving
+    /// the rules screen (11b) = `challenge_composed`. Both fire before the step moves.
+    private func trackAdvancingAway(from step: OnboardingStep) {
+        if let qa = OnboardingAnalytics.questionAnswer(for: step, draft: draft) {
+            Analytics.track(AnalyticsEvent.onboardingQuestionAnswered,
+                            ["step": step.rawValue, "question": qa.question, "answer": qa.answer])
+        }
+        if step == .composeRules {
+            Analytics.track(AnalyticsEvent.onboardingChallengeComposed,
+                            ["preset": setup.selectedPreset.rawValue,
+                             "duration_days": setup.durationDays,
+                             "rules_count": setup.enabledRules.count,
+                             "rules_edited": setup.rulesEdited])
+        }
+    }
+
+    /// End of the persuasion funnel (contract signed → paywall). Exactly-once.
+    /// Also posts the four person properties — the only $set (plan §4).
+    private func trackOnboardingCompleted() {
+        guard !didTrackCompleted else { return }
+        didTrackCompleted = true
+        let seconds = analyticsStartedAt.map { Int(Date().timeIntervalSince($0)) } ?? 0
+        Analytics.track(AnalyticsEvent.onboardingCompleted,
+                        ["duration_seconds": seconds, "screens_seen": analyticsScreensSeen])
+        Analytics.set(person: OnboardingAnalytics.personProperties(draft: draft,
+                                                                   preset: setup.selectedPreset))
     }
 
     #if DEBUG
@@ -269,6 +323,7 @@ final class OnboardingViewModel {
             durationDays: setup.durationDays,
             reminderMinutes: setup.reminderMinutes,
             rules: setup.enabledRules.map { .init(title: $0.title, iconName: $0.iconName) })
+        trackOnboardingCompleted()
         advance(force: true)
     }
 
@@ -305,7 +360,8 @@ final class OnboardingViewModel {
         store.startChallenge(preset: contract.preset,
                              durationDays: contract.durationDays,
                              rules: contract.rules.map { RuleDraft(title: $0.title, iconName: $0.iconName) },
-                             reminderMinutes: contract.reminderMinutes)
+                             reminderMinutes: contract.reminderMinutes,
+                             origin: .onboarding)
     }
 
     // MARK: - OB 21 — checkpoint 3

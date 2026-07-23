@@ -15,6 +15,14 @@ enum AppConfig {
     /// fudo_weekly_599, `$rc_annual` → fudo_annual_4399.
     static let defaultOfferingID = "default"
 
+    // MARK: - PostHog (analytics, ANALYTICS-PLAN.md)
+
+    /// Public project key — safe to ship. EU host is mandatory here (GDPR, plan §4).
+    static let postHogAPIKey = "phc_AGWxa8wwv8N4hLddobbKmvFMQdqgRjGosx2nz5uQLFTt"
+    /// Official EU ingestion domain (the dashboard hands out `eu.i.posthog.com`;
+    /// the bare `eu.posthog.com` still redirects but is legacy).
+    static let postHogHost = "https://eu.i.posthog.com"
+
     // MARK: - Legal
     // Settings AND the paywall footer link these (both mandatory for review).
 

@@ -143,6 +143,7 @@ struct NotificationsScreen: View {
         isRequesting = true
         let granted = await NotificationService.requestAuthorization()
         isRequesting = false
+        Analytics.track(AnalyticsEvent.notifPermissionAnswered, ["granted": granted])
         guard granted else {
             // Already-denied users land here too: requestAuthorization returns
             // false with no popup. Same path, no insisting.

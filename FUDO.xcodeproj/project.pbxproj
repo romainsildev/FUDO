@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		B5AC0001300700000000C001 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = B5AC0002300700000000C002 /* RevenueCat */; };
+		B5AC0004300700000000C004 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = B5AC0005300700000000C005 /* PostHog */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -71,6 +72,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B5AC0001300700000000C001 /* RevenueCat in Frameworks */,
+				B5AC0004300700000000C004 /* PostHog in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -133,6 +135,7 @@
 			name = FUDO;
 			packageProductDependencies = (
 				B5AC0002300700000000C002 /* RevenueCat */,
+				B5AC0005300700000000C005 /* PostHog */,
 			);
 			productName = FUDO;
 			productReference = B55F68613002C6C8003FC32B /* FUDO.app */;
@@ -218,6 +221,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				B5AC0003300700000000C003 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
+				B5AC0006300700000000C006 /* XCRemoteSwiftPackageReference "posthog-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B55F68623002C6C8003FC32B /* Products */;
@@ -614,6 +618,14 @@
 				minimumVersion = 5.0.0;
 			};
 		};
+		B5AC0006300700000000C006 /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -621,6 +633,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = B5AC0003300700000000C003 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
 			productName = RevenueCat;
+		};
+		B5AC0005300700000000C005 /* PostHog */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B5AC0006300700000000C006 /* XCRemoteSwiftPackageReference "posthog-ios" */;
+			productName = PostHog;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

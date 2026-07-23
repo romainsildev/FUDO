@@ -7,6 +7,12 @@
 //  no SwiftData, no RevenueCat, no PostHog. Identity mirrors the Home hero
 //  (vermillon ensō ring + flame + giant OVR), dark, design-system tokens only.
 //
+//  Renders in all three widget modes: .fullColor (home screen), .accented
+//  (tinted) and .vibrant (transparent). Custom colors survive only in fullColor;
+//  the other two desaturate by luminance and turn SOLID FILLS into blobs, so the
+//  flame pill's fill is fullColor-only and the hero glyphs opt into the accent
+//  group via .widgetAccentable() — layout is VStack-stacked so nothing overlaps.
+//
 
 import WidgetKit
 import SwiftUI
@@ -71,27 +77,23 @@ struct SmallWidgetView: View {
 
     var body: some View {
         if snap.hasActiveChallenge {
-            ZStack {
-                HeroDial(snap: snap, lineWidth: 7, ovrSize: 40)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                VStack {
-                    HStack { FlamePill(streak: snap.streak); Spacer() }
-                    Spacer()
-                    DayLabel(dayIndex: snap.dayIndex, totalDays: snap.totalDays)
-                }
+            // Stacked, not overlaid: the ring gets the flexible middle band so it
+            // can never clip the flame row or the day label (device bug fix).
+            VStack(spacing: 4) {
+                HStack { FlamePill(streak: snap.streak); Spacer() }
+                HeroDial(snap: snap, lineWidth: 7, ovrSize: 36)
+                    .frame(maxHeight: .infinity)
+                DayLabel(dayIndex: snap.dayIndex, totalDays: snap.totalDays)
             }
         } else {
             // Between challenges — rank + OVR + retention CTA.
             VStack(spacing: 6) {
-                HeroDial(snap: snap, lineWidth: 6, ovrSize: 38)
+                HeroDial(snap: snap, lineWidth: 6, ovrSize: 34)
                     .frame(maxHeight: .infinity)
-                    .padding(.horizontal, 12)
-                    .padding(.top, 10)
                 Text("New challenge?")
                     .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(WidgetPalette.accent)
-                    .padding(.bottom, 8)
+                    .widgetAccentable()
             }
         }
     }
@@ -114,20 +116,17 @@ struct MediumWidgetView: View {
         }
     }
 
+    @ViewBuilder
     private var heroColumn: some View {
-        Group {
-            if snap.hasActiveChallenge {
-                ZStack {
-                    HeroDial(snap: snap, lineWidth: 6, ovrSize: 34)
-                    VStack {
-                        HStack { FlamePill(streak: snap.streak); Spacer() }
-                        Spacer()
-                        DayLabel(dayIndex: snap.dayIndex, totalDays: snap.totalDays)
-                    }
-                }
-            } else {
-                HeroDial(snap: snap, lineWidth: 6, ovrSize: 34)
+        if snap.hasActiveChallenge {
+            VStack(spacing: 4) {
+                HStack { FlamePill(streak: snap.streak); Spacer() }
+                HeroDial(snap: snap, lineWidth: 6, ovrSize: 32)
+                    .frame(maxHeight: .infinity)
+                DayLabel(dayIndex: snap.dayIndex, totalDays: snap.totalDays)
             }
+        } else {
+            HeroDial(snap: snap, lineWidth: 6, ovrSize: 32)
         }
     }
 
@@ -139,6 +138,7 @@ struct MediumWidgetView: View {
                 Text("New challenge?")
                     .font(.system(size: 17, weight: .bold))
                     .foregroundStyle(WidgetPalette.accent)
+                    .widgetAccentable()
                 Text("Start your next monk mode.")
                     .font(.system(size: 12))
                     .foregroundStyle(WidgetPalette.textSecondary)
@@ -151,6 +151,7 @@ struct MediumWidgetView: View {
                 Image(systemName: "checkmark.seal.fill")
                     .font(.system(size: 26))
                     .foregroundStyle(WidgetPalette.celebrationGold)
+                    .widgetAccentable()
                 Text("Day \(snap.dayIndex) sealed")
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(WidgetPalette.celebrationGold)
@@ -188,6 +189,7 @@ private struct TaskRow: View {
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(WidgetPalette.accent)
                 .frame(width: 18)
+                .widgetAccentable()
             Text(task.title)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(WidgetPalette.textPrimary)
@@ -209,6 +211,7 @@ struct EmptyWidgetView: View {
                     .font(.system(size: 18))
                     .foregroundStyle(WidgetPalette.flame)
             }
+            .widgetAccentable()
             Text("Start your monk mode.")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(WidgetPalette.textPrimary)
@@ -260,6 +263,8 @@ private struct ProgressRing: View {
 
     var body: some View {
         ZStack {
+            // Track stays in the default (desaturated) group so the accent arc
+            // reads against it in tinted mode.
             Circle()
                 .stroke(WidgetPalette.border, lineWidth: lineWidth)
             Circle()
@@ -267,27 +272,39 @@ private struct ProgressRing: View {
                 .stroke(WidgetPalette.accent,
                         style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
+                .widgetAccentable()
         }
         .aspectRatio(1, contentMode: .fit)
     }
 }
 
 private struct FlamePill: View {
+    // The pill's filled capsule is a solid shape → it renders as an opaque blob
+    // in .accented / .vibrant. Drop the fill there and show the bare flame+count.
+    @Environment(\.widgetRenderingMode) private var renderingMode
     let streak: Int
+
+    private var isFullColor: Bool { renderingMode == .fullColor }
 
     var body: some View {
         HStack(spacing: 3) {
             Image(systemName: "flame.fill")
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(WidgetPalette.flame)
+                .widgetAccentable()
             Text("\(streak)")
                 .font(.system(size: 12, weight: .bold).monospacedDigit())
                 .foregroundStyle(WidgetPalette.textPrimary)
         }
-        .padding(.horizontal, 7)
-        .padding(.vertical, 4)
-        .background(Capsule().fill(WidgetPalette.bgCard))
-        .overlay(Capsule().stroke(WidgetPalette.border, lineWidth: 1))
+        .padding(.horizontal, isFullColor ? 7 : 0)
+        .padding(.vertical, isFullColor ? 4 : 0)
+        .background {
+            if isFullColor {
+                Capsule()
+                    .fill(WidgetPalette.bgCard)
+                    .overlay(Capsule().stroke(WidgetPalette.border, lineWidth: 1))
+            }
+        }
     }
 }
 

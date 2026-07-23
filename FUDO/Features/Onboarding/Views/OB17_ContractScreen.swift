@@ -31,13 +31,19 @@ struct ContractScreen: View {
     let date: Date
     let durationDays: Int
     let hasSignature: Bool
+    /// The strokes live in the VM (batch #12): the paywall's X recreates this
+    /// screen, and a signed contract must come back with its mark intact.
+    @Binding var strokes: [[CGPoint]]
     let onSign: () -> Void
     let onSignatureStroke: () -> Void
     let onSignatureCleared: () -> Void
-    /// DEBUG previews only — renders state 2 (stamped, Continue up).
+    /// Fires when the hold completes — the VM remembers the seal across the
+    /// paywall round trip.
+    var onSealed: () -> Void = {}
+    /// Re-entry from the paywall's X (and DEBUG previews): poses the sealed end
+    /// state cold — stamp posed, Continue up, nothing replays.
     var startsSealed = false
 
-    @State private var strokes: [[CGPoint]] = []
     @State private var isDrawing = false
     @State private var revealed = false
     @State private var sealed = false
@@ -354,6 +360,7 @@ struct ContractScreen: View {
     private func seal() {
         guard !sealed else { return }
         withAnimation(AppAnimation.standard) { sealed = true }
+        onSealed()
 
         Task { @MainActor in
             // Settle, then the paper darkens under the incoming stamp.
@@ -403,38 +410,39 @@ private struct StampShakeEffect: GeometryEffect {
 #if DEBUG
 /// 43 → ~78 on the canonical run. The rank reads WARRIOR at 78 — the frame's
 /// "Master" is a bug (Master opens at 80). State 1: no price anywhere.
-#Preview("OB 17 — state 1 (unsigned)") {
-    OnboardingPreviewChrome {
-        ContractScreen(startingOVR: 43, rank: .novice, projectedOVR: 78,
-                       projectedRank: .warrior,
-                       date: Calendar.current.date(byAdding: .day, value: 29, to: .now) ?? .now,
-                       durationDays: 30, hasSignature: false,
-                       onSign: {}, onSignatureStroke: {}, onSignatureCleared: {})
+private struct ContractPreviewHost: View {
+    @State var strokes: [[CGPoint]] = []
+    var hasSignature = false
+    var startsSealed = false
+    var ovr = 43
+    var days = 30
+
+    var body: some View {
+        OnboardingPreviewChrome {
+            ContractScreen(startingOVR: ovr, rank: .novice, projectedOVR: 78,
+                           projectedRank: .warrior,
+                           date: Calendar.current.date(byAdding: .day, value: days - 1, to: .now) ?? .now,
+                           durationDays: days, hasSignature: hasSignature,
+                           strokes: $strokes,
+                           onSign: {}, onSignatureStroke: {}, onSignatureCleared: {},
+                           startsSealed: startsSealed)
+        }
     }
+}
+
+#Preview("OB 17 — state 1 (unsigned)") {
+    ContractPreviewHost()
 }
 
 /// Signed, hold not done: CTA live, STILL no price. The fill + ramp only exist
 /// under a finger — the feel is a device check.
 #Preview("OB 17 — state 1 (signed, pre-hold)") {
-    OnboardingPreviewChrome {
-        ContractScreen(startingOVR: 45, rank: .novice, projectedOVR: 79,
-                       projectedRank: .warrior,
-                       date: Calendar.current.date(byAdding: .day, value: 29, to: .now) ?? .now,
-                       durationDays: 30, hasSignature: true,
-                       onSign: {}, onSignatureStroke: {}, onSignatureCleared: {})
-    }
+    ContractPreviewHost(hasSignature: true, ovr: 45)
 }
 
-/// State 2 — sealed: dimmed paper, SIGNED stamp under the baseline, Continue
-/// up. Monk Mode 90 from the ceiling — the longest terms line the card holds.
+/// State 2 — sealed (the paywall-X return state): dimmed paper, SIGNED stamp
+/// under the baseline, Continue up, nothing replays. 90 days from the ceiling.
 #Preview("OB 17 — state 2 (stamped, 90 days)") {
-    OnboardingPreviewChrome {
-        ContractScreen(startingOVR: 50, rank: .disciple, projectedOVR: 96,
-                       projectedRank: .sensei,
-                       date: Calendar.current.date(byAdding: .day, value: 89, to: .now) ?? .now,
-                       durationDays: 90, hasSignature: true,
-                       onSign: {}, onSignatureStroke: {}, onSignatureCleared: {},
-                       startsSealed: true)
-    }
+    ContractPreviewHost(hasSignature: true, startsSealed: true, ovr: 50, days: 90)
 }
 #endif

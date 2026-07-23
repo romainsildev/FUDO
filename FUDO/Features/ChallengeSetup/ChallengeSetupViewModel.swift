@@ -47,7 +47,9 @@ final class ChallengeSetupViewModel {
     // MARK: - Rules
 
     var enabledRules: [EditableRule] { rules.filter(\.isEnabled) }
-    var canAddRule: Bool { rules.count < GameConfig.maxRules }
+    /// The cap counts ENABLED rules (batch #12): the onboarding's 11b keeps the
+    /// whole catalog visible as disabled rows — visible isn't committed.
+    var canAddRule: Bool { enabledRules.count < GameConfig.maxRules }
     var showRuleCountWarning: Bool { enabledRules.count >= Self.ruleCountWarningThreshold }
 
     @discardableResult
@@ -64,6 +66,10 @@ final class ChallengeSetupViewModel {
 
     func toggleRule(id: UUID) {
         guard let index = rules.firstIndex(where: { $0.id == id }) else { return }
+        // Enabling respects the cap; disabling is always allowed.
+        if !rules[index].isEnabled {
+            guard enabledRules.count < GameConfig.maxRules else { return }
+        }
         rules[index].isEnabled.toggle()
     }
 

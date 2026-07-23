@@ -95,8 +95,11 @@ enum QuitHistory: CaseIterable, Equatable {
 }
 
 /// What he actually wants (OB 07, multi-select). Feeds the reflection only.
+/// Batch #12 additions: `doWhatIveWanted` (the acted one) and `moreEnergy`
+/// (proposed alongside — Romain arbitrates the copy).
 enum Goal: CaseIterable, Equatable {
-    case leanerBody, earlyWakeUps, killScrolling, readDaily, harderMindset, coldShowers
+    case leanerBody, earlyWakeUps, killScrolling, readDaily, harderMindset,
+         coldShowers, doWhatIveWanted, moreEnergy
 
     var optionTitle: String {
         switch self {
@@ -106,6 +109,8 @@ enum Goal: CaseIterable, Equatable {
         case .readDaily: return "Read every day"
         case .harderMindset: return "Harder mindset"
         case .coldShowers: return "Cold showers"
+        case .doWhatIveWanted: return "Do what I've always wanted to do"
+        case .moreEnergy: return "More energy, less fog"
         }
     }
 
@@ -119,6 +124,65 @@ enum Goal: CaseIterable, Equatable {
         case .readDaily: return "reading every day"
         case .harderMindset: return "a harder mindset"
         case .coldShowers: return "cold showers"
+        case .doWhatIveWanted: return "to finally do what you've always wanted"
+        case .moreEnergy: return "more energy"
+        }
+    }
+
+    /// OB 07's display order (batch #12): the options his PREVIOUS answers point
+    /// at rise to the top — the heavy scroller reads "Kill zombie scrolling"
+    /// first. Stable: score descending, enum order breaking ties, zero
+    /// randomness. Only answers given BEFORE the goals screen are read.
+    static func displayOrder(for draft: OnboardingDraft) -> [Goal] {
+        allCases.enumerated().sorted { lhs, rhs in
+            let l = lhs.element.affinity(to: draft)
+            let r = rhs.element.affinity(to: draft)
+            return l == r ? lhs.offset < rhs.offset : l > r
+        }.map(\.element)
+    }
+
+    private func affinity(to draft: OnboardingDraft) -> Int {
+        switch self {
+        case .killScrolling:
+            var score = 0
+            if draft.pain == .doomscrolling { score += 2 }
+            switch draft.scrollTime {
+            case .sixHoursPlus: score += 2
+            case .fourToSixHours: score += 1
+            default: break
+            }
+            if draft.focusSpan == .underTen { score += 1 }
+            return score
+        case .earlyWakeUps:
+            var score = 0
+            if draft.pain == .wakingUpEarly { score += 2 }
+            switch draft.wakeTime {
+            case .afterNine: score += 2
+            case .sevenToNine: score += 1
+            default: break
+            }
+            return score
+        case .leanerBody:
+            var score = 0
+            if draft.pain == .trainingConsistently { score += 2 }
+            switch draft.trainingLoad {
+            case .zero: score += 2
+            case .oneToTwo: score += 1
+            default: break
+            }
+            return score
+        case .readDaily:
+            return draft.pain == .reading ? 2 : 0
+        case .harderMindset:
+            switch draft.procrastination {
+            case .everyDay: return 2
+            case .everyWeek: return 1
+            default: return 0
+            }
+        case .moreEnergy:
+            return draft.wakeTime == .afterNine ? 1 : 0
+        case .coldShowers, .doWhatIveWanted:
+            return 0
         }
     }
 }

@@ -29,6 +29,13 @@ final class OnboardingViewModel {
     /// OB 17 — the CTA stays dead until his finger has left a stroke.
     private(set) var hasSignature = false
 
+    /// OB 17's view state, hoisted (batch #12): the paywall's X walks back to
+    /// the contract and RECREATES the screen — a signed contract must come back
+    /// signed (his stroke intact, the stamp posed, Continue up), not blank.
+    /// Session memory, like the one-shot flags.
+    var signatureStrokes: [[CGPoint]] = []
+    private(set) var contractSealed = false
+
     /// The 60-seconds beat plays ONCE per funnel run (batch #4): backing out
     /// of the quiz must land on the FINISHED state — lock line + CTA posed —
     /// never replay the launch. Session memory, deliberately not persisted.
@@ -214,13 +221,36 @@ final class OnboardingViewModel {
         setup = ChallengeSetupViewModel(store: store, recommendedPreset: recommended)
     }
 
+    // MARK: - OB 11b — personalized rules (batch #12)
+
+    /// Which preset the current rule set was personalized against — changing
+    /// the duration reloads preset defaults (chip semantics), so 11b re-derives.
+    private var personalizedForPreset: ChallengePreset?
+
+    /// Swaps the preset's default rules for the personalized cut: full catalog
+    /// visible, ~4 pre-selected from his answers. Idempotent per preset — his
+    /// toggles survive a back-and-forth that doesn't change the duration.
+    func preparePersonalizedRules() {
+        guard personalizedForPreset != setup.selectedPreset else { return }
+        setup.rules = RulePersonalizer.rules(for: draft)
+        personalizedForPreset = setup.selectedPreset
+    }
+
     // MARK: - OB 17 — checkpoint 1
 
     func registerSignature() { hasSignature = true }
 
-    /// "Clear" (tester batch #1): the strokes die in the screen's @State; here
-    /// only the FACT of the signature is revoked — the CTA goes dead again.
-    func clearSignature() { hasSignature = false }
+    /// "Clear" (tester batch #1): revokes the FACT of the signature — the CTA
+    /// goes dead again. The strokes live here too since batch #12 (paywall
+    /// round trip), so both die together.
+    func clearSignature() {
+        hasSignature = false
+        signatureStrokes = []
+    }
+
+    /// The hold completed and the stamp landed — one-way, survives the paywall's
+    /// X. The screen poses the sealed end state cold on re-entry (no replay).
+    func markContractSealed() { contractSealed = true }
 
     /// Checkpoint 1 (kill-safety): the player becomes REAL here — his OVR exists even
     /// if he kills the app at the paywall. The CHALLENGE does not: its day-1 clock

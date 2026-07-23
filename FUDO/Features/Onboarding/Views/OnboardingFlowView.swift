@@ -139,10 +139,11 @@ struct OnboardingFlowView: View {
                                selection: $viewModel.draft.focusSpan,
                                onAdvance: viewModel.advance)
         case .goals:
-            MultiChoiceScreen(step: .goals, 
+            // Batch #12: dynamic order — what his answers point at rises first.
+            MultiChoiceScreen(step: .goals,
                               title: "What do you actually\nwant?",
                               subtitle: "Pick all that apply",
-                              options: Goal.allCases,
+                              options: Goal.displayOrder(for: viewModel.draft),
                               selection: $viewModel.draft.goals,
                               onAdvance: viewModel.advance)
         case .struggle:
@@ -229,9 +230,12 @@ struct OnboardingFlowView: View {
                            date: viewModel.projectionDate,
                            durationDays: viewModel.setup.durationDays,
                            hasSignature: viewModel.hasSignature,
+                           strokes: $viewModel.signatureStrokes,
                            onSign: viewModel.signContract,
                            onSignatureStroke: viewModel.registerSignature,
-                           onSignatureCleared: viewModel.clearSignature)
+                           onSignatureCleared: viewModel.clearSignature,
+                           onSealed: viewModel.markContractSealed,
+                           startsSealed: viewModel.contractSealed)
         case .paywall:
             PaywallGateView(contract: flags.contract, date: viewModel.projectionDate,
                             onContinue: viewModel.passPaywall,

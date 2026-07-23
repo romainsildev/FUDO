@@ -190,7 +190,10 @@ struct OnboardingViewModelTests {
 
         #expect(viewModel.projectedOVR == OVREngine.project(from: base, days: viewModel.setup.durationDays))
         #expect(viewModel.projectedRank == Rank.from(ovr: viewModel.projectedOVR))
-        // 44 → 30 perfect days lands in the WARRIOR band, never Master (frame bug).
+        // Pin the duration: the default is the 60-day reco (2026-07-16), and this
+        // band check is about the canonical 30-day run — 44 → 30 perfect days
+        // lands in the WARRIOR band, never Master (frame bug).
+        viewModel.setup.selectDuration(days: 30)
         #expect(viewModel.projectedRank == .warrior)
     }
 
@@ -213,7 +216,10 @@ struct OnboardingViewModelTests {
 
         #expect(store.player != nil, "the OVR must survive a kill at the paywall")
         #expect(store.activeChallenge == nil, "day 1 must not tick behind the paywall")
-        #expect(flags.contract?.durationDays == 30)
+        // No explicit pick in this test → the snapshot carries the setup's
+        // default, the 60-day reco (supersedes 30, 2026-07-16).
+        #expect(flags.contract?.durationDays == viewModel.setup.durationDays)
+        #expect(flags.contract?.durationDays == 60)
         #expect(viewModel.step == .paywall)
     }
 
@@ -267,7 +273,9 @@ struct OnboardingViewModelTests {
         #expect(flags.isFullyDone == false, "the hold-lock still holds")
 
         viewModel.commitChallenge()
-        #expect(store.activeChallenge?.durationDays == 30)
+        // Same default-60 truth as the snapshot test — the challenge is born
+        // from the contract, and the contract carried the reco.
+        #expect(store.activeChallenge?.durationDays == 60)
         #expect(store.activeChallenge?.startDate == store.effectiveToday, "day 1 is today (D2)")
     }
 

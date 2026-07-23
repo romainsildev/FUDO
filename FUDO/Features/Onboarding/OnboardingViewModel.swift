@@ -82,7 +82,16 @@ final class OnboardingViewModel {
     }
 
     func advance() {
-        guard !isAdvancing, canAdvance, let next = step.next else { return }
+        advance(force: false)
+    }
+
+    /// `force` bypasses the spam guard — for the CHECKPOINT advances only
+    /// (signContract, passPaywall): those are commits, not CTA taps, and a
+    /// guard armed by the previous screen must never swallow them (it left
+    /// `hasCompletedOnboarding` set with the step stuck on the paywall — the
+    /// resume write below never ran).
+    private func advance(force: Bool) {
+        guard force || !isAdvancing, canAdvance, let next = step.next else { return }
         isAdvancing = true
         Haptics.light()
         direction = .forward
@@ -217,7 +226,10 @@ final class OnboardingViewModel {
     /// if he kills the app at the paywall. The CHALLENGE does not: its day-1 clock
     /// must not tick while he's blocked behind a paywall he hasn't passed.
     func signContract() {
-        guard hasSignature else { return }
+        // The step guard is what makes the forced advance safe: a double tap
+        // lands with step already on .paywall and dies here — a forced advance
+        // without it would sign twice and SKIP the paywall.
+        guard hasSignature, step == .contract else { return }
         let startingOVR = OVREngine.startingOVR(from: draft.answers)
         store.ensurePlayer(startingOVR: startingOVR)
         flags.contract = ContractSnapshot(
@@ -227,7 +239,7 @@ final class OnboardingViewModel {
             durationDays: setup.durationDays,
             reminderMinutes: setup.reminderMinutes,
             rules: setup.enabledRules.map { .init(title: $0.title, iconName: $0.iconName) })
-        advance()
+        advance(force: true)
     }
 
     // MARK: - Paywall — checkpoint 2
@@ -235,8 +247,9 @@ final class OnboardingViewModel {
     /// The quiz never replays after this. The hold-lock takes over: `isFullyDone`
     /// stays false until the post-paywall trio is done.
     func passPaywall() {
+        guard step == .paywall else { return }   // same double-tap seal as the contract
         flags.hasCompletedOnboarding = true
-        advance()
+        advance(force: true)
     }
 
     // MARK: - OB 19 — the real work behind "Saving your protocol"

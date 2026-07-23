@@ -8,6 +8,7 @@ import SwiftUI
 struct DebugMenuSection: View {
     @Environment(GameStore.self) private var store
     @Environment(AppState.self) private var appState
+    @Environment(EntitlementStore.self) private var entitlements: EntitlementStore?
     @State private var pendingAction: DebugAction?
 
     private enum DebugAction: String, CaseIterable, Identifiable {
@@ -49,6 +50,10 @@ struct DebugMenuSection: View {
         // No own header: the real Settings screen (S10) wraps this in a Section
         // that already carries the "DEBUG" header — two were showing.
         VStack(alignment: .leading, spacing: 10) {
+            if let entitlements {
+                EntitlementOverrideRow(entitlements: entitlements)
+            }
+
             ForEach(DebugAction.allCases) { action in
                 Button {
                     pendingAction = action
@@ -104,6 +109,60 @@ struct DebugMenuSection: View {
         case .completeChallenge: store.debugCompleteActiveChallenge()
         case .abandonChallenge: store.abandonChallenge()
         }
+    }
+}
+
+/// Segmented entitlement override — System follows RevenueCat, Pro/Free force
+/// the gate. Free simulates the expired-trial paywall over Home without any
+/// purchase (the sandbox stays dead until the banking paperwork clears); the
+/// escape back lives on the paywall itself, since this menu sits under it.
+private struct EntitlementOverrideRow: View {
+    let entitlements: EntitlementStore
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Entitlement override")
+                .fudoFont(.body(15))
+                .foregroundStyle(FudoColor.textPrimary)
+
+            Picker("Entitlement override", selection: selection) {
+                Text("System").tag(0)
+                Text("Pro").tag(1)
+                Text("Free").tag(2)
+            }
+            .pickerStyle(.segmented)
+
+            Text("Free raises the expired-trial paywall over the whole app.")
+                .fudoFont(.caption(11))
+                .foregroundStyle(FudoColor.textSecondary)
+        }
+        .padding(FudoSpacing.cardPadding)
+        .background {
+            RoundedRectangle(cornerRadius: FudoSpacing.radiusNested, style: .continuous)
+                .fill(FudoColor.bgCard)
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: FudoSpacing.radiusNested, style: .continuous)
+                .strokeBorder(FudoColor.border, lineWidth: 1)
+        }
+    }
+
+    private var selection: Binding<Int> {
+        Binding(
+            get: {
+                switch entitlements.debugProOverride {
+                case .some(true): return 1
+                case .some(false): return 2
+                case .none: return 0
+                }
+            },
+            set: { value in
+                switch value {
+                case 1: entitlements.debugProOverride = true
+                case 2: entitlements.debugProOverride = false
+                default: entitlements.debugProOverride = nil
+                }
+            })
     }
 }
 #endif

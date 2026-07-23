@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B5AC0001300700000000C001 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = B5AC0002300700000000C002 /* RevenueCat */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		B55F686F3002C6C9003FC32B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -66,6 +70,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B5AC0001300700000000C001 /* RevenueCat in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -127,6 +132,7 @@
 			);
 			name = FUDO;
 			packageProductDependencies = (
+				B5AC0002300700000000C002 /* RevenueCat */,
 			);
 			productName = FUDO;
 			productReference = B55F68613002C6C8003FC32B /* FUDO.app */;
@@ -210,6 +216,9 @@
 			);
 			mainGroup = B55F68583002C6C8003FC32B;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B5AC0003300700000000C003 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B55F68623002C6C8003FC32B /* Products */;
 			projectDirPath = "";
@@ -595,6 +604,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B5AC0003300700000000C003 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B5AC0002300700000000C002 /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B5AC0003300700000000C003 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B55F68593002C6C8003FC32B /* Project object */;
 }

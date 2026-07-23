@@ -8,6 +8,8 @@ import Observation
 final class SettingsViewModel {
     private let store: GameStore
     private let prefs: NotificationPreferences
+    /// nil in previews / the test shell (RevenueCat unconfigured there).
+    private let entitlements: EntitlementStore?
 
     /// Mirror of the persisted switches so SwiftUI observes them; the setters
     /// write through to UserDefaults and fire the notification side effects.
@@ -22,9 +24,11 @@ final class SettingsViewModel {
     /// row shows nothing fancy, but the flag guards against double taps.
     private(set) var isSyncingNotifications = false
 
-    init(store: GameStore, prefs: NotificationPreferences = NotificationPreferences()) {
+    init(store: GameStore, prefs: NotificationPreferences = NotificationPreferences(),
+         entitlements: EntitlementStore? = nil) {
         self.store = store
         self.prefs = prefs
+        self.entitlements = entitlements
         self.dailyReminderEnabled = prefs.isEnabled(.dailyReminder)
         self.eveningRemindersEnabled = prefs.isEnabled(.eveningReminders)
         self.rankCelebrationsEnabled = prefs.isEnabled(.rankCelebrations)
@@ -94,10 +98,30 @@ final class SettingsViewModel {
 
     // MARK: - Subscription (§SUBSCRIPTION)
 
-    /// TODO(S6): RevenueCat is not wired yet — this is the documented stub. Once
-    /// `EntitlementStore` ships, restore maps to `Purchases.shared.restorePurchases`.
+    /// Spinner state for the Restore row — guards double taps too.
+    private(set) var isRestoring = false
+    /// One-shot outcome surfaced as an alert by the view (nil = nothing to show).
+    var restoreMessage: String?
+
     func restorePurchases() {
-        // Intentionally a no-op until Session 6. No dead-end UX: the row explains it.
+        guard !isRestoring else { return }
+        guard let entitlements else {
+            restoreMessage = "The store isn't reachable right now. Try again later."
+            return
+        }
+        isRestoring = true
+        Task {
+            defer { isRestoring = false }
+            switch await entitlements.restore() {
+            case .restored:
+                Haptics.success()
+                restoreMessage = "Purchases restored. You're in."
+            case .nothingToRestore:
+                restoreMessage = "No previous purchase found on this Apple ID."
+            case .failed(let message):
+                restoreMessage = message
+            }
+        }
     }
 
     // MARK: - Data (§DATA)

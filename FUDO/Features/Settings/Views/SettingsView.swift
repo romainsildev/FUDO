@@ -5,9 +5,10 @@ import SwiftUI
 /// and openURL are read from the environment inside the screen.
 struct SettingsView: View {
     @Environment(GameStore.self) private var store
+    @Environment(EntitlementStore.self) private var entitlements: EntitlementStore?
 
     var body: some View {
-        SettingsScreen(store: store)
+        SettingsScreen(store: store, entitlements: entitlements)
     }
 }
 
@@ -29,15 +30,15 @@ struct SettingsScreen: View {
     @State private var showEraseSheet = false
     @State private var showEraseAlert = false
 
-    init(store: GameStore) {
+    init(store: GameStore, entitlements: EntitlementStore? = nil) {
         self.store = store
-        _viewModel = State(initialValue: SettingsViewModel(store: store))
+        _viewModel = State(initialValue: SettingsViewModel(store: store, entitlements: entitlements))
     }
 
     private enum Route: Hashable { case editRules }
 
-    private static let privacyURL = URL(string: "https://u8492529422-web.github.io/fudo-legal/privacy")!
-    private static let termsURL = URL(string: "https://u8492529422-web.github.io/fudo-legal/terms")!
+    // Legal URLs live in AppConfig (single source — the paywall footer links the
+    // same ones). Only the app-specific rows keep local constants.
     private static let manageSubscriptionURL = URL(string: "https://apps.apple.com/account/subscriptions")!
     private static let contactURL = URL(string: "mailto:thepixelwar.contact@gmail.com")!
 
@@ -75,6 +76,11 @@ struct SettingsScreen: View {
         }
         .sheet(item: $safariLink) { link in
             SafariView(url: link.url).ignoresSafeArea()
+        }
+        .alert("Restore purchases", isPresented: restoreAlertBinding) {
+            Button("OK") { viewModel.restoreMessage = nil }
+        } message: {
+            Text(viewModel.restoreMessage ?? "")
         }
     }
 
@@ -164,14 +170,22 @@ struct SettingsScreen: View {
             Button {
                 viewModel.restorePurchases()
             } label: {
-                rowLabel("Restore purchases", systemImage: "arrow.clockwise")
+                HStack {
+                    rowLabel("Restore purchases", systemImage: "arrow.clockwise")
+                    Spacer()
+                    if viewModel.isRestoring {
+                        ProgressView()
+                            .controlSize(.small)
+                            .tint(FudoColor.textSecondary)
+                    }
+                }
             }
+            .disabled(viewModel.isRestoring)
             .listRowBackground(FudoColor.bgCard)
         } header: {
             sectionHeader("Subscription")
         } footer: {
-            // The one documented stub (TODO S6): keep the promise honest.
-            sectionFooter("Restore reconnects a past purchase once subscriptions go live.")
+            sectionFooter("Restore reconnects a past purchase to this device.")
         }
     }
 
@@ -180,12 +194,12 @@ struct SettingsScreen: View {
     @ViewBuilder
     private var legalSection: some View {
         Section {
-            Button { safariLink = SafariLink(url: Self.privacyURL) } label: {
+            Button { safariLink = SafariLink(url: AppConfig.privacyURL) } label: {
                 rowLabel("Privacy Policy", systemImage: "hand.raised")
             }
             .listRowBackground(FudoColor.bgCard)
 
-            Button { safariLink = SafariLink(url: Self.termsURL) } label: {
+            Button { safariLink = SafariLink(url: AppConfig.termsURL) } label: {
                 rowLabel("Terms of Use", systemImage: "doc.text")
             }
             .listRowBackground(FudoColor.bgCard)
@@ -248,6 +262,12 @@ struct SettingsScreen: View {
     }
 
     // MARK: - Bindings
+
+    private var restoreAlertBinding: Binding<Bool> {
+        Binding(
+            get: { viewModel.restoreMessage != nil },
+            set: { if !$0 { viewModel.restoreMessage = nil } })
+    }
 
     private var reminderTimeBinding: Binding<Date> {
         Binding(

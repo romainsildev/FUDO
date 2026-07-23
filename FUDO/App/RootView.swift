@@ -9,6 +9,8 @@ import SwiftUI
 /// runs the rollover (grace-period closures, decay) before routing.
 struct RootView: View {
     @Environment(GameStore.self) private var gameStore
+    // Optional on purpose: previews and the test shell never configure RevenueCat.
+    @Environment(EntitlementStore.self) private var entitlementStore: EntitlementStore?
     @Environment(\.scenePhase) private var scenePhase
     @State private var appState: AppState
     @State private var flags: OnboardingFlags
@@ -44,6 +46,10 @@ struct RootView: View {
         // The DEBUG "Replay onboarding" flips this from inside the app: re-route
         // now rather than wait for the next scene activation.
         .onChange(of: appState.hasCompletedOnboarding) { _, _ in evaluateRoute() }
+        // Entitlement changes land live from the RC stream (purchase, expiry,
+        // restore, DEBUG override) — reflected without a relaunch.
+        .onChange(of: entitlementStore?.isPro) { _, _ in syncEntitlement() }
+        .onChange(of: entitlementStore?.isResolved) { _, _ in syncEntitlement() }
     }
 
     private var mainRoot: some View {
@@ -60,7 +66,10 @@ struct RootView: View {
             .fudoCover(item: $cover) { cover in
                 switch cover {
                 case .paywall:
-                    PaywallPlaceholderView()   // trial-expired path — Session 6
+                    // Trial expired without conversion: Home replaced, local data
+                    // kept, no close — purchase/restore flips isPro and the cover
+                    // falls on its own.
+                    PaywallView(context: .reactivation, onFinished: syncEntitlement)
                 default:
                     EmptyView()
                 }
@@ -96,6 +105,15 @@ struct RootView: View {
         // trio must be finished too, or a kill at OB 19 would drop him into an app
         // with no reminder, no dojo, no widget pitch.
         appState.hasCompletedOnboarding = flags.isFullyDone
+        syncEntitlement()
+    }
+
+    /// Mirror the entitlement into routing. Unresolved reads as PRO: a paying
+    /// user must never see the paywall flash while the RC cache loads (it
+    /// resolves within the first frames, offline included) — an expired user
+    /// gets the cover one beat later instead, the acceptable side of that trade.
+    private func syncEntitlement() {
+        appState.entitlementActive = entitlementStore.map { $0.isResolved ? $0.isPro : true } ?? true
         evaluateRoute()
     }
 

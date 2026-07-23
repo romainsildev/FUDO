@@ -59,6 +59,19 @@ enum NotificationService {
             .removePendingNotificationRequests(withIdentifiers: [dailyReminderID])
     }
 
+    // MARK: - Trial reminder (S9)
+
+    /// Reserved id for the "trial ends tomorrow" local notification.
+    static let trialEndingReminderID = "fudo.trial.ending"
+
+    /// Called on purchase success (paywall promises "Day 2 — we remind you by
+    /// notification"). TODO(S9): schedule the real D-1 content + timing here.
+    /// Intentionally a no-op until then — never fake a notification we didn't
+    /// schedule, and never promise one from a screen whose grant path is dead.
+    static func scheduleTrialEndingReminderStub() {
+        // S9 wires the real request against `trialEndingReminderID`.
+    }
+
     #if DEBUG
     /// Device check for the grant path: prints what is actually queued. A screen
     /// that "worked" but scheduled nothing is the exact bug this service exists

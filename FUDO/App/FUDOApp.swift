@@ -1,3 +1,4 @@
+import RevenueCat
 import SwiftData
 import SwiftUI
 import UIKit
@@ -6,6 +7,7 @@ import UIKit
 struct FUDOApp: App {
     private let container: ModelContainer?
     @State private var gameStore: GameStore?
+    @State private var entitlementStore: EntitlementStore?
 
     init() {
         // Unit tests AND Xcode previews run HOSTED inside this app: if the app also
@@ -14,12 +16,14 @@ struct FUDOApp: App {
         // multi-container bug; "Fatal Error in BackingData.swift" in the canvas).
         // Under either session the app stays an empty shell; tests own their single
         // in-memory container (SwiftDataTestSupport), previews own theirs
-        // (per-preview factory, e.g. HomePreviewFactory).
+        // (per-preview factory, e.g. HomePreviewFactory). The same guard keeps
+        // Purchases.configure out of tests/canvas — EntitlementStore no-ops unconfigured.
         let env = ProcessInfo.processInfo.environment
         if env["XCTestSessionIdentifier"] != nil || env["XCTestConfigurationFilePath"] != nil
             || env["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
             container = nil
             _gameStore = State(initialValue: nil)
+            _entitlementStore = State(initialValue: nil)
             return
         }
         #if DEBUG
@@ -28,6 +32,16 @@ struct FUDOApp: App {
             "Bebas Neue not registered — check UIAppFonts + Resources/Fonts/BebasNeue-Regular.ttf"
         )
         #endif
+        // RevenueCat FIRST (before any routing decision): configuring at launch
+        // revives the SDK's local CustomerInfo cache, so a paying user resolves
+        // as pro within the first frames — offline included, never a paywall flash.
+        #if DEBUG
+        Purchases.logLevel = .debug
+        #endif
+        Purchases.configure(withAPIKey: AppConfig.revenueCatAPIKey)
+        let entitlements = EntitlementStore()
+        entitlements.start()
+        _entitlementStore = State(initialValue: entitlements)
         do {
             let built = try ModelContainer(for: FudoSchema.schema)
             #if DEBUG
@@ -43,9 +57,10 @@ struct FUDOApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if let container, let gameStore {
+            if let container, let gameStore, let entitlementStore {
                 RootView()
                     .environment(gameStore)
+                    .environment(entitlementStore)
                     .modelContainer(container)
             } else {
                 Color.clear   // test-host shell — never visible outside unit-test sessions

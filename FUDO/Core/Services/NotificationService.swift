@@ -159,6 +159,14 @@ enum NotificationService {
         guard !isSideEffectsSuppressed else { return }
         guard NotificationPreferences().isEnabled(.rankCelebrations) else { return }
         guard UIApplication.shared.applicationState != .active else { return }
+        // Effectively immediate; a 1s interval keeps a valid non-repeating trigger.
+        UNUserNotificationCenter.current().add(
+            rankUpRequest(rankName: rankName, rankRaw: rankRaw, delay: 1), withCompletionHandler: nil)
+    }
+
+    /// The rank-up request — shared by the live post and the DEBUG affordance. Carries
+    /// the deep link + raw rank so the tap resolves to the share card.
+    private static func rankUpRequest(rankName: String, rankRaw: Int, delay: TimeInterval) -> UNNotificationRequest {
         let content = UNMutableNotificationContent()
         content.title = NotificationCopy.title(for: .rankUp)
         content.body = NotificationCopy.rankUpBody(rankName: rankName)
@@ -168,12 +176,10 @@ enum NotificationService {
             NotificationCopy.deepLinkKey: NotificationCopy.rankUpShareLink,
             NotificationCopy.rankRawKey: rankRaw,
         ]
-        let request = UNNotificationRequest(
+        return UNNotificationRequest(
             identifier: NotificationCopy.Kind.rankUp.id,
             content: content,
-            // Effectively immediate; a 1s interval keeps a valid non-repeating trigger.
-            trigger: UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false))
-        UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+            trigger: UNTimeIntervalNotificationTrigger(timeInterval: max(1, delay), repeats: false))
     }
 
     /// The in-app cover consumed the rank-up: drop any delivered/pending notif for
@@ -206,6 +212,17 @@ enum NotificationService {
     }
 
     #if DEBUG
+    /// DEBUG affordance (Settings §DEBUG): fire a REAL rank-up notification,
+    /// bypassing the app-state + toggle gates. A genuine gain never happens while
+    /// backgrounded, so this is the only way to exercise the tap → share deep link
+    /// on device. ~4s delay: lock/background the app to catch the banner (a
+    /// foreground delivery is silent — `willPresent` returns []).
+    static func debugPostRankUp(rankName: String, rankRaw: Int) {
+        guard !isSideEffectsSuppressed else { return }
+        UNUserNotificationCenter.current().add(
+            rankUpRequest(rankName: rankName, rankRaw: rankRaw, delay: 4), withCompletionHandler: nil)
+    }
+
     /// Device check: prints the whole pending queue. A screen that "worked" but
     /// scheduled nothing is the exact bug this service exists to prevent.
     static func debugDumpPending() async {
@@ -288,9 +305,12 @@ extension NotificationService {
                 return cal.date(byAdding: .minute, value: minute, to: start)
             }
 
-            // No active challenge → the only notification is the day-7 idle nudge.
+            // No active challenge → the only notification is the day-7 idle nudge,
+            // gated by the daily-reminder switch (trial_d1 is the one toggle-immune
+            // notification; decay follows the daily opt-out like everything else).
             guard input.hasActiveChallenge else {
-                guard let idle = input.lastDayClosedAt,
+                guard input.dailyEnabled,
+                      let idle = input.lastDayClosedAt,
                       let day7 = cal.date(byAdding: .day, value: GameConfig.decayStartDays,
                                           to: cal.startOfDay(for: idle)),
                       let fire = cal.date(byAdding: .minute, value: decayMinute, to: day7),

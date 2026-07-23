@@ -170,6 +170,16 @@ struct NotificationPlannerTests {
             Self.input(now: now, cal: cal, hasActiveChallenge: false, lastDayClosedAt: nil)).isEmpty)
     }
 
+    @Test func decayGatedByDailyToggle() {
+        let cal = Self.calendar()
+        let now = Self.date(9, day: 23, cal: cal)
+        let idle = Self.date(9, day: 20, cal: cal)
+        // Daily switch OFF → no decay nudge (only trial_d1 is toggle-immune).
+        #expect(NotificationService.Planner.plan(
+            Self.input(now: now, cal: cal, hasActiveChallenge: false,
+                       lastDayClosedAt: idle, dailyEnabled: false)).isEmpty)
+    }
+
     @Test func activeChallengeNeverSchedulesDecay() {
         let cal = Self.calendar()
         let noon = Self.date(12, cal: cal)
@@ -193,6 +203,10 @@ struct NotificationPlannerTests {
         #expect(NotificationCopy.eveningBody(tasksLeft: 1) == "You have 1 task left. 3h30 before the penalty.")
         #expect(NotificationCopy.streakDangerBody(streak: 1) == "Your 1-day streak dies at midnight.")
         #expect(NotificationCopy.streakDangerBody(streak: 12) == "Your 12-day streak dies at midnight.")
+    }
+
+    @Test func trialCopyKeepsTheBillingPromise() {
+        #expect(NotificationCopy.trialD1Body == "Your trial ends tomorrow. Keep your OVR climbing?")
     }
 
     // MARK: - Identifiers are stable slugs (analytics + reschedule keys)

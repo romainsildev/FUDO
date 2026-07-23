@@ -12,7 +12,8 @@ struct DebugMenuSection: View {
     @State private var pendingAction: DebugAction?
 
     private enum DebugAction: String, CaseIterable, Identifiable {
-        case wipeAndReseed, wipeBlank, replayOnboarding, triggerRankUp, completeChallenge, abandonChallenge
+        case wipeAndReseed, wipeBlank, replayOnboarding, triggerRankUp, postRankUpNotif,
+             completeChallenge, abandonChallenge
 
         var id: String { rawValue }
 
@@ -22,6 +23,7 @@ struct DebugMenuSection: View {
             case .wipeBlank: return "Wipe vierge"
             case .replayOnboarding: return "Replay onboarding"
             case .triggerRankUp: return "Trigger rank-up"
+            case .postRankUpNotif: return "Post rank-up notif"
             case .completeChallenge: return "Complete challenge"
             case .abandonChallenge: return "Abandon challenge"
             }
@@ -33,6 +35,7 @@ struct DebugMenuSection: View {
             case .wipeBlank: return "Erase everything, stay blank (no auto-seed)."
             case .replayOnboarding: return "Erase everything INCLUDING the player, replay the funnel from OB 00."
             case .triggerRankUp: return "Present the rank-up cover for the current rank."
+            case .postRankUpNotif: return "Fire a REAL rank-up notification (bypasses the on-screen gate). Lock/background the app to catch the banner, then tap → share card."
             case .completeChallenge: return "End the active challenge as completed."
             case .abandonChallenge: return "Abandon with the normal penalty."
             }
@@ -41,7 +44,7 @@ struct DebugMenuSection: View {
         var needsActiveChallenge: Bool {
             switch self {
             case .completeChallenge, .abandonChallenge: return true
-            case .wipeAndReseed, .wipeBlank, .replayOnboarding, .triggerRankUp: return false
+            case .wipeAndReseed, .wipeBlank, .replayOnboarding, .triggerRankUp, .postRankUpNotif: return false
             }
         }
     }
@@ -106,6 +109,9 @@ struct DebugMenuSection: View {
             // raises the cover now, instead of making you background the app.
             appState.hasCompletedOnboarding = false
         case .triggerRankUp: store.debugTriggerRankUp()
+        case .postRankUpNotif:
+            let rank = store.player?.rank ?? .novice
+            NotificationService.debugPostRankUp(rankName: rank.displayName, rankRaw: rank.rawValue)
         case .completeChallenge: store.debugCompleteActiveChallenge()
         case .abandonChallenge: store.abandonChallenge()
         }

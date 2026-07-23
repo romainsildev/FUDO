@@ -65,7 +65,7 @@ enum NotificationCopy {
     }
 
     /// Trial D-1 — billing transparency (always delivered, ignores toggles).
-    static var trialD1Body: String { "OVR up in 2 days. Keep going?" }
+    static var trialD1Body: String { "Your trial ends tomorrow. Keep your OVR climbing?" }
 
     /// Decay warning — day 7 idle, before the first tick.
     static var decayWarningBody: String { "Your OVR is starting to rust. New challenge?" }

@@ -43,15 +43,16 @@ struct PaywallPlan: Identifiable, Equatable {
         return "Continue"
     }
 
-    /// The Apple-required line: full price + auto-renew mention, visible on the
-    /// screen BEFORE any purchase.
-    var complianceLine: String {
-        if let trialDays {
-            return "\(trialDays)-day free trial, then \(price)/\(periodUnit). "
-                + "Auto-renews until cancelled. Cancel anytime in Settings."
-        }
-        return "\(price)/\(periodUnit). Auto-renews until cancelled. Cancel anytime in Settings."
+    /// Compact price recap under the CTA — "3 days free, then $5.99/week".
+    /// Never a wall of text; the renewal notice is its own second line.
+    var priceRecapLine: String {
+        if let trialDays { return "\(trialDays) days free, then \(price)/\(periodUnit)" }
+        return "\(price)/\(periodUnit), billed today"
     }
+
+    /// The Apple-required renewal notice, shown right under the recap — full
+    /// price + auto-renew visible on screen BEFORE any purchase.
+    static let autoRenewNotice = "Auto-renews until cancelled. Cancel anytime in Settings."
 
     /// "SAVE 86%" — computed from the real prices, never hardcoded (doctrine D4:
     /// the badge must stay true if pricing ever changes). nil when there is

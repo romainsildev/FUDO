@@ -234,7 +234,8 @@ struct OnboardingFlowView: View {
                            onSignatureCleared: viewModel.clearSignature)
         case .paywall:
             PaywallGateView(contract: flags.contract, date: viewModel.projectionDate,
-                            onContinue: viewModel.passPaywall)
+                            onContinue: viewModel.passPaywall,
+                            onClose: viewModel.closePaywall)
 
         // MARK: Act 4 — post-paywall
 

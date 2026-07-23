@@ -7,7 +7,8 @@ enum PaywallMetrics {
     static let ctaHeight: CGFloat = 65
     /// The close affordance appears only after the pitch had its beat.
     static let closeDelay: TimeInterval = 3
-    static let sectionSpacing: CGFloat = 28
+    /// Generous on purpose — the one-pager must breathe, not stack.
+    static let sectionSpacing: CGFloat = 32
 }
 
 /// Thin environment reader (same shim pattern as SettingsView): hands the
@@ -49,7 +50,9 @@ struct PaywallScreen: View {
         ScrollView {
             VStack(spacing: PaywallMetrics.sectionSpacing) {
                 PaywallHeaderView(context: viewModel.context)
-                    .padding(.top, 12)
+                    .padding(.top, 4)
+
+                PaywallBulletsView()
 
                 timelineSection
 
@@ -77,7 +80,9 @@ struct PaywallScreen: View {
         .sheet(item: $safariLink) { link in
             SafariView(url: link.url).ignoresSafeArea()
         }
-        .animation(AppAnimation.standard, value: viewModel.loadState)
+        // NO animation on loadState: the swap must SNAP (a crossfade dips both
+        // states to translucent for a beat — read as a blank frame on device).
+        // The skeleton is the initial state, rendered from the very first frame.
         .animation(AppAnimation.standard, value: viewModel.showsTrialTimeline)
         .preferredColorScheme(.dark)
     }
@@ -107,13 +112,13 @@ struct PaywallScreen: View {
         case .failed:
             loadFailure
         case .loaded:
-            VStack(spacing: 12) {
+            VStack(spacing: 14) {
                 ForEach(viewModel.plans) { plan in
                     PaywallPlanCard(
                         plan: plan,
                         isSelected: viewModel.selectedKind == plan.kind,
-                        badge: plan.kind == .annual
-                            ? viewModel.savingsPercent.map { "SAVE \($0)%" } : nil,
+                        badgeText: badgeText(for: plan),
+                        badgeStyle: plan.trialDays != nil ? .trial : .savings,
                         action: { viewModel.select(plan.kind) })
                 }
                 Text(PricingCopy.hook)
@@ -121,7 +126,17 @@ struct PaywallScreen: View {
                     .foregroundStyle(FudoColor.textSecondary)
                     .padding(.top, 2)
             }
+            // Headroom for the corner badges riding the cards' top edge.
+            .padding(.top, 6)
         }
+    }
+
+    /// Trial plan → "3 DAYS FREE" (vermillon, the hook) · annual → computed
+    /// "SAVE 86%" (green, the recommendation). Never both on one card.
+    private func badgeText(for plan: PaywallPlan) -> String? {
+        if let trialDays = plan.trialDays { return "\(trialDays) DAYS FREE" }
+        if plan.kind == .annual { return viewModel.savingsPercent.map { "SAVE \($0)%" } }
+        return nil
     }
 
     /// Offline / store failure — message + Retry, never a dead end (2.1).
@@ -176,11 +191,15 @@ struct PaywallScreen: View {
                     .transition(.opacity)
             }
 
-            if viewModel.loadState == .loaded, let compliance = viewModel.complianceLine {
-                Text(compliance)
-                    .fudoFont(.caption(11))
-                    .foregroundStyle(FudoColor.textSecondary)
-                    .multilineTextAlignment(.center)
+            // Cal AI's #1 trust line — only when the selected plan HAS a trial.
+            if viewModel.showsTrialTimeline {
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark")
+                        .fudoFont(.glyph(12, weight: .semibold))
+                    Text("No payment due now")
+                        .fudoFont(.headline(13))
+                }
+                .foregroundStyle(FudoColor.textPrimary)
             }
 
             Button {
@@ -210,9 +229,17 @@ struct PaywallScreen: View {
             .buttonStyle(.plain)
             .disabled(!viewModel.canPurchase)
 
-            Text("No commitment, cancel anytime.")
-                .fudoFont(.caption())
+            // Compact price recap + the Apple-required renewal notice — two short
+            // centered lines, never a wall of text.
+            if viewModel.loadState == .loaded, let plan = viewModel.selectedPlan {
+                VStack(spacing: 2) {
+                    Text(plan.priceRecapLine)
+                    Text(PaywallPlan.autoRenewNotice)
+                }
+                .fudoFont(.caption(11))
                 .foregroundStyle(FudoColor.textSecondary)
+                .multilineTextAlignment(.center)
+            }
         }
         .padding(.horizontal, FudoSpacing.screenMargin)
         .padding(.top, 10)

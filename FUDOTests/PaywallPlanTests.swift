@@ -43,19 +43,18 @@ struct PaywallPlanTests {
         #expect(PaywallPlan.mockAnnual.ctaTitle == "Continue")
     }
 
-    // MARK: - Apple compliance line (full price + auto-renew, pre-purchase)
+    // MARK: - Price recap + renewal notice (full price + auto-renew, pre-purchase)
 
-    @Test func complianceLineCarriesTrialThenPriceAndAutoRenew() {
-        let line = PaywallPlan.mockWeekly.complianceLine
-        #expect(line.contains("3-day free trial"))
-        #expect(line.contains("$5.99/week"))
-        #expect(line.contains("Auto-renews"))
+    @Test func recapCarriesTrialThenPrice() {
+        #expect(PaywallPlan.mockWeekly.priceRecapLine == "3 days free, then $5.99/week")
     }
 
-    @Test func complianceLineWithoutTrialStartsAtThePrice() {
-        let line = PaywallPlan.mockAnnual.complianceLine
-        #expect(!line.contains("free trial"))
-        #expect(line.contains("$43.99/year"))
-        #expect(line.contains("Auto-renews"))
+    @Test func recapWithoutTrialBillsToday() {
+        #expect(PaywallPlan.mockAnnual.priceRecapLine == "$43.99/year, billed today")
+    }
+
+    @Test func renewalNoticeNamesAutoRenewAndCancel() {
+        #expect(PaywallPlan.autoRenewNotice.contains("Auto-renews"))
+        #expect(PaywallPlan.autoRenewNotice.contains("Cancel anytime"))
     }
 }

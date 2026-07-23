@@ -252,6 +252,17 @@ final class OnboardingViewModel {
         advance(force: true)
     }
 
+    /// The paywall's discreet X (appears after 3 s): back to the signed contract.
+    /// Not `back()` — the paywall carries no chevron (`showsBack` is false), and
+    /// there is no free zone to explore: the only exits are purchase or here.
+    func closePaywall() {
+        guard !isAdvancing, step == .paywall else { return }
+        isAdvancing = true
+        direction = .backward
+        step = .contract
+        releaseGuard()
+    }
+
     // MARK: - OB 19 — the real work behind "Saving your protocol"
 
     /// The challenge is created HERE, after the paywall, so day 1 starts when he

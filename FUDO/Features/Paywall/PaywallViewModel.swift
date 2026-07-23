@@ -57,8 +57,8 @@ final class PaywallViewModel {
     }
 
     var ctaTitle: String { selectedPlan?.ctaTitle ?? "Continue" }
-    var complianceLine: String? { selectedPlan?.complianceLine }
-    /// The trial timeline only tells the truth for a plan that HAS a trial.
+    /// The trial timeline (and the "No payment due now" line) only tell the
+    /// truth for a plan that HAS a trial.
     var showsTrialTimeline: Bool { selectedPlan?.trialDays != nil }
 
     var isBusy: Bool { purchaseState == .purchasing || purchaseState == .restoring }
@@ -87,14 +87,19 @@ final class PaywallViewModel {
     }
 
     #if DEBUG
-    /// The sandbox is dead until the banking paperwork clears — this renders the
-    /// full UI with the dashboard's real price points so the screen can be tuned
-    /// on device. Purchasing a mock fails honestly; use the DEBUG Pro override
-    /// to simulate the unlock.
+    /// True after `useMockPlans()`: the CTA then SIMULATES the full success path
+    /// (the sandbox is dead until the banking paperwork clears) — brief in-flight
+    /// beat → DEBUG Pro override → the exact same `finishUnlocked()` as a real
+    /// purchase. Makes paywall → Welcome → Home day 1 testable end-to-end.
+    private(set) var isMockSession = false
+
+    /// Renders the full UI with the dashboard's real price points so the screen
+    /// can be tuned on device, and arms the simulated purchase path above.
     func useMockPlans() {
         plans = [.mockWeekly, .mockAnnual]
         loadState = .loaded
         purchaseState = .idle
+        isMockSession = true
     }
     #endif
 
@@ -106,7 +111,17 @@ final class PaywallViewModel {
     }
 
     func purchaseSelected() async {
-        guard canPurchase, let plan = selectedPlan, let entitlements else { return }
+        guard canPurchase, let plan = selectedPlan else { return }
+        #if DEBUG
+        if isMockSession {
+            purchaseState = .purchasing
+            try? await Task.sleep(for: .seconds(0.9))
+            entitlements?.debugProOverride = true
+            finishUnlocked()
+            return
+        }
+        #endif
+        guard let entitlements else { return }
         purchaseState = .purchasing
         switch await entitlements.purchase(plan) {
         case .success:

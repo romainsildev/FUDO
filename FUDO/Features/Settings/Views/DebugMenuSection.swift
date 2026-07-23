@@ -135,6 +135,19 @@ private struct EntitlementOverrideRow: View {
             Text("Free raises the expired-trial paywall over the whole app.")
                 .fudoFont(.caption(11))
                 .foregroundStyle(FudoColor.textSecondary)
+
+            Toggle(isOn: trialConsumedBinding) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Trial already consumed")
+                        .fudoFont(.body(15))
+                        .foregroundStyle(FudoColor.textPrimary)
+                    Text("Paywall drops every trial promise — price only. Reopen the paywall to see it.")
+                        .fudoFont(.caption(11))
+                        .foregroundStyle(FudoColor.textSecondary)
+                }
+            }
+            .tint(FudoColor.accent)
+            .padding(.top, 6)
         }
         .padding(FudoSpacing.cardPadding)
         .background {
@@ -163,6 +176,12 @@ private struct EntitlementOverrideRow: View {
                 default: entitlements.debugProOverride = nil
                 }
             })
+    }
+
+    private var trialConsumedBinding: Binding<Bool> {
+        Binding(
+            get: { entitlements.debugTrialConsumed },
+            set: { entitlements.debugTrialConsumed = $0 })
     }
 }
 #endif

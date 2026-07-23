@@ -57,4 +57,14 @@ struct PaywallPlanTests {
         #expect(PaywallPlan.autoRenewNotice.contains("Auto-renews"))
         #expect(PaywallPlan.autoRenewNotice.contains("Cancel anytime"))
     }
+
+    // MARK: - Intro ineligibility (trial consumed → no trial promise anywhere)
+
+    @Test func strippedTrialDropsEveryTrialPromise() {
+        let plan = PaywallPlan.mockWeekly.strippingTrial()
+        #expect(plan.trialDays == nil)
+        #expect(plan.ctaTitle == "Continue")
+        #expect(plan.priceRecapLine == "$5.99/week, billed today")
+        #expect(plan.price == PaywallPlan.mockWeekly.price)
+    }
 }

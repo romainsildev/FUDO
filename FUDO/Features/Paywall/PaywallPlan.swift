@@ -79,5 +79,12 @@ extension PaywallPlan {
     static let mockAnnual = PaywallPlan(
         kind: .annual, price: "$43.99", rawPrice: Decimal(string: "43.99") ?? 43.99,
         trialDays: nil, perMonthPrice: "$3.67")
+
+    /// Same plan, trial promise removed — what an intro-ineligible user sees.
+    /// Mirrors the real gate in `EntitlementStore.trialEligibleIDs`.
+    func strippingTrial() -> PaywallPlan {
+        PaywallPlan(kind: kind, price: price, rawPrice: rawPrice,
+                    trialDays: nil, perMonthPrice: perMonthPrice)
+    }
 }
 #endif

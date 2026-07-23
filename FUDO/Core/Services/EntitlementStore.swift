@@ -45,6 +45,12 @@ final class EntitlementStore {
             }
         }
     }
+
+    /// Simulates a user whose intro offer is already consumed: every trial
+    /// promise drops off the paywall (real plans AND mocks). Persisted.
+    var debugTrialConsumed: Bool = UserDefaults.standard.bool(forKey: "debug.trialConsumed") {
+        didSet { UserDefaults.standard.set(debugTrialConsumed, forKey: "debug.trialConsumed") }
+    }
     #endif
 
     // MARK: - Lifecycle
@@ -88,16 +94,38 @@ final class EntitlementStore {
         let annual = offering.annual ?? offering.availablePackages.first { $0.packageType == .annual }
         guard let weekly, let annual else { throw PlanLoadError.offeringMissing }
         packages = [.weekly: weekly, .annual: annual]
-        return [plan(from: weekly, kind: .weekly), plan(from: annual, kind: .annual)]
+        let eligible = await trialEligibleIDs(for: [weekly.storeProduct, annual.storeProduct])
+        return [plan(from: weekly, kind: .weekly, trialEligible: eligible),
+                plan(from: annual, kind: .annual, trialEligible: eligible)]
     }
 
-    private func plan(from package: Package, kind: PaywallPlan.Kind) -> PaywallPlan {
+    /// Product ids allowed to PROMISE their intro offer. Apple bills an
+    /// ineligible user immediately — so an explicit `.ineligible` from the SDK
+    /// strips every trial promise off the screen (badge, timeline, CTA and
+    /// recap all follow the plan's `trialDays`). `.unknown` stays optimistic:
+    /// no receipt usually just means a brand-new user.
+    private func trialEligibleIDs(for products: [StoreProduct]) async -> Set<String> {
+        #if DEBUG
+        if debugTrialConsumed { return [] }
+        #endif
+        let withIntro = products.filter { $0.introductoryDiscount != nil }
+        guard !withIntro.isEmpty else { return [] }
+        let statuses = await Purchases.shared.checkTrialOrIntroDiscountEligibility(
+            productIdentifiers: withIntro.map(\.productIdentifier))
+        return Set(withIntro.map(\.productIdentifier).filter { id in
+            statuses[id]?.status != .ineligible
+        })
+    }
+
+    private func plan(from package: Package, kind: PaywallPlan.Kind,
+                      trialEligible: Set<String>) -> PaywallPlan {
         let product = package.storeProduct
+        let allowsTrial = trialEligible.contains(product.productIdentifier)
         return PaywallPlan(
             kind: kind,
             price: product.localizedPriceString,
             rawPrice: product.price,
-            trialDays: trialDays(of: product),
+            trialDays: allowsTrial ? trialDays(of: product) : nil,
             perMonthPrice: perMonthPrice(of: product))
     }
 

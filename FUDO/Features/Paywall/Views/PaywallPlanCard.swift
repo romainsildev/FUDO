@@ -71,7 +71,8 @@ struct PaywallPlanCard: View {
                 .fudoFont(.caption())
                 .foregroundStyle(FudoColor.textSecondary)
         } else {
-            Text("Billed once a \(plan.periodUnit)")
+            // No trial to promise (intro consumed) → the price stands alone.
+            Text("Billed every \(plan.periodUnit)")
                 .fudoFont(.caption())
                 .foregroundStyle(FudoColor.textSecondary)
         }

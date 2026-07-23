@@ -95,8 +95,12 @@ final class PaywallViewModel {
 
     /// Renders the full UI with the dashboard's real price points so the screen
     /// can be tuned on device, and arms the simulated purchase path above.
+    /// Honors the "trial already consumed" DEBUG override so the ineligible
+    /// layout is testable without a receipt.
     func useMockPlans() {
-        plans = [.mockWeekly, .mockAnnual]
+        let trialConsumed = entitlements?.debugTrialConsumed == true
+        plans = [trialConsumed ? PaywallPlan.mockWeekly.strippingTrial() : .mockWeekly,
+                 .mockAnnual]
         loadState = .loaded
         purchaseState = .idle
         isMockSession = true

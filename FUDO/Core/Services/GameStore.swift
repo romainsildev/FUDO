@@ -465,6 +465,11 @@ final class GameStore {
     private func save() {
         do {
             try modelContext.save()
+            // The SINGLE choke point → the SINGLE widget-write site: every mutation
+            // (check/uncheck/rollover/start/abandon/edit rules/erase/decay) funnels
+            // through here, so the App Group snapshot never drifts. Cheap: it only
+            // reloads timelines when the encoded snapshot actually changed.
+            WidgetBridge.refresh(from: self)
         } catch {
             // 100 % local store: a failing save has no user-facing recovery path yet.
             // Surface loudly in DEBUG; SwiftData autosave will retry in release.

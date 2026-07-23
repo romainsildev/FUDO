@@ -103,6 +103,9 @@ enum AnalyticsEvent {
     static let statsViewed = "stats_viewed"
     static let statsPeriodChanged = "stats_period_changed"
     static let habitDetailViewed = "habit_detail_viewed"
+
+    // Widget (P7) — fired from the app on foreground when the installed families change.
+    static let widgetDetected = "widget_detected"
 }
 
 /// Anonymizes a habit into a stable slug for `habit_detail_viewed` (plan §1.8):

@@ -100,6 +100,9 @@ struct RootView: View {
 
     private func refresh() {
         gameStore.processRolloverIfNeeded()
+        // Foreground: fire `widget_detected` only when the installed families
+        // changed (self-guarded, DEBUG no-op). Cheap async call, safe every wake.
+        WidgetBridge.reportInstalledWidgetsIfChanged()
         appState.hasActiveChallenge = gameStore.activeChallenge != nil
         // The HOLD-LOCK: "onboarding completed" is not enough — the post-paywall
         // trio must be finished too, or a kill at OB 19 would drop him into an app

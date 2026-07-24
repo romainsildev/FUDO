@@ -20,6 +20,10 @@ final class StatsViewModel {
         aggregator(for: challenge).summary(period)
     }
 
+    func completionDelta(for challenge: Challenge) -> Int? {
+        aggregator(for: challenge).completionDelta(period)
+    }
+
     func topFlop(for challenge: Challenge) -> TopFlop? {
         aggregator(for: challenge).topFlop(period)
     }

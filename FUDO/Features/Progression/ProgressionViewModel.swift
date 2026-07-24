@@ -55,6 +55,16 @@ final class ProgressionViewModel {
     /// "Rank 2 of 6" — the view uppercases it.
     var rankOrdinalLabel: String { "Rank \(heroRank.rawValue + 1) of \(Rank.allCases.count)" }
 
+    /// Progress WITHIN the current rank band, 0…1 — drives the hero ring arc (02 Progression).
+    /// Sensei (top rank) has no next floor, so it reads full.
+    var rankProgress: Double {
+        let rank = heroRank
+        guard let next = Rank(rawValue: rank.rawValue + 1) else { return 1 }
+        let span = next.floorOVR - rank.floorOVR
+        guard span > 0 else { return 1 }
+        return min(max((Double(displayedOVR) - rank.floorOVR) / span, 0), 1)
+    }
+
     // MARK: Curve
 
     /// History windowed to the current run, each point with its derived delta + completeness.

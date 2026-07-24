@@ -52,24 +52,38 @@ struct HabitDetailView: View {
     }
 
     private func content(rule: TaskRule, detail: HabitDetail) -> some View {
-        ScrollView(showsIndicators: false) {
+        let dayNo = currentDayNumber(in: detail.calendarDays)
+        let duration = detail.calendarDays.count
+        return ScrollView(showsIndicators: false) {
             VStack(spacing: FudoSpacing.sectionGap) {
-                HabitTilesRow(completionPercent: detail.completionPercent,
-                              streak: detail.streak,
-                              totalChecks: detail.totalChecks)
+                HabitHeroCard(completionPercent: detail.completionPercent,
+                              dayNumber: dayNo,
+                              durationDays: duration,
+                              streak: detail.streak)
 
-                ChallengeCalendarCard(days: detail.calendarDays,
-                                      dayNumber: currentDayNumber(in: detail.calendarDays),
-                                      durationDays: detail.calendarDays.count)
+                HabitBoardCard(days: detail.calendarDays,
+                               dayNumber: dayNo,
+                               durationDays: duration)
 
                 if let peakLine = detail.peakLine {
                     WhenYouCheckCard(buckets: detail.hourBuckets, peakLine: peakLine)
                 }
+
+                ending(dayNumber: dayNo)
             }
             .padding(.horizontal, FudoSpacing.screenMargin)
             .padding(.top, 8)
             .padding(.bottom, FudoSpacing.sectionGap)
         }
+    }
+
+    /// The dry sign-off under the board (Habit FINAL v3-B3): a fact, not a pep-talk.
+    private func ending(dayNumber: Int) -> some View {
+        Text("\(dayNumber) day\(dayNumber == 1 ? "" : "s") on the board. Keep walking.")
+            .fudoFont(.body(12))
+            .foregroundStyle(FudoColor.textSecondary)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity, alignment: .center)
     }
 
     /// Today's day number for the map header — falls back to the last played day
@@ -94,3 +108,18 @@ struct HabitDetailView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
+
+#if DEBUG
+#Preview("Habit detail — hero + board") {
+    if let store = AppPreviewFactory.store, let container = AppPreviewFactory.container,
+       let ruleID = AppPreviewFactory.sampleRuleID {
+        NavigationStack {
+            HabitDetailView(store: store, ruleID: ruleID, initialPeriod: .challenge)
+        }
+        .modelContainer(container)
+        .preferredColorScheme(.dark)
+    } else {
+        Text("Preview container failed")
+    }
+}
+#endif

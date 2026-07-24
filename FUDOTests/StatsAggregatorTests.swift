@@ -110,6 +110,36 @@ struct StatsAggregatorTests {
         #expect(summary.closedDayCount == 5)
     }
 
+    // MARK: - Completion delta (current window vs the prior window of the same size)
+
+    @Test func completionDeltaComparesTheTwoConsecutiveWindows() throws {
+        let scenario = try Scenario(days: 14, ruleTitles: ["A"])
+        let a = scenario.rules[0]
+        // Current week = days 8…14 all held (100 %); prior week = days 1…7 none (0 %).
+        for day in 1...14 { try scenario.addDay(day, held: day >= 8 ? [a] : [], closed: day < 14) }
+        #expect(scenario.aggregator.completionDelta(.week) == 100)
+        #expect(scenario.aggregator.completionDelta(.challenge) == nil)   // nothing to compare
+    }
+
+    @Test func completionDeltaIsNilWithoutAFullPriorWindow() throws {
+        let scenario = try Scenario(days: 5, ruleTitles: ["A"])
+        let a = scenario.rules[0]
+        for day in 1...5 { try scenario.addDay(day, held: [a], closed: day < 5) }
+        // A 5-day run: the prior 7-day window falls entirely before day 1 → no delta.
+        #expect(scenario.aggregator.completionDelta(.week) == nil)
+        #expect(scenario.aggregator.completionDelta(.challenge) == nil)
+    }
+
+    @Test func completionDeltaClampsThePriorWindowToTheChallengeStart() throws {
+        let scenario = try Scenario(days: 10, ruleTitles: ["A"])
+        let a = scenario.rules[0]
+        // Prior week clamps to days 1…3 (the run starts at day 1): 2 of 3 held = 67 %.
+        for day in 1...3 { try scenario.addDay(day, held: day <= 2 ? [a] : [], closed: true) }
+        // Current week = days 4…10 all held = 100 %. Delta = 100 − 67 = 33.
+        for day in 4...10 { try scenario.addDay(day, held: [a], closed: day < 10) }
+        #expect(scenario.aggregator.completionDelta(.week) == 33)
+    }
+
     // MARK: - Top / Flop threshold
 
     @Test func topFlopIsTooEarlyUnderFiveClosedDays() throws {

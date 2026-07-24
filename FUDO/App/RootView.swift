@@ -123,21 +123,26 @@ struct RootView: View {
                     .preferredColorScheme(.dark)
                     .interactiveDismissDisabled(true)
             }
-            // Rank-up celebration — presented above the tabs from the store's
-            // high-water mark (D6), so it fires whether the rank was crossed by a
-            // live check or a rollover closure, on any tab. Bound to the store
-            // directly: the item re-evaluates every render, so a mark set at launch
-            // (before this appeared) still presents — an onChange would miss it.
-            .fullScreenCover(item: rankUpBinding) { presentation in
-                RankUpCoverView(newRank: presentation.rank, store: gameStore) {
-                    _ = gameStore.consumeRankUp()
-                }
-                .preferredColorScheme(.dark)
-            }
             // Deep-linked share card (rank-up notification tap). Separate from the
-            // cover above: the deep-link handler consumes the pending mark first, so
-            // the two never contend for the same rank-up event.
+            // rank-up overlay below: the deep-link handler consumes the pending mark
+            // first, so the two never contend for the same rank-up event.
             .shareCardPreview($deepLinkShare)
+            // Rank-up celebration — a ROOT OVERLAY above the tabs (not a cover): it
+            // plays over the current screen with Home darkened + blurred behind, the
+            // context still visible. Driven by the store's high-water mark (D6) so it
+            // fires on any tab whether the rank was crossed by a live check or a
+            // rollover closure; `rankUpRank` reads the store every render, so a mark
+            // set at launch still shows. Gated so the end-of-challenge sequence
+            // subsumes a twin rank-up (S11).
+            .overlay {
+                if let rank = rankUpRank {
+                    RankUpOverlayView(reachedRank: rank, store: gameStore) {
+                        _ = gameStore.consumeRankUp()
+                    }
+                    .transition(.opacity)
+                }
+            }
+            .animation(AppAnimation.standard, value: rankUpRank)
     }
 
     /// Drain a rank-up deep link into the share card. Consumes the in-memory rank-up
@@ -152,21 +157,14 @@ struct RootView: View {
         router?.pendingDeepLink = nil
     }
 
-    /// Drains `pendingRankUp` into a presentation; dismissing consumes the mark so
-    /// the same rank never re-celebrates.
-    private var rankUpBinding: Binding<RankUpPresentation?> {
-        Binding(
-            get: {
-                // The challenge-complete sequence subsumes any rank-up crossed on the
-                // final closure (its beat 1 replays the climb), so suppress the twin
-                // cover while a completion is pending or already on screen.
-                guard completionFlow == nil, gameStore.pendingChallengeCompletion == nil else { return nil }
-                return gameStore.pendingRankUp.map { RankUpPresentation(rank: $0) }
-            },
-            set: { newValue in
-                if newValue == nil { _ = gameStore.consumeRankUp() }
-            }
-        )
+    /// The reached rank to celebrate, or nil. The challenge-complete sequence
+    /// subsumes any rank-up crossed on the final closure (its beat 1 replays the
+    /// climb), so suppress the overlay while a completion is pending or already on
+    /// screen. Read every render (not via onChange) so a mark set at launch still
+    /// shows; the overlay's Done button consumes the mark via `consumeRankUp()`.
+    private var rankUpRank: Rank? {
+        guard completionFlow == nil, gameStore.pendingChallengeCompletion == nil else { return nil }
+        return gameStore.pendingRankUp
     }
 
     private func refresh() {

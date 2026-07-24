@@ -1,12 +1,11 @@
 import SwiftUI
 
-/// The Progress tab — the trophy room. Top→bottom: sensei hero + giant OVR, the OVR curve,
-/// the descending rank path, then past challenges (hidden when none). Calm and factual: the
-/// pride comes from the numbers, so there are no celebration effects here. Composed to be
-/// filmed (9:16) — no nav-bar title, nothing critical in the top corners.
+/// The Progress tab — the trophy room (02 Progression re-skin, 2026-07-24). Top→bottom:
+/// the OVR ring hero, the OVR history bars, the descending rank path, then past challenges
+/// (hidden when none). Calm and factual: the pride comes from the numbers, so there are no
+/// celebration effects here. On a warm ink gradient with a faint top halo.
 struct ProgressionView: View {
     @State private var viewModel: ProgressionViewModel
-    @State private var shareRequest: ShareCardRequest?
     private let store: GameStore
 
     init(store: GameStore) {
@@ -18,20 +17,19 @@ struct ProgressionView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: FudoSpacing.sectionGap) {
                 Text("Progression")
-                    .fudoFont(.title(34))
+                    .fudoFont(.title(34))          // iOS large-title size (HIG) — matches Stats/Home
                     .foregroundStyle(FudoColor.textPrimary)
                     .padding(.top, 4)
 
-                SenseiHeroView(rank: viewModel.heroRank,
-                               ovr: viewModel.displayedOVR,
-                               rankName: viewModel.heroRankName,
-                               ordinal: viewModel.rankOrdinalLabel)
+                OVRRingHeroView(rank: viewModel.heroRank,
+                                ovr: viewModel.displayedOVR,
+                                rankName: viewModel.heroRankName,
+                                ordinal: viewModel.rankOrdinalLabel,
+                                progress: viewModel.rankProgress)
 
-                shareButton
-
-                OVRCurveView(points: viewModel.curvePoints,
-                             windowLabel: viewModel.curveWindowLabel,
-                             weekNet: viewModel.weekNet)
+                OVRBarsView(points: viewModel.curvePoints,
+                            windowLabel: viewModel.curveWindowLabel,
+                            weekNet: viewModel.weekNet)
 
                 RankPathView(nodes: viewModel.rankNodes)
 
@@ -41,38 +39,22 @@ struct ProgressionView: View {
             .padding(.bottom, FudoSpacing.sectionGap)
         }
         .scrollIndicators(.hidden)
-        .background(FudoColor.bgPrimary.ignoresSafeArea())
-        .shareCardPreview($shareRequest)
+        .background(background)
     }
 
-    /// Permanent share affordance — inline (not a top-corner toolbar: this screen
-    /// is composed to be filmed, so nothing critical sits in the corners).
-    @ViewBuilder private var shareButton: some View {
-        // Hidden without a player so the affordance is never a silent no-op tap
-        // (defensive — a player always exists past onboarding) — F17.
-        if store.player != nil {
-            Button {
-                guard let data = ShareCardData.daily(from: store) else { return }
-                Haptics.light()
-                shareRequest = ShareCardRequest(variant: .daily, data: data, origin: .progress)
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "square.and.arrow.up")
-                        .fudoFont(.headline(15, weight: .semibold))
-                    Text("Share your card")
-                        .fudoFont(.headline(16))
-                }
-                .foregroundStyle(FudoColor.accent)
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .background(
-                    Capsule()
-                        .fill(FudoColor.bgCard)
-                        .overlay(Capsule().strokeBorder(FudoColor.border, lineWidth: 1))
-                )
+    /// Warm ink gradient (silhouette → ink) with a faint vermillon halo up top — the
+    /// ambient "trophy room" light, matching the 02 Progression frame.
+    private var background: some View {
+        LinearGradient(colors: [FudoColor.silhouette, FudoColor.bgPrimary],
+                       startPoint: .top, endPoint: .bottom)
+            .overlay(alignment: .top) {
+                Circle()
+                    .fill(FudoColor.accent.opacity(0.07))
+                    .frame(width: 420, height: 420)
+                    .blur(radius: 80)
+                    .offset(x: -40, y: -180)
+                    .allowsHitTesting(false)
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Share your rank card")
-        }
+            .ignoresSafeArea()
     }
 }

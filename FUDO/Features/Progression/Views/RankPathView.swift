@@ -65,10 +65,11 @@ struct RankPathView: View {
 
             let traversed = nodes[index + 1].state != .future
             if traversed {
+                // Bright vermillon dotted trail up to the current rank (02 Progression).
                 context.stroke(path, with: .color(FudoColor.accent),
-                               style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                               style: StrokeStyle(lineWidth: 5, lineCap: .round, dash: [0.1, 10]))
             } else {
-                context.stroke(path, with: .color(FudoColor.textSecondary.opacity(0.45)),
+                context.stroke(path, with: .color(FudoColor.textSecondary.opacity(0.4)),
                                style: StrokeStyle(lineWidth: 4, lineCap: .round, dash: [0.1, 11]))
             }
         }

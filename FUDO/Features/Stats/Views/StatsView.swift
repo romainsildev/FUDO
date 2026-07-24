@@ -70,7 +70,9 @@ struct StatsView: View {
                 }
                 .padding(.top, 4)
 
-                PeriodSummaryCard(summary: viewModel.summary(for: challenge))
+                PeriodSummaryCard(summary: viewModel.summary(for: challenge),
+                                  delta: viewModel.completionDelta(for: challenge),
+                                  period: viewModel.period)
 
                 ChecksPerDayCard(days: viewModel.checksPerDay(for: challenge),
                                  maxChecks: max(challenge.activeRules.count, 1))
@@ -198,3 +200,15 @@ struct StatsView: View {
             .foregroundStyle(FudoColor.textSecondary)
     }
 }
+
+#if DEBUG
+#Preview("Stats — live") {
+    if let store = AppPreviewFactory.store, let container = AppPreviewFactory.container {
+        NavigationStack { StatsView(store: store) }
+            .modelContainer(container)
+            .preferredColorScheme(.dark)
+    } else {
+        Text("Preview container failed")
+    }
+}
+#endif

@@ -32,13 +32,16 @@ struct HabitStat: Identifiable, Equatable {
     let missedCount: Int
 }
 
-/// One bar of the Stats-tab "checks per day" graph (Stats FINAL, 2026-07-23).
+/// One bar of the Stats-tab "checks per day" graph (3D iso bars, 2026-07-24). Colours
+/// stay on the acted data palette (Romain's call, over the mock's heat gradient): cream
+/// bar · gold on the best day · red only on a CLOSED zero-check day (a real miss).
 struct DayChecks: Identifiable, Equatable {
     let id: Int
     let date: Date
     let label: String    // narrow weekday, uppercased — rendered only in ≤7-day mode
     let checks: Int
-    let isBest: Bool     // highest count in the window (gold bar)
+    let isBest: Bool      // highest count in the window (gold bar)
+    let isMissed: Bool    // closed day with zero checks — the only red, a failure signal
 }
 
 /// The two side-by-side cards. nil when there isn't enough data (min 5 closed days).
@@ -192,23 +195,48 @@ struct StatsAggregator {
     func summary(_ period: StatsPeriod) -> PeriodSummary {
         let logs = windowLogs(period)
         let closed = logs.filter(\.isClosed)
-        let ruleCount = max(activeRules.count, 1)
-
-        // Overall completion = held rule-days / (rules × days), today included.
-        let heldRuleDays = logs.reduce(0) { acc, log in
-            acc + activeRules.reduce(0) { $0 + (held($1, in: log) ? 1 : 0) }
-        }
-        let denom = ruleCount * logs.count
-        let completion = denom > 0 ? Double(heldRuleDays) / Double(denom) : 0
 
         let totalChecks = logs.reduce(0) { acc, log in
             acc + log.checks.filter { activeIDs.contains($0.ruleID) }.count
         }
 
-        return PeriodSummary(completionPercent: percent(completion),
+        return PeriodSummary(completionPercent: percent(overallCompletion(logs)),
                              totalChecks: totalChecks,
                              bestDayLabel: bestWeekday(in: logs),
                              closedDayCount: closed.count)
+    }
+
+    /// Overall completion over a set of logs = held rule-days / (rules × days), today
+    /// included. The single home for the "% done" number — `summary` and
+    /// `completionDelta` both call it.
+    private func overallCompletion(_ logs: [DayLog]) -> Double {
+        let ruleCount = max(activeRules.count, 1)
+        let heldRuleDays = logs.reduce(0) { acc, log in
+            acc + activeRules.reduce(0) { $0 + (held($1, in: log) ? 1 : 0) }
+        }
+        let denom = ruleCount * logs.count
+        return denom > 0 ? Double(heldRuleDays) / Double(denom) : 0
+    }
+
+    /// Completion of the current window MINUS the previous window of the same size, in
+    /// percentage points (the hero card's "▲ +6% vs last week", Stats FINAL). The prior
+    /// window is the `N` days ending `N` days before today, clamped to the challenge
+    /// start. `nil` for `.challenge` (no window to compare) and when the prior window is
+    /// empty (challenge too young) — no delta rather than a misleading one.
+    func completionDelta(_ period: StatsPeriod) -> Int? {
+        guard let days = period.trailingDays else { return nil }
+        guard let prevEndRaw = calendar.date(byAdding: .day, value: -days, to: today),
+              let prevStartRaw = calendar.date(byAdding: .day, value: -(2 * days - 1), to: today)
+        else { return nil }
+        let prevEnd = calendar.startOfDay(for: prevEndRaw)
+        let prevStart = max(calendar.startOfDay(for: prevStartRaw), challengeStart)
+        guard prevEnd >= prevStart else { return nil }   // no room before the current window
+        let prevLogs = allLogs.filter {
+            let d = calendar.startOfDay(for: $0.date)
+            return d >= prevStart && d <= prevEnd
+        }
+        guard !prevLogs.isEmpty else { return nil }
+        return percent(overallCompletion(windowLogs(period))) - percent(overallCompletion(prevLogs))
     }
 
     /// Weekday (abbrev, uppercased) with the highest average daily completion.
@@ -311,7 +339,8 @@ struct StatsAggregator {
                       date: log.date,
                       label: log.date.formatted(.dateTime.weekday(.narrow).locale(Self.enLocale)).uppercased(),
                       checks: counts[index],
-                      isBest: best > 0 && counts[index] == best)
+                      isBest: best > 0 && counts[index] == best,
+                      isMissed: log.isClosed && counts[index] == 0)
         }
     }
 

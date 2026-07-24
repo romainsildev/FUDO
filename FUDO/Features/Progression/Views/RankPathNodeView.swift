@@ -33,10 +33,11 @@ struct RankPathNodeView: View {
     private func label(alignment: HorizontalAlignment) -> some View {
         VStack(alignment: alignment, spacing: 3) {
             Text(node.name.uppercased())
-                .fudoFont(.title(19))
+                .fudoFont(.headline(15, weight: .semibold))
+                .tracking(0.9)
                 .foregroundStyle(nameColor)
             Text(node.subtitle)
-                .fudoFont(.caption(13))
+                .fudoFont(.caption(12))
                 .foregroundStyle(FudoColor.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: alignment == .leading ? .leading : .trailing)
@@ -66,7 +67,7 @@ private struct RankPortrait: View {
             haloIfCurrent
             Circle().fill(FudoColor.bgCard)
             portraitImage.clipShape(Circle())
-            Circle().strokeBorder(ringColor, lineWidth: node.state == .current ? 3 : 1)
+            Circle().strokeBorder(ringColor, lineWidth: ringWidth)
         }
         .frame(width: diameter, height: diameter)
         .rotationEffect(.degrees(wiggle ? 3 : 0))
@@ -76,24 +77,37 @@ private struct RankPortrait: View {
     }
 
     @ViewBuilder private var portraitImage: some View {
-        if let head = SenseiAssetProvider.headImage(for: node.rank) {
+        if node.state == .future {
+            // Locked ranks = a pure-black disc (FudoColor.silhouette): total mystery, no
+            // art leaks (02 Progression / carnet 2026-07-23). The studio renders are
+            // opaque, so we fill the disc black rather than dimming the portrait to grey.
+            FudoColor.silhouette
+        } else if let head = SenseiAssetProvider.headImage(for: node.rank) {
             head
                 .resizable()
                 .scaledToFill()
                 .frame(width: diameter, height: diameter)
-                .saturation(node.state == .future ? 0 : 1)
-                .brightness(node.state == .future ? -0.55 : 0)   // silhouette — tuned on device
         } else {
             Image(systemName: "person.fill")
                 .fudoFont(.glyph(diameter * 0.42))
-                .foregroundStyle(node.state == .future
-                                 ? FudoColor.textSecondary.opacity(0.4)
-                                 : FudoColor.textSecondary)
+                .foregroundStyle(FudoColor.textSecondary)
         }
     }
 
     private var ringColor: Color {
-        node.state == .current ? FudoColor.accent : FudoColor.border
+        switch node.state {
+        case .current:    return FudoColor.accent
+        case .discovered: return FudoColor.accent.opacity(0.3)
+        case .future:     return FudoColor.border
+        }
+    }
+
+    private var ringWidth: CGFloat {
+        switch node.state {
+        case .current:    return 2.5
+        case .discovered: return 1.5
+        case .future:     return 1
+        }
     }
 
     @ViewBuilder private var haloIfCurrent: some View {

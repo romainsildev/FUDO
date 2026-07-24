@@ -118,12 +118,20 @@ final class ChallengeCompletionViewModel {
         withAnimation(AppAnimation.standard) { beat = next }
     }
 
+    /// Guards the terminal hook choice: a rapid double-tap before the cover
+    /// dismisses must not fire `next_challenge_chosen` (or launch setup) twice.
+    private var didChooseNext = false
+
     func chooseNext(_ launch: (ChallengeSetupIntent) -> Void) {
+        guard !didChooseNext else { return }
+        didChooseNext = true
         Analytics.track(AnalyticsEvent.nextChallengeChosen, ["option": "next"])
         launch(nextIntent)
     }
 
     func chooseRestart(_ launch: (ChallengeSetupIntent) -> Void) {
+        guard !didChooseNext else { return }
+        didChooseNext = true
         Analytics.track(AnalyticsEvent.nextChallengeChosen, ["option": "restart_harder"])
         launch(restartIntent)
     }

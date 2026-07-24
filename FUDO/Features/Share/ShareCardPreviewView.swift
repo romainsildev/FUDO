@@ -5,6 +5,9 @@ import SwiftUI
 struct ShareCardRequest: Identifiable {
     let variant: ShareCardVariant
     let data: ShareCardData
+    /// The surface that opened this share (plan §1.6). Defaults to day-complete so the
+    /// existing previews keep compiling; real call sites pass their own origin.
+    var origin: ShareCardOrigin = .dayComplete
     let id = UUID()
 }
 
@@ -19,6 +22,9 @@ struct ShareCardPreviewView: View {
     private enum ExportState: Equatable { case idle, rendering, failed }
     @State private var exportState: ExportState = .idle
     @State private var shareItem: SharePayload?
+    /// Guards `share_card_viewed` to one fire per presentation (onAppear can re-run
+    /// when the child share sheet dismisses).
+    @State private var didTrackView = false
 
     var body: some View {
         ZStack {
@@ -34,7 +40,20 @@ struct ShareCardPreviewView: View {
             .padding(.bottom, FudoSpacing.contentBottom)
         }
         .sheet(item: $shareItem) { payload in
-            ActivityView(items: [payload.image])
+            ActivityView(items: [payload.image]) { activity, completed in
+                // Only a real, completed share counts (plan §1.6).
+                guard completed else { return }
+                Analytics.track(AnalyticsEvent.shareCardShared,
+                                ["origin": request.origin.rawValue,
+                                 "template": request.variant.slug,
+                                 "activity": activity?.rawValue ?? "unknown"])
+            }
+        }
+        .onAppear {
+            guard !didTrackView else { return }
+            didTrackView = true
+            Analytics.track(AnalyticsEvent.shareCardViewed,
+                            ["origin": request.origin.rawValue, "template": request.variant.slug])
         }
     }
 

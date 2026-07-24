@@ -3,8 +3,14 @@ import Foundation
 /// The composed protocol, frozen at the signature (kill-safety checkpoint 1).
 /// Disposable: it exists only between the signature and the challenge's creation
 /// at the OB 19 loader. Codable so a kill mid-paywall loses nothing.
-struct ContractSnapshot: Codable, Equatable {
-    struct Rule: Codable, Equatable {
+/// `nonisolated`: the module defaults every type to `@MainActor`, but Codable's
+/// `init(from:)`/`encode(to:)` are nonisolated protocol requirements — a main-actor
+/// synthesis to satisfy them is the data-race warning. This is a pure JSON value type
+/// (safe off the main actor), so opt the whole thing out.
+nonisolated struct ContractSnapshot: Codable, Equatable {
+    // Also nonisolated: the outer type's nonisolated Codable/Equatable synthesis must
+    // reach this nested type's own synthesis off the main actor.
+    nonisolated struct Rule: Codable, Equatable {
         var title: String
         var iconName: String
     }
@@ -22,7 +28,11 @@ struct ContractSnapshot: Codable, Equatable {
 ///
 /// `defaults` is injected so tests own a throwaway suite, and so the App Group
 /// swap (when the widget target lands) is a ONE-line change here.
-final class OnboardingFlags {
+///
+/// `nonisolated`: a pure UserDefaults wrapper (thread-safe), forced onto the main
+/// actor only by the module default and then embedded as a default-arg init —
+/// opting it out clears the main-actor-init warning without changing behavior.
+nonisolated final class OnboardingFlags {
     private enum Key {
         static let completed = "onboarding.hasCompleted"
         static let postPaywall = "onboarding.hasFinishedPostPaywall"

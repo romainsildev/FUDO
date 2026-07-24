@@ -41,8 +41,11 @@ struct CommitmentScreen: View {
                 }
 
                 // "A little" context — conditional, never a standing sub-text.
-                if selection == .somewhat {
-                    Text("\"A little\"? Then start small. 30 days.")
+                // Only offered to someone on a LONGER challenge: "30 days" is the
+                // downgrade FLOOR, not a label of his chosen duration — a 30-day
+                // user is never told his challenge is 30 (F26, audit 2026-07-23).
+                if selection == .somewhat, currentDurationDays != 30 {
+                    Text("\"A little\"? No shame — try 30 days instead.")
                         .fudoFont(.caption(13))
                         .foregroundStyle(FudoColor.textSecondary)
                         .padding(.top, 8)
@@ -64,7 +67,7 @@ struct CommitmentScreen: View {
     @ViewBuilder private var changeDurationNudge: some View {
         if selection == .somewhat {
             if switchedToThirty {
-                Label("Now 30 days.", systemImage: "checkmark")
+                Label("Now \(currentDurationDays) days.", systemImage: "checkmark")
                     .fudoFont(.caption(12, weight: .semibold))
                     .foregroundStyle(FudoColor.positive)
                     .padding(.top, 6)

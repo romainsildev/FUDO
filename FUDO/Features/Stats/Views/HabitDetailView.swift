@@ -1,10 +1,10 @@
 import SwiftUI
 import SwiftData
 
-/// One habit, in depth (frame 05b) — PUSH, tab bar hidden (prd/12 §5). Back + a title
-/// carrying the habit's SF Symbol and name. The 7d/30d/challenge picker repeats at the
-/// top, its selection inherited from the Stats tab at push, then editable locally.
-/// Header tiles · completion graph · step-by-step timeline · one line of local advice.
+/// One habit, in depth (Habit FINAL, 2026-07-23) — PUSH, tab bar hidden (prd/12 §5).
+/// Back + a title carrying the habit's SF Symbol and name. The period picker is gone:
+/// this screen now reads over the whole run. Header tiles (challenge scope) · the
+/// challenge map (every day, one grid) · "when you check" (hour-of-day histogram).
 struct HabitDetailView: View {
     @State private var viewModel: HabitDetailViewModel
     @Query private var rules: [TaskRule]
@@ -17,7 +17,6 @@ struct HabitDetailView: View {
     private var rule: TaskRule? { rules.first { $0.id == viewModel.ruleID } }
 
     var body: some View {
-        @Bindable var viewModel = viewModel
         Group {
             if let rule, let challenge = rule.challenge {
                 content(rule: rule, detail: viewModel.detail(rule: rule, challenge: challenge))
@@ -53,37 +52,32 @@ struct HabitDetailView: View {
     }
 
     private func content(rule: TaskRule, detail: HabitDetail) -> some View {
-        @Bindable var viewModel = viewModel
-        return ScrollView(showsIndicators: false) {
+        ScrollView(showsIndicators: false) {
             VStack(spacing: FudoSpacing.sectionGap) {
-                StatsPeriodPicker(period: $viewModel.period)
-
                 HabitTilesRow(completionPercent: detail.completionPercent,
                               streak: detail.streak,
                               totalChecks: detail.totalChecks)
 
-                HabitBarChart(bars: detail.bars, mode: detail.barMode, trend: detail.trend)
+                ChallengeCalendarCard(days: detail.calendarDays,
+                                      dayNumber: currentDayNumber(in: detail.calendarDays),
+                                      durationDays: detail.calendarDays.count)
 
-                VStack(alignment: .leading, spacing: 14) {
-                    sectionLabel("STEP BY STEP")
-                    HabitTimelineView(entries: detail.timeline)
+                if let peakLine = detail.peakLine {
+                    WhenYouCheckCard(buckets: detail.hourBuckets, peakLine: peakLine)
                 }
-
-                StatsAdviceCard(text: detail.advice)
             }
             .padding(.horizontal, FudoSpacing.screenMargin)
             .padding(.top, 8)
             .padding(.bottom, FudoSpacing.sectionGap)
-            .animation(AppAnimation.standard, value: viewModel.period)
         }
     }
 
-    private func sectionLabel(_ text: String) -> some View {
-        Text(text)
-            .fudoFont(.label(12))
-            .kerning(1.5)
-            .foregroundStyle(FudoColor.textSecondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
+    /// Today's day number for the map header — falls back to the last played day
+    /// (looking at a finished run) and then to 1.
+    private func currentDayNumber(in days: [CalendarDay]) -> Int {
+        days.first(where: \.isToday)?.dayNumber
+            ?? days.last(where: { $0.state != .future })?.dayNumber
+            ?? 1
     }
 
     private var unavailable: some View {

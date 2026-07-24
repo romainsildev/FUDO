@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// The three habit-detail header tiles (frame 05b): completion % · current streak ·
-/// total checks. Completion carries the vermillon accent; the rest stay cream.
+/// The three habit-detail header tiles: challenge completion % · current streak ·
+/// total checks. All cream (2026-07-23) — completion is an achievement, not an alarm.
 struct HabitTilesRow: View {
     let completionPercent: Int
     let streak: Int
@@ -9,7 +9,7 @@ struct HabitTilesRow: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            tile(value: "\(completionPercent)%", caption: "COMPLETION", accent: true)
+            tile(value: "\(completionPercent)%", caption: "CHALLENGE", accent: false)
             divider
             tile(value: "\(streak)", caption: "DAY STREAK", accent: false)
             divider

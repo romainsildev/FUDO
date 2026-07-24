@@ -57,16 +57,23 @@ struct StatsView: View {
 
     private func statsBody(for challenge: Challenge) -> some View {
         @Bindable var viewModel = viewModel
+        // Stats FINAL (2026-07-23): the segmented control is gone — the period lives
+        // in a header pill menu; a checks-per-day graph sits under the summary.
         return ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: FudoSpacing.sectionGap) {
-                Text("Stats")
-                    .fudoFont(.title(34))
-                    .foregroundStyle(FudoColor.textPrimary)
-                    .padding(.top, 4)
-
-                StatsPeriodPicker(period: $viewModel.period)
+                HStack(alignment: .center) {
+                    Text("Stats")
+                        .fudoFont(.title(34))
+                        .foregroundStyle(FudoColor.textPrimary)
+                    Spacer()
+                    StatsPeriodMenu(period: $viewModel.period)
+                }
+                .padding(.top, 4)
 
                 PeriodSummaryCard(summary: viewModel.summary(for: challenge))
+
+                ChecksPerDayCard(days: viewModel.checksPerDay(for: challenge),
+                                 maxChecks: max(challenge.activeRules.count, 1))
 
                 TopFlopRow(topFlop: viewModel.topFlop(for: challenge))
 

@@ -14,7 +14,6 @@ struct DurationChip: View {
 
     var body: some View {
         Button {
-            Haptics.light()
             action()
         } label: {
             Text("\(days) d")

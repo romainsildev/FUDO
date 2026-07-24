@@ -24,8 +24,18 @@ struct RankNode: Identifiable, Equatable {
     let rank: Rank
     let state: RankNodeState
     let name: String        // EN display name
-    let subtitle: String    // "reached Jul 4" / "current rank · OVR 47" / "unlocks at OVR 60"
+    let subtitle: String    // "reached Jul 4" / "current rank" / "unlocks at OVR 60"
     let reachedDate: Date?   // discovered/current only; nil when unknown (started above the floor)
+    let currentOVR: Int?     // current node only — rendered as the vermillon OVR badge
+}
+
+/// A rank threshold crossed inside the curve window — drawn as a gold dashed rule
+/// with "DISCIPLE — DAY 5" (gold = crossed-threshold celebration, 2026-07-23).
+struct RankMilestone: Identifiable, Equatable {
+    let id: Int             // Rank.rawValue
+    let name: String
+    let floor: Double
+    let dayNumber: Int      // 1-based day within the curve window
 }
 
 // MARK: - View model
@@ -75,8 +85,23 @@ final class ProgressionViewModel {
     var hasCurve: Bool { curvePoints.count >= 2 }
 
     var curveWindowLabel: String {
-        let count = curvePoints.count
-        return count >= 2 ? "Last \(count) days" : "Your curve starts on day 1"
+        hasCurve ? "OVR — day by day" : "Your curve starts on day 1"
+    }
+
+    /// Rank floors crossed inside the curve window (excluding Novice's floor 0) —
+    /// gold dashed rules on the chart. Day number = 1-based index of the first
+    /// point at or above the floor.
+    var curveMilestones: [RankMilestone] {
+        let points = curvePoints
+        guard points.count >= 2 else { return [] }
+        return Rank.allCases.compactMap { rank in
+            let floor = rank.floorOVR
+            guard floor > 0 else { return nil }
+            guard let firstBelow = points.first, firstBelow.value < floor else { return nil }
+            guard let crossIndex = points.firstIndex(where: { $0.value >= floor }) else { return nil }
+            return RankMilestone(id: rank.rawValue, name: rank.displayName,
+                                 floor: floor, dayNumber: crossIndex + 1)
+        }
     }
 
     /// Net OVR over the last ≤7 points ("this week"). nil when there isn't enough history.
@@ -107,7 +132,8 @@ final class ProgressionViewModel {
             return RankNode(id: rank.rawValue, rank: rank, state: state,
                             name: rank.displayName,
                             subtitle: subtitle(for: rank, state: state, reached: reached),
-                            reachedDate: reached)
+                            reachedDate: reached,
+                            currentOVR: state == .current ? displayedOVR : nil)
         }
     }
 
@@ -148,7 +174,7 @@ final class ProgressionViewModel {
     private func subtitle(for rank: Rank, state: RankNodeState, reached: Date?) -> String {
         switch state {
         case .current:
-            return "current rank · OVR \(displayedOVR)"
+            return "current rank"   // the OVR lives on the badge, not the copy (2026-07-23)
         case .discovered:
             if let reached { return "reached \(Self.shortDate(reached))" }
             return "reached"

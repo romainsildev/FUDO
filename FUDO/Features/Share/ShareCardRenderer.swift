@@ -22,9 +22,16 @@ enum ShareCardRenderer {
 /// then pick a target in the OS sheet) — we never auto-send.
 struct ActivityView: UIViewControllerRepresentable {
     let items: [Any]
+    /// Called when the sheet closes: `completed` is true only on a real share
+    /// (plan §1.6 — `share_card_shared` fires only then). `activity` is the picked target.
+    var onComplete: ((UIActivity.ActivityType?, Bool) -> Void)? = nil
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        controller.completionWithItemsHandler = { activityType, completed, _, _ in
+            onComplete?(activityType, completed)
+        }
+        return controller
     }
 
     func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}

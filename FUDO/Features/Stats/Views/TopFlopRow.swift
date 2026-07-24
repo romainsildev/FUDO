@@ -1,19 +1,19 @@
 import SwiftUI
 
-/// Strongest / weakest habits, side by side (frame 05). The STRONGEST marker uses
-/// `positive` (the validation/reco green exception, CLAUDE.md 2026-07-12); WEAKEST
-/// uses vermillon — never `negative` red, which is reserved for the trend arrows.
-/// Below 5 closed days (or fewer than 2 habits) it collapses to a calm "too early" card.
+/// Strongest / weakest habits, side by side (frame 05). Semantics repaired 2026-07-23:
+/// STRONGEST is gold (an achievement — warm, not the reco-green), WEAKEST is `negative`
+/// red — the one legitimate red on this screen. Each card wears its tint as a quiet
+/// border. Below 5 closed days (or fewer than 2 habits) it collapses to "too early".
 struct TopFlopRow: View {
     let topFlop: TopFlop?
 
     var body: some View {
         if let topFlop {
             HStack(spacing: 12) {
-                card(marker: "STRONGEST", icon: "flame.fill", tint: FudoColor.positive,
+                card(marker: "STRONGEST", icon: "flame.fill", tint: FudoColor.celebrationGold,
                      habit: topFlop.strongest,
                      detail: streakLine(topFlop.strongest))
-                card(marker: "WEAKEST", icon: "exclamationmark.triangle.fill", tint: FudoColor.accent,
+                card(marker: "WEAKEST", icon: "exclamationmark.triangle.fill", tint: FudoColor.negative,
                      habit: topFlop.weakest,
                      detail: missedLine(topFlop.weakest))
             }
@@ -59,7 +59,7 @@ struct TopFlopRow: View {
         .background {
             RoundedRectangle(cornerRadius: FudoSpacing.radiusCard, style: .continuous)
                 .fill(FudoColor.bgCard)
-                .strokeBorder(FudoColor.border, lineWidth: 1)
+                .strokeBorder(tint.opacity(0.35), lineWidth: 1)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(marker): \(habit.title), \(detail)")

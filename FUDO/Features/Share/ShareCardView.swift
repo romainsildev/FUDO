@@ -5,6 +5,25 @@ enum ShareCardVariant {
     case daily        // sensei + giant OVR + rank + streak + day X/Y
     case rankUp       // the new rank in scene, celebration energy
     case challengeEnd // OVR 43 → 76 — the number of the clip (template, wired S11)
+
+    /// Stable analytics slug for the `template` property (plan §1.6). Never localized.
+    var slug: String {
+        switch self {
+        case .daily:        return "daily"
+        case .rankUp:       return "rank_up"
+        case .challengeEnd: return "challenge_end"
+        }
+    }
+}
+
+/// Where a share was initiated — the `origin` of `share_card_viewed`/`_shared`
+/// (plan §1.6). Set by the presenting surface; the variant alone can't tell a
+/// Home day-complete share from a Progression share (both use `.daily`).
+enum ShareCardOrigin: String {
+    case dayComplete = "day_complete"
+    case progress
+    case rankUp = "rank_up"
+    case challengeEnd = "challenge_end"
 }
 
 /// The 9:16 story card — ONE fixed canvas rendered to a UIImage at 3× (1080×1920).

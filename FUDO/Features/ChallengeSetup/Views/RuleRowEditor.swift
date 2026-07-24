@@ -12,7 +12,6 @@ struct RuleRowEditor: View {
 
     var body: some View {
         Button {
-            Haptics.light()
             onToggle()
         } label: {
             HStack(spacing: 12) {

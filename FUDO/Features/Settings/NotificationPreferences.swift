@@ -8,7 +8,11 @@ import Foundation
 /// notification S5 ships. `eveningReminders` and `rankCelebrations` persist the
 /// user's choice for the conditional-notification session to honour; they store
 /// real state, so the toggles are functional, not decorative.
-struct NotificationPreferences {
+///
+/// `nonisolated`: a pure UserDefaults wrapper forced onto the main actor by the
+/// module default, then embedded as a default-arg init — opting out clears the
+/// main-actor-init concurrency warning (UserDefaults is thread-safe).
+nonisolated struct NotificationPreferences {
     enum Category: String, CaseIterable, Identifiable {
         case dailyReminder = "settings.notif.dailyReminder"
         case eveningReminders = "settings.notif.eveningReminders"

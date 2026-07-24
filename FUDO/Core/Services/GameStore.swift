@@ -48,6 +48,15 @@ final class GameStore {
     /// value type — it survives `activeChallenge` being nil'd at completion.
     private(set) var pendingChallengeCompletion: ChallengeCompletionSummary?
 
+    /// DayLogs whose `day_completed` already fired this session — an uncheck→recheck
+    /// of an already-sealed OPEN day must not re-emit the activation event (F8, audit
+    /// 2026-07-23). Session memory: a relaunch re-seals through the closed-day path.
+    private var emittedDayCompletions: Set<PersistentIdentifier> = []
+
+    /// Persisted so `task_checked {is_first_ever: true}` fires ONCE ever, not again
+    /// when the very first check is unchecked then re-checked (F20). Cleared on erase.
+    private static let firstCheckKey = "analytics.firstCheckDone"
+
     init(modelContext: ModelContext, calendar: Calendar = .current,
          nowProvider: @escaping () -> Date = Date.init) {
         self.modelContext = modelContext
@@ -90,7 +99,7 @@ final class GameStore {
     func checkTask(_ rule: TaskRule) {
         guard let player, let challenge = activeChallenge, rule.isActive,
               let log = currentLog(), !log.isChecked(rule) else { return }   // nothing ever pays twice
-        let isFirstEver = totalChecksAllTime == 0   // the real first check (demo excluded)
+        let isFirstEver = !UserDefaults.standard.bool(forKey: Self.firstCheckKey)   // once ever, demo excluded (F20)
         let unchecked = challenge.activeRules.filter { !log.isChecked($0) }.count
         let delta = OVREngine.checkDelta(pool: log.dailyGainPool,
                                          alreadyGained: log.checksTotal,
@@ -103,8 +112,10 @@ final class GameStore {
         Analytics.track(AnalyticsEvent.taskChecked,
                         ["day_index": log.dayNumber, "tasks_done": done,
                          "tasks_total": total, "is_first_ever": isFirstEver])
+        if isFirstEver { UserDefaults.standard.set(true, forKey: Self.firstCheckKey) }
         // Ring sealed at 100 % — the live activation moment (day_index == 1 = D1).
-        if total > 0, done == total {
+        // Once per DayLog: an uncheck→recheck of a sealed open day must not re-fire it (F8).
+        if total > 0, done == total, emittedDayCompletions.insert(log.persistentModelID).inserted {
             Analytics.track(AnalyticsEvent.dayCompleted,
                             ["day_index": log.dayNumber, "streak": player.currentStreak,
                              "ovr": OVREngine.displayedOVR(player.ovrValue), "tasks_total": total])
@@ -435,6 +446,9 @@ final class GameStore {
     /// Mirrors the DEBUG replay minus the seed plumbing (DebugSeed is DEBUG-only;
     /// Release never auto-seeds, so there is nothing to disarm).
     func eraseAllData(flags: OnboardingFlags = OnboardingFlags()) {
+        // The hardest churn signal, fired as the LAST event on this anonymous id —
+        // before the wipe and before the id is reset below (plan §1.7).
+        Analytics.track(AnalyticsEvent.dataErased)
         wipeAll(DayLog.self)
         wipeAll(TaskRule.self)
         wipeAll(Challenge.self)
@@ -442,11 +456,16 @@ final class GameStore {
         player = nil
         activeChallenge = nil
         pendingRankUp = nil
+        emittedDayCompletions.removeAll()
+        UserDefaults.standard.removeObject(forKey: Self.firstCheckKey)   // fresh anon id ⇒ fresh first-check (F20)
         save()
         flags.reset()
         // A funnel restart must not leave ANY notification firing for a world that
         // no longer exists (daily, evening, streak, decay, trial, rank-up).
         NotificationService.cancelAll()
+        // Fresh anonymous id: the restarted onboarding funnel must not be attributed
+        // to the erased user (plan §1.7). No-op in DEBUG.
+        Analytics.reset()
     }
 
     /// fetch+delete — `ModelContext.delete(model:)` batch is unreliable on iOS 17.

@@ -110,7 +110,6 @@ struct RuleEditSheet: View {
                   spacing: 10) {
             ForEach(RuleIconCatalog.symbols, id: \.self) { symbol in
                 Button {
-                    Haptics.light()
                     iconName = symbol
                 } label: {
                     Image(systemName: symbol)

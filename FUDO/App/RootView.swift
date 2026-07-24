@@ -147,7 +147,8 @@ struct RootView: View {
         guard case .rankUpShare(let rank) = router?.pendingDeepLink else { return }
         _ = gameStore.consumeRankUp()
         deepLinkShare = ShareCardRequest(variant: .rankUp,
-                                         data: ShareCardData.rankUp(to: rank, from: gameStore))
+                                         data: ShareCardData.rankUp(to: rank, from: gameStore),
+                                         origin: .rankUp)
         router?.pendingDeepLink = nil
     }
 

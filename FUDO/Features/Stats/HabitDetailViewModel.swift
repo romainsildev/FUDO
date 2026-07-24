@@ -1,9 +1,10 @@
 import Foundation
 import Observation
 
-/// The Habit-detail view model. Owns its own `period` (seeded from the tab's selection
-/// at push, then free to change locally without affecting the tab). Read-only over the
-/// store; the maths lives in `StatsAggregator`.
+/// The Habit-detail view model. The screen reads over the WHOLE run since the FINAL
+/// redesign (2026-07-23) — the challenge map shows every day, so the pushed period is
+/// kept only for route compatibility and the aggregation is pinned to `.challenge`.
+/// Read-only over the store; the maths lives in `StatsAggregator`.
 @MainActor
 @Observable
 final class HabitDetailViewModel {
@@ -20,6 +21,6 @@ final class HabitDetailViewModel {
 
     func detail(rule: TaskRule, challenge: Challenge) -> HabitDetail {
         StatsAggregator(challenge: challenge, calendar: store.displayCalendar, today: store.effectiveToday)
-            .detail(for: rule, period: period)
+            .detail(for: rule, period: .challenge)
     }
 }

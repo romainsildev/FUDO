@@ -28,6 +28,10 @@ final class StatsViewModel {
         aggregator(for: challenge).habitStats(period)
     }
 
+    func checksPerDay(for challenge: Challenge) -> [DayChecks] {
+        aggregator(for: challenge).checksPerDay(period)
+    }
+
     func overallAdvice(for challenge: Challenge) -> String {
         aggregator(for: challenge).overallAdvice(period)
     }

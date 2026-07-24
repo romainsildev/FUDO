@@ -41,7 +41,6 @@ struct StatsPeriodPicker: View {
             .contentShape(Capsule())
             .onTapGesture {
                 guard !selected else { return }
-                Haptics.light()
                 withAnimation(AppAnimation.standard) { period = option }
             }
             .accessibilityElement()

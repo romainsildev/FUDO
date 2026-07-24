@@ -7,7 +7,6 @@ struct AddRuleRow: View {
 
     var body: some View {
         Button {
-            Haptics.light()
             action()
         } label: {
             HStack(spacing: 6) {

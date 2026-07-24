@@ -371,7 +371,7 @@ struct HomeView: View {
             Button {
                 guard let data = ShareCardData.daily(from: store) else { return }
                 Haptics.light()
-                shareRequest = ShareCardRequest(variant: .daily, data: data)
+                shareRequest = ShareCardRequest(variant: .daily, data: data, origin: .dayComplete)
             } label: {
                 HStack(spacing: 4) {
                     Text("Share my day")

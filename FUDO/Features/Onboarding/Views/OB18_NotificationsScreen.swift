@@ -141,9 +141,14 @@ struct NotificationsScreen: View {
 
     private func requestPermission() async {
         isRequesting = true
+        // Only the FIRST ask shows the system popup; a relaunch re-entry after a
+        // prior denial gets no popup, so don't re-fire the analytics answer (§1.2).
+        let firstAsk = await NotificationService.authorizationStatus() == .notDetermined
         let granted = await NotificationService.requestAuthorization()
         isRequesting = false
-        Analytics.track(AnalyticsEvent.notifPermissionAnswered, ["granted": granted])
+        if firstAsk {
+            Analytics.track(AnalyticsEvent.notifPermissionAnswered, ["granted": granted])
+        }
         guard granted else {
             // Already-denied users land here too: requestAuthorization returns
             // false with no popup. Same path, no insisting.

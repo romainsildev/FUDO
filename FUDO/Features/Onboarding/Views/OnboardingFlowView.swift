@@ -9,6 +9,10 @@ struct OnboardingFlowView: View {
     /// Held for the screens that touch persistence directly — OB 15's one-shot
     /// review flag. Everything else goes through the view model.
     private let flags: OnboardingFlags
+    /// Optional so previews (no environment) don't trap: an already-entitled user
+    /// replaying the funnel (erase / reinstall with the entitlement intact) must
+    /// never be shown a paywall — the `.paywall` step auto-passes for him.
+    @Environment(EntitlementStore.self) private var entitlementStore: EntitlementStore?
 
     init(store: GameStore, flags: OnboardingFlags = OnboardingFlags(),
          onFinished: @escaping () -> Void = {}) {
@@ -242,9 +246,15 @@ struct OnboardingFlowView: View {
                            onSealed: viewModel.markContractSealed,
                            startsSealed: viewModel.contractSealed)
         case .paywall:
-            PaywallGateView(contract: flags.contract, date: viewModel.projectionDate,
-                            onContinue: viewModel.passPaywall,
-                            onClose: viewModel.closePaywall)
+            if entitlementStore?.isPro == true {
+                // App Review path: a paying user is NEVER shown a paywall. Pass
+                // straight through to the post-paywall trio (Q3, audit 2026-07-23).
+                Color.clear.onAppear { viewModel.passPaywall() }
+            } else {
+                PaywallGateView(contract: flags.contract, date: viewModel.projectionDate,
+                                onContinue: viewModel.passPaywall,
+                                onClose: viewModel.closePaywall)
+            }
 
         // MARK: Act 4 — post-paywall
 

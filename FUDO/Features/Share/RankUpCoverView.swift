@@ -86,9 +86,13 @@ struct RankUpCoverView: View {
         VStack(spacing: 14) {
             Button {
                 Haptics.medium()
+                // Share INTENT from the cover (plan §1.8) — distinct from the actual
+                // completed share, which `share_card_shared {origin: rank_up}` reports.
+                Analytics.track(AnalyticsEvent.rankUpShared, ["rank": newRank.displayName.lowercased()])
                 shareRequest = ShareCardRequest(
                     variant: .rankUp,
-                    data: ShareCardData.rankUp(to: newRank, from: store))
+                    data: ShareCardData.rankUp(to: newRank, from: store),
+                    origin: .rankUp)
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "square.and.arrow.up")
@@ -135,6 +139,9 @@ struct RankUpCoverView: View {
         withAnimation(AppAnimation.slow) { appeared = true }
         burstTrigger += 1
         Haptics.success()
+        // The celebration cover was seen (plan §1.8) — once per rank (high-water gated
+        // upstream; `play` runs once per presentation).
+        Analytics.track(AnalyticsEvent.rankUpShown, ["rank": newRank.displayName.lowercased()])
     }
 }
 

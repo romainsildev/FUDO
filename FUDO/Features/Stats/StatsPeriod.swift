@@ -13,6 +13,16 @@ enum StatsPeriod: String, CaseIterable, Hashable {
         }
     }
 
+    /// Sentence-case label for the header dropdown (2026-07-23 — the segmented
+    /// control is gone, the period lives in a compact menu next to the title).
+    var menuLabel: String {
+        switch self {
+        case .week:      "Last 7 days"
+        case .month:     "Last 30 days"
+        case .challenge: "Full challenge"
+        }
+    }
+
     /// `stats_period_changed.period` (plan §1.8) — stable, not the UI caption.
     var analyticsValue: String {
         switch self {

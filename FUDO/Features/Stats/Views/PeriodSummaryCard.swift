@@ -1,14 +1,14 @@
 import SwiftUI
 
-/// The period summary (frame 05): three stats — completion %, checks done, best day —
-/// split by hairline dividers. Completion carries the vermillon accent (a hero number);
-/// the other two stay cream.
+/// The period summary (frame 05): three stats — completion %, checks done, best day.
+/// All three stay cream (2026-07-23): a completion number is an achievement, never an
+/// alarm — no red/vermillon on success metrics.
 struct PeriodSummaryCard: View {
     let summary: PeriodSummary
 
     var body: some View {
         HStack(spacing: 0) {
-            stat(value: "\(summary.completionPercent)%", caption: "COMPLETION", accent: true)
+            stat(value: "\(summary.completionPercent)%", caption: "COMPLETION", accent: false)
             divider
             stat(value: "\(summary.totalChecks)", caption: "CHECKS DONE", accent: false)
             divider

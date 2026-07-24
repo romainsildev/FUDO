@@ -14,6 +14,10 @@ struct PeriodSummary: Equatable {
     let closedDayCount: Int     // elapsed (closed) days in the window
 }
 
+/// One day of a habit's recent-form sparkline. `open` = today, still unchecked —
+/// neutral, never red: the day isn't over, so it can't be a failure yet (2026-07-23).
+enum SparkDay: Equatable { case held, missed, open }
+
 /// One habit's aggregate over the window — the list row (frame 05) and the
 /// strongest/weakest cards. `sparkline` is the last 7 days (held/missed), most
 /// recent last; it is recent-form, independent of the selected period.
@@ -22,10 +26,19 @@ struct HabitStat: Identifiable, Equatable {
     let title: String
     let iconName: String
     let completionPercent: Int
-    let sparkline: [Bool]
+    let sparkline: [SparkDay]
     let trend: TrendDirection
     let streak: Int
     let missedCount: Int
+}
+
+/// One bar of the Stats-tab "checks per day" graph (Stats FINAL, 2026-07-23).
+struct DayChecks: Identifiable, Equatable {
+    let id: Int
+    let date: Date
+    let label: String    // narrow weekday, uppercased — rendered only in ≤7-day mode
+    let checks: Int
+    let isBest: Bool     // highest count in the window (gold bar)
 }
 
 /// The two side-by-side cards. nil when there isn't enough data (min 5 closed days).
@@ -54,6 +67,24 @@ struct TimelineEntry: Identifiable, Equatable {
     let timeLabel: String?   // "7:42 AM" for held days
 }
 
+/// One cell of the habit-detail challenge map (Habit FINAL, 2026-07-23): the whole
+/// run as a 30/60/90/120-day grid — cream = held, red = missed, ring = today.
+struct CalendarDay: Identifiable, Equatable {
+    enum State: Equatable { case held, missed, open, future }
+    let id: Int          // dayNumber
+    let dayNumber: Int
+    let state: State
+    let isToday: Bool
+}
+
+/// One 3-hour bucket of the check-hour histogram ("when you check").
+struct HourBucket: Identifiable, Equatable {
+    let id: Int
+    let label: String    // "6a" "9a" "12p" "3p" "6p" "9p"
+    let count: Int
+    let isPeak: Bool
+}
+
 /// Everything the Habit-detail screen needs, precomputed.
 struct HabitDetail: Equatable {
     let title: String
@@ -66,6 +97,9 @@ struct HabitDetail: Equatable {
     let bars: [HabitBar]
     let timeline: [TimelineEntry]
     let advice: String
+    let calendarDays: [CalendarDay]
+    let hourBuckets: [HourBucket]
+    let peakLine: String?    // "9 of 11 checks land 6–9 AM" — nil before any check
 }
 
 // MARK: - Aggregator
@@ -80,6 +114,7 @@ struct StatsAggregator {
     let calendar: Calendar
     let today: Date              // startOfDay of the effective gameplay day
     let challengeStart: Date     // startOfDay of day 1
+    let durationDays: Int
     let activeRules: [TaskRule]
     let allLogs: [DayLog]
 
@@ -87,6 +122,7 @@ struct StatsAggregator {
         self.calendar = calendar
         self.today = calendar.startOfDay(for: today)
         self.challengeStart = calendar.startOfDay(for: challenge.startDate)
+        self.durationDays = challenge.durationDays
         self.activeRules = challenge.activeRules
         self.allLogs = challenge.dayLogs
     }
@@ -224,9 +260,14 @@ struct StatsAggregator {
         }
     }
 
-    /// Last 7 challenge days, held/missed, most recent last (recent-form glance).
-    private func sparkline(_ rule: TaskRule) -> [Bool] {
-        recentLogs(7).map { held(rule, in: $0) }
+    /// Last 7 challenge days, most recent last (recent-form glance). Today while
+    /// open and unchecked is `.open`, not `.missed` — no false red before the verdict.
+    private func sparkline(_ rule: TaskRule) -> [SparkDay] {
+        recentLogs(7).map { log in
+            if held(rule, in: log) { return .held }
+            if isToday(log) && !log.isClosed { return .open }
+            return .missed
+        }
     }
 
     /// Consecutive held days ending at the most recent day. Today, while still open
@@ -258,6 +299,22 @@ struct StatsAggregator {
         return .flat
     }
 
+    // MARK: Checks per day (Stats graph)
+
+    /// Total active-rule checks per window day, ascending. Best day(s) carry the gold.
+    func checksPerDay(_ period: StatsPeriod) -> [DayChecks] {
+        let logs = windowLogs(period)
+        let counts = logs.map { log in log.checks.filter { activeIDs.contains($0.ruleID) }.count }
+        let best = counts.max() ?? 0
+        return logs.enumerated().map { index, log in
+            DayChecks(id: index,
+                      date: log.date,
+                      label: log.date.formatted(.dateTime.weekday(.narrow).locale(Self.enLocale)).uppercased(),
+                      checks: counts[index],
+                      isBest: best > 0 && counts[index] == best)
+        }
+    }
+
     // MARK: Top / Flop
 
     /// nil unless there are ≥5 closed days AND ≥2 habits — otherwise "too early".
@@ -287,7 +344,65 @@ struct StatsAggregator {
                            barMode: mode,
                            bars: mode == .days ? dayBars(rule) : weekBars(rule, logs: logs),
                            timeline: timeline(rule, logs: logs),
-                           advice: HabitAdvice.line(for: rule, aggregator: self, period: period))
+                           advice: HabitAdvice.line(for: rule, aggregator: self, period: period),
+                           calendarDays: challengeCalendar(for: rule),
+                           hourBuckets: hourHistogram(for: rule),
+                           peakLine: peakLine(for: rule))
+    }
+
+    // MARK: Challenge map + check hours (Habit FINAL, 2026-07-23)
+
+    /// Every day of the run, 1…durationDays: held / missed / open (today, unchecked) /
+    /// future. Days beyond the logs are future by definition.
+    func challengeCalendar(for rule: TaskRule) -> [CalendarDay] {
+        var byDay: [Int: DayLog] = [:]
+        for log in allLogs where calendar.startOfDay(for: log.date) <= today {
+            byDay[log.dayNumber] = log
+        }
+        return (1...max(durationDays, 1)).map { day in
+            let state: CalendarDay.State
+            var isToday = false
+            if let log = byDay[day] {
+                isToday = self.isToday(log)
+                if held(rule, in: log) { state = .held }
+                else if isToday && !log.isClosed { state = .open }
+                else { state = .missed }
+            } else {
+                state = .future
+            }
+            return CalendarDay(id: day, dayNumber: day, state: state, isToday: isToday)
+        }
+    }
+
+    private static let bucketStarts = [6, 9, 12, 15, 18, 21]
+    private static let bucketLabels = ["6a", "9a", "12p", "3p", "6p", "9p"]
+
+    /// Check hours over the whole run, in six 3-hour buckets from 6 AM. Night owls
+    /// (before 6) clamp into the first bucket.
+    func hourHistogram(for rule: TaskRule) -> [HourBucket] {
+        let hours = allLogs
+            .compactMap { $0.checks.first(where: { $0.ruleID == rule.id })?.checkedAt }
+            .map { calendar.component(.hour, from: $0) }
+        var counts = [Int](repeating: 0, count: Self.bucketStarts.count)
+        for hour in hours {
+            let clamped = max(hour, Self.bucketStarts[0])
+            let index = Self.bucketStarts.lastIndex(where: { clamped >= $0 }) ?? 0
+            counts[index] += 1
+        }
+        let peak = counts.max() ?? 0
+        return counts.enumerated().map { index, count in
+            HourBucket(id: index, label: Self.bucketLabels[index],
+                       count: count, isPeak: peak > 0 && count == peak)
+        }
+    }
+
+    /// "9 of 11 checks land 6–9 AM" — nil before the first check.
+    func peakLine(for rule: TaskRule) -> String? {
+        let buckets = hourHistogram(for: rule)
+        let total = buckets.reduce(0) { $0 + $1.count }
+        guard total > 0, let peak = buckets.first(where: \.isPeak) else { return nil }
+        let ranges = ["6–9 AM", "9–12 AM", "12–3 PM", "3–6 PM", "6–9 PM", "9–12 PM"]
+        return "\(peak.count) of \(total) checks land \(ranges[peak.id])"
     }
 
     /// 7 day-bars (most recent last): held = full vermillon, missed = dead, today = in-progress.

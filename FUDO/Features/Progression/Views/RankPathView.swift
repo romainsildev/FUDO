@@ -4,10 +4,10 @@ import SwiftUI
 /// The portrait lives in a fixed-width lane pinned to one edge, so its centre is constant
 /// regardless of the portrait's own diameter (current node is larger but same centre).
 enum RankPathMetrics {
-    static let rowHeight: CGFloat = 128
+    static let rowHeight: CGFloat = 112     // densified 2026-07-23 (device verdict: too airy)
     static let laneWidth: CGFloat = 88
-    static let portraitNormal: CGFloat = 60
-    static let portraitCurrent: CGFloat = 84
+    static let portraitNormal: CGFloat = 54
+    static let portraitCurrent: CGFloat = 92
 
     static var laneCenter: CGFloat { laneWidth / 2 }
 
@@ -68,8 +68,9 @@ struct RankPathView: View {
                 context.stroke(path, with: .color(FudoColor.accent),
                                style: StrokeStyle(lineWidth: 3, lineCap: .round))
             } else {
-                context.stroke(path, with: .color(FudoColor.textSecondary.opacity(0.45)),
-                               style: StrokeStyle(lineWidth: 4, lineCap: .round, dash: [0.1, 11]))
+                // Dead path — thin and quiet (the fat dotted rope read as "raw" on device).
+                context.stroke(path, with: .color(FudoColor.textSecondary.opacity(0.28)),
+                               style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [0.1, 8]))
             }
         }
     }

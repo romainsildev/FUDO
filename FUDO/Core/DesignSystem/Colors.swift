@@ -22,7 +22,11 @@ enum FudoColor {
     static let positive = Color(hex: "34C759")     // OVR delta ▲ only
     static let negative = Color(hex: "FF453A")     // OVR delta ▼ only
 
-    static let celebrationGold = Color(hex: "E8B44A") // celebration bursts only
+    static let celebrationGold = Color(hex: "E8B44A") // celebration bursts + crossed rank thresholds (2026-07-23)
+
+    /// Locked-rank discs on the Progression path — pitch-dark on purpose: future ranks
+    /// must be a total mystery (Romain, 2026-07-23), no silhouette hinting at the art.
+    static let silhouette = Color(hex: "0B0A09")
 
     // Glass (RiteOff recipe) — translucent white overlays for `.ultraThinMaterial`
     // capsules/cards. Dark-only, app UI only (never mirrored to the widget's Asset

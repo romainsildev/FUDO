@@ -33,22 +33,28 @@ struct RankPathNodeView: View {
     private func label(alignment: HorizontalAlignment) -> some View {
         VStack(alignment: alignment, spacing: 3) {
             Text(node.name.uppercased())
-                .fudoFont(.title(19))
+                .fudoFont(.title(node.state == .current ? 21 : 17))
                 .foregroundStyle(nameColor)
             Text(node.subtitle)
                 .fudoFont(.caption(13))
-                .foregroundStyle(FudoColor.textSecondary)
+                .foregroundStyle(subtitleColor)
         }
         .frame(maxWidth: .infinity, alignment: alignment == .leading ? .leading : .trailing)
         .multilineTextAlignment(alignment == .leading ? .leading : .trailing)
     }
 
+    // The current node's name stays cream — the ring and the OVR badge already carry
+    // the vermillon; "current rank" underneath takes the accent instead (2026-07-23).
     private var nameColor: Color {
         switch node.state {
-        case .current:    return FudoColor.accent
+        case .current:    return FudoColor.textPrimary
         case .discovered: return FudoColor.textPrimary
         case .future:     return FudoColor.textSecondary
         }
+    }
+
+    private var subtitleColor: Color {
+        node.state == .current ? FudoColor.accent : FudoColor.textSecondary
     }
 }
 
@@ -69,31 +75,50 @@ private struct RankPortrait: View {
             Circle().strokeBorder(ringColor, lineWidth: node.state == .current ? 3 : 1)
         }
         .frame(width: diameter, height: diameter)
+        .overlay(alignment: .bottom) { ovrBadge }
         .rotationEffect(.degrees(wiggle ? 3 : 0))
         .contentShape(Circle())
         .onTapGesture { triggerWiggleIfFuture() }
         .animation(AppAnimation.standard, value: node.state)
     }
 
+    /// Locked ranks are a total mystery — a pitch-dark disc, no art leaking through
+    /// (Romain, 2026-07-23: "complètement noir"). Discovered/current show the portrait.
     @ViewBuilder private var portraitImage: some View {
-        if let head = SenseiAssetProvider.headImage(for: node.rank) {
+        if node.state == .future {
+            Circle().fill(FudoColor.silhouette)
+        } else if let head = SenseiAssetProvider.headImage(for: node.rank) {
             head
                 .resizable()
                 .scaledToFill()
                 .frame(width: diameter, height: diameter)
-                .saturation(node.state == .future ? 0 : 1)
-                .brightness(node.state == .future ? -0.55 : 0)   // silhouette — tuned on device
         } else {
             Image(systemName: "person.fill")
                 .fudoFont(.glyph(diameter * 0.42))
-                .foregroundStyle(node.state == .future
-                                 ? FudoColor.textSecondary.opacity(0.4)
-                                 : FudoColor.textSecondary)
+                .foregroundStyle(FudoColor.textSecondary)
+        }
+    }
+
+    /// The current node carries its OVR as a vermillon capsule riding the portrait's
+    /// bottom edge — the number lives on the path, not in the copy (Prog FINAL).
+    @ViewBuilder private var ovrBadge: some View {
+        if let ovr = node.currentOVR {
+            Text("OVR \(ovr)")
+                .fudoFont(.stat(12))
+                .foregroundStyle(FudoColor.textPrimary)
+                .padding(.horizontal, 11)
+                .padding(.vertical, 4)
+                .background(Capsule().fill(FudoColor.accent))
+                .offset(y: 11)
         }
     }
 
     private var ringColor: Color {
-        node.state == .current ? FudoColor.accent : FudoColor.border
+        switch node.state {
+        case .current:    return FudoColor.accent
+        case .discovered: return FudoColor.border
+        case .future:     return FudoColor.border.opacity(0.6)   // barely-there rim on the dark disc
+        }
     }
 
     @ViewBuilder private var haloIfCurrent: some View {
@@ -107,12 +132,12 @@ private struct RankPortrait: View {
 
     private func triggerWiggleIfFuture() {
         guard node.state == .future else { return }
+        // A single slow nudge out-and-back (0.4–0.6 s ease), not the old snappy
+        // 4× shake — "locked" reads without breaking the premium-motion rule.
         Task {
-            withAnimation(.easeInOut(duration: 0.1).repeatCount(4, autoreverses: true)) {
-                wiggle = true
-            }
-            try? await Task.sleep(for: .milliseconds(450))
-            wiggle = false
+            withAnimation(AppAnimation.standard) { wiggle = true }
+            try? await Task.sleep(for: .milliseconds(220))
+            withAnimation(AppAnimation.standard) { wiggle = false }
         }
     }
 }

@@ -10,7 +10,6 @@ struct PresetCard: View {
 
     var body: some View {
         Button {
-            Haptics.light()
             action()
         } label: {
             VStack(alignment: .leading, spacing: 8) {

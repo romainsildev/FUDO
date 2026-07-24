@@ -11,6 +11,9 @@ protocol AnalyticsClient {
     func track(_ event: String, properties: [String: Any]?)
     /// $set person properties on the anonymous user (no identify).
     func set(person: [String: Any])
+    /// Drop the current anonymous id and start a fresh one — called on data erase so
+    /// the restarted funnel is not attributed to the erased user (plan §1.7).
+    func reset()
 }
 
 /// The facade every feature uses. `configure()` picks the backend once at launch.
@@ -44,12 +47,18 @@ enum Analytics {
     static func set(person: [String: Any]) {
         client.set(person: person)
     }
+
+    /// Reset the anonymous id (data erase). No-op in DEBUG.
+    static func reset() {
+        client.reset()
+    }
 }
 
 /// Captures nothing — the DEBUG backend and the default until `configure()` runs.
 struct NoopAnalytics: AnalyticsClient {
     func track(_ event: String, properties: [String: Any]?) {}
     func set(person: [String: Any]) {}
+    func reset() {}
 }
 
 /// Real backend. The only type that touches the PostHog SDK. Compiled in every
@@ -62,6 +71,11 @@ struct PostHogAnalytics: AnalyticsClient {
     func set(person: [String: Any]) {
         // Anonymous $set — no identify, no distinct id of our own.
         PostHogSDK.shared.capture("$set", properties: nil, userProperties: person)
+    }
+    func reset() {
+        // New anonymous id: the erased user's funnel history stays severed from the
+        // fresh onboarding run (plan §1.7 — data_erased is the last event of the old id).
+        PostHogSDK.shared.reset()
     }
 }
 
@@ -106,11 +120,24 @@ enum AnalyticsEvent {
     static let nextChallengeChosen = "next_challenge_chosen"
     static let decayStarted = "decay_started"
 
+    // Churn (§1.7) — data_erased is the last event fired on the anonymous id before
+    // Analytics.reset() severs it. Hardest exit signal.
+    static let dataErased = "data_erased"
+
+    // Share loop (§1.6) — viewed on the share-card preview open, shared only when the
+    // system share sheet completes (completed == true). template = card variant slug.
+    static let shareCardViewed = "share_card_viewed"
+    static let shareCardShared = "share_card_shared"
+
     // Engagement (§1.8)
     static let flameSheetViewed = "flame_sheet_viewed"
     static let statsViewed = "stats_viewed"
     static let statsPeriodChanged = "stats_period_changed"
     static let habitDetailViewed = "habit_detail_viewed"
+    // Rank-up COVER (§1.8) — distinct from the GameStore `rank_up` crossing: shown when
+    // the celebration cover appears, shared on its Share tap (intent, not completed).
+    static let rankUpShown = "rank_up_shown"
+    static let rankUpShared = "rank_up_shared"
 
     // Widget (P7) — fired from the app on foreground when the installed families change.
     static let widgetDetected = "widget_detected"

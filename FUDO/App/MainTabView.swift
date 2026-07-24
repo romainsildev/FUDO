@@ -20,7 +20,6 @@ struct MainTabView: View {
             tab(.settings) { SettingsView() }
         }
         .tint(FudoColor.textPrimary)
-        .onChange(of: appState.selectedTab) { _, _ in Haptics.light() }
     }
 
     @ViewBuilder

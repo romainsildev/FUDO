@@ -10,7 +10,3 @@ struct FudoNavigationStack<Root: View>: View {
         NavigationStack(path: $path) { root() }
     }
 }
-
-/// Foundations-only demo route used by placeholder screens to prove push hides the pill.
-/// Real routes replace this in later sessions.
-struct PushDemoDestination: Hashable { let title: String }

@@ -7,6 +7,7 @@ import SwiftUI
 /// RiteOff pattern); tab CONTENT re-tints to vermillon so CTAs keep the accent.
 struct MainTabView: View {
     @Environment(AppState.self) private var appState
+    @Environment(GameStore.self) private var gameStore
     @State private var paths: [AppTab: NavigationPath] = Dictionary(
         uniqueKeysWithValues: AppTab.allCases.map { ($0, NavigationPath()) }
     )
@@ -14,9 +15,9 @@ struct MainTabView: View {
     var body: some View {
         @Bindable var appState = appState
         TabView(selection: $appState.selectedTab) {
-            tab(.today) { HomePlaceholderView() }
-            tab(.progress) { ProgressionPlaceholderView() }
-            tab(.stats) { StatsPlaceholderView() }
+            tab(.today) { HomeView(store: gameStore) }
+            tab(.progress) { ProgressionView(store: gameStore) }
+            tab(.stats) { StatsView(store: gameStore) }
             tab(.settings) { SettingsView() }
         }
         .tint(FudoColor.textPrimary)

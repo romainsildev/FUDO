@@ -159,7 +159,9 @@ struct HomeView: View {
             }
             .padding(.horizontal, FudoSpacing.cardPadding)
             .frame(maxWidth: .infinity)
-            .frame(height: HomeHeroMetrics.collapsedHeight)
+            // minHeight, not a fixed height: at large Dynamic Type the 3 stacked
+            // rows grow past 112 pt instead of clipping (F11). Default sizes = 112.
+            .frame(minHeight: HomeHeroMetrics.collapsedHeight)
             .background {
                 RoundedRectangle(cornerRadius: FudoSpacing.radiusCard, style: .continuous)
                     .fill(FudoColor.bgCard)
@@ -249,10 +251,17 @@ struct HomeView: View {
                     .fudoFont(.label(16, weight: .heavy))
                     .kerning(1.2)
                     .foregroundStyle(FudoColor.accent)
+                    // A long rank ("APPRENTICE") next to the giant OVR can overflow
+                    // the row at large Dynamic Type — scale it down rather than push
+                    // the line off a narrow screen (F12).
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                 Text(viewModel.nextRankHint)
                     .fudoFont(.stat(10, weight: .semibold))
                     .kerning(0.8)
                     .foregroundStyle(FudoColor.textSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
 
             Capsule()
@@ -368,20 +377,24 @@ struct HomeView: View {
             Text(viewModel.completionMessage)
                 .fudoFont(.headline(17))
                 .foregroundStyle(FudoColor.textPrimary)
-            Button {
-                guard let data = ShareCardData.daily(from: store) else { return }
-                Haptics.light()
-                shareRequest = ShareCardRequest(variant: .daily, data: data, origin: .dayComplete)
-            } label: {
-                HStack(spacing: 4) {
-                    Text("Share my day")
-                        .fudoFont(.headline(15))
-                    Image(systemName: "square.and.arrow.up")
-                        .fudoFont(.headline(11))
+            // Hidden without a player so the affordance is never a silent no-op tap
+            // (defensive — a completed day always has a player) — F17.
+            if store.player != nil {
+                Button {
+                    guard let data = ShareCardData.daily(from: store) else { return }
+                    Haptics.light()
+                    shareRequest = ShareCardRequest(variant: .daily, data: data, origin: .dayComplete)
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("Share my day")
+                            .fudoFont(.headline(15))
+                        Image(systemName: "square.and.arrow.up")
+                            .fudoFont(.headline(11))
+                    }
+                    .foregroundStyle(FudoColor.accent)
                 }
-                .foregroundStyle(FudoColor.accent)
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
     }
 

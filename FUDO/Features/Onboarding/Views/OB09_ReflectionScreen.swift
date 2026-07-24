@@ -19,6 +19,8 @@ struct ReflectionScreen: View {
     private static let beatGap: TimeInterval = 0.55
     /// The stamp: lands from above at scale, one bounce, done. The spring is a
     /// deliberate exception to the 0.4-0.6 ease rule — a seal doesn't ease in.
+    // Intentional stamp punch — a soft spring, device-validated exception to the
+    // 0.4–0.6 s ease rule (F19, audit 2026-07-23: feel kept, comment added).
     private static let stampAnimation: Animation = .spring(response: 0.4, dampingFraction: 0.65)
     private static let stampFromScale: CGFloat = 1.45
 

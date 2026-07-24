@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// One non-negotiable card. Unchecked: the signature 1.5 s hold-to-check
+/// One non-negotiable card. Unchecked: the signature 1.0 s hold-to-check
 /// (HoldToConfirm — ring around the card, progressive haptics; on seal: burst +
 /// floating "+X OVR"). Checked: long-press asks before unchecking — exact refund,
 /// no burst, no celebration (anti-farming stays in GameStore).

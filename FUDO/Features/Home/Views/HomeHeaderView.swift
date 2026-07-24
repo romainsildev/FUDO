@@ -27,7 +27,7 @@ struct HomeHeaderView: View {
                 .kerning(1.5)
                 .foregroundStyle(FudoColor.textPrimary)
                 .padding(.horizontal, 16)
-                .frame(height: Self.elementHeight)
+                .frame(minHeight: Self.elementHeight)
                 .fudoGlassCapsule(shadow: false)
 
             Spacer()
@@ -44,7 +44,7 @@ struct HomeHeaderView: View {
                         .foregroundStyle(streakIsAlive ? FudoColor.textPrimary : FudoColor.textSecondary)
                 }
                 .padding(.horizontal, 14)
-                .frame(height: Self.elementHeight)
+                .frame(minHeight: Self.elementHeight)
                 .fudoGlassCapsule(strong: streakIsAlive, shadow: false)
             }
             .buttonStyle(.plain)

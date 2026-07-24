@@ -23,6 +23,8 @@ struct DiagnosticScreen: View {
     private static let countUp: TimeInterval = 0.8
     /// The rank stamps in like OB 09's seal — same spring, same exception to
     /// the ease rule.
+    // Intentional stamp punch — a soft spring, device-validated exception to the
+    // 0.4–0.6 s ease rule (F19, audit 2026-07-23: feel kept, comment added).
     private static let stampAnimation: Animation = .spring(response: 0.4, dampingFraction: 0.65)
     private static let stampFromScale: CGFloat = 1.45
 

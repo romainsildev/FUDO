@@ -273,6 +273,7 @@ struct BuildLoaderScreen: View {
     private func finish() async {
         Haptics.success()
         withAnimation(.easeOut(duration: 0.25)) { percentOpacity = 0 }
+        // Soft spring on the checkmark pop — device-validated loader beat, exception to the 0.4–0.6 s rule (F19).
         withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) { checkShown = true }
 
         try? await Task.sleep(for: .seconds(Self.checkDwell + 0.35))
@@ -344,6 +345,7 @@ private struct OrbitStatView: View {
     }
 
     private func runLifecycle() {
+        // Soft spring on the emerge — device-validated loader beat, exception to the 0.4–0.6 s rule (F19).
         withAnimation(.spring(response: 0.5, dampingFraction: 0.75)) { emerged = true }
         withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
             swaying = true
@@ -429,6 +431,7 @@ private struct DoneMarker: View {
             .fill(FudoColor.accent)
             .scaleEffect(scale)
             .onAppear {
+                // Soft spring on the scale-in — device-validated loader beat, exception to the 0.4–0.6 s rule (F19).
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) { scale = 1 }
             }
     }

@@ -15,8 +15,6 @@ struct ProgressionView: View {
     }
 
     var body: some View {
-        // Prog FINAL (2026-07-23): the sensei hero is gone — the graph leads, the
-        // portrait lives on the path's current node. Title → graph → path → share → past.
         ScrollView {
             VStack(alignment: .leading, spacing: FudoSpacing.sectionGap) {
                 Text("Progression")
@@ -24,14 +22,18 @@ struct ProgressionView: View {
                     .foregroundStyle(FudoColor.textPrimary)
                     .padding(.top, 4)
 
+                SenseiHeroView(rank: viewModel.heroRank,
+                               ovr: viewModel.displayedOVR,
+                               rankName: viewModel.heroRankName,
+                               ordinal: viewModel.rankOrdinalLabel)
+
+                shareButton
+
                 OVRCurveView(points: viewModel.curvePoints,
-                             milestones: viewModel.curveMilestones,
                              windowLabel: viewModel.curveWindowLabel,
                              weekNet: viewModel.weekNet)
 
                 RankPathView(nodes: viewModel.rankNodes)
-
-                shareButton
 
                 PastChallengesView()
             }

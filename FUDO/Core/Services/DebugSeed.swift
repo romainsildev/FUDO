@@ -74,6 +74,15 @@ enum DebugSeed {
         // and the funnel would then find his OVR 61 through ensurePlayer's
         // fetch-or-create instead of minting the one his answers produce.
         OnboardingFlags().markFullyCompleted()
+        // …and an onboarded player holds an entitlement. Skipping the funnel also
+        // skips the purchase it ends on, so routing found `isPro == false` and
+        // raised the reactivation paywall over the Home — every DEBUG launch, on a
+        // simulator where StoreKit can only answer with an Apple Account prompt.
+        // Seed the override the debug menu already owns (nil = follow the SDK),
+        // leaving a deliberate Free/System choice untouched.
+        if UserDefaults.standard.object(forKey: "debug.proOverride") == nil {
+            UserDefaults.standard.set(true, forKey: "debug.proOverride")
+        }
 
         assert(store.player?.displayedOVR == 61,
                "Seed drifted: OVR \(store.player?.displayedOVR ?? -1) ≠ 61 — recalibrate answers")
